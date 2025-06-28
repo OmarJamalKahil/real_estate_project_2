@@ -1,0 +1,70 @@
+import { Module } from '@nestjs/common';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { UserModule } from './user/user.module';
+import { AuthModule } from './auth/auth.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { ConfigModule } from '@nestjs/config';
+import { MailModule } from './mail/mail.module';
+import * as Joi from 'joi'
+import { MailService } from './mail/mail.service';
+import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { User } from './user/entities/user.entity';
+import { Upload } from './user/entities/upload.entity';
+import { Warning } from './user/entities/warning.entity';
+import { Banned } from './user/entities/banned.entity';
+import { UserWarnings } from './user/entities/user-warnings.entity';
+@Module({
+  imports: [
+    TypeOrmModule.forRoot({
+      type: 'postgres',
+      host: 'localhost',
+      //  process.env.DB_HOST,
+      port: 5432,
+      // Number(process.env.DB_PORT),
+      username: 'postgres',
+      // process.env.DB_USER_NAME,
+      password: "0940468172mtn",
+      //  process.env.DB_PASSWORD || 
+      database: 'real-estate',
+      // process.env.DB_NAME,
+      entities: [User, Upload, Warning,UserWarnings, Banned],
+      // autoLoadEntities: true, // Automatically loads entities registered through TypeOrmModule.forFeature()
+      synchronize: true,      // ⚠️ use only in development
+    }),
+    ConfigModule.forRoot({
+      isGlobal: true, 
+      envFilePath: '.env', 
+      validationSchema: Joi.object({
+        // Cloudinary
+        CLOUDINARY_NAME: Joi.string().required(),
+        CLOUDINARY_API_KEY: Joi.string().required(),
+        CLOUDINARY_SECRET_KEY: Joi.string().required(),
+
+        // Auth
+        ACCESS_SECRET_KEY: Joi.string().required(),
+        ACCESS_EXPIRE_IN: Joi.string().required(),
+
+        REFRESH_SECRET_KEY: Joi.string().required(),
+        REFRESH_EXPIRE_IN: Joi.string().required(),
+
+
+        // DataBase
+        DB_HOST: Joi.string().required(),
+        DB_PORT: Joi.string().required(),
+        DB_USER_NAME: Joi.string().required(),
+        DB_PASSWORD: Joi.string().required(),
+        DB_NAME: Joi.string().required(),
+        DB_TYPE: Joi.string().required(),
+
+
+
+      }),
+    }),
+    UserModule, AuthModule, MailModule, CloudinaryModule],
+  controllers: [AppController],
+  providers: [AppService, MailService],
+})
+export class AppModule {
+
+}
