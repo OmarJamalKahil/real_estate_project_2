@@ -1,90 +1,3 @@
-// import {
-//   Controller,
-//   Post,
-//   Body,
-//   UploadedFile,
-//   UseInterceptors,
-//   UseGuards,
-//   Req,
-// } from '@nestjs/common';
-// import { UserService } from './user.service';
-// import { CreateUserDto } from './dto/create-user.dto';
-// import { VerifyUserDto } from './dto/verify-user.dto';
-// import { CompleteUserDto } from './dto/complete-user.dto';
-// import { FileInterceptor } from '@nestjs/platform-express';
-// import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
-// import { ResetUserPassword } from './dto/reset-user-password.dto';
-// import { LoginUserDto } from './dto/login-user.dto';
-// import { Role } from './entities/user.entity';
-
-
-
-// @Controller('user')
-// export class UserController {
-//   constructor(private readonly userService: UserService) { }
-
-//   @Post('start-register')
-//   async startRegister(@Body() dto: CreateUserDto) {
-//     return this.userService.startRegister(dto);
-//   }
-
-//   @Post('start-register-office-manager')
-//   async startRegisterOfficeManager(@Body() dto: CreateUserDto) {
-//     return this.userService.startRegister(dto,Role.OFFICEMANAGER);
-//   }
-
-//   @Post('verify-code')
-//   @UseGuards(JwtAuthGuard)
-//   async verifyCode(@Req() req, @Body() dto: VerifyUserDto) {
-//     const { email, phone } = req.user; // extracted from token
-//     console.log("email,phone", req.user);
-
-//     return this.userService.verifyCode(email, phone, dto.verify_code);
-//   }
-
-//   @Post('complete')
-//   @UseGuards(JwtAuthGuard)
-//   @UseInterceptors(FileInterceptor('profile_photo'))
-//   async complete(
-//     @Req() req,
-//     @Body() dto: CompleteUserDto,
-//     @UploadedFile() profilePhoto: Express.Multer.File,
-//   ) {
-//     const { email, phone } = req.user; // extracted from token
-
-//     return this.userService.completeProfile(email, phone, dto, profilePhoto);
-//   }
-
-//   @Post('login')
-//   async login(
-//     @Body() loginUserDto: LoginUserDto
-//   ) {
-//     return this.userService.login(loginUserDto)
-//   }
-
-//   @Post('reset-password')
-//   @UseGuards(JwtAuthGuard)
-//   async resetPassword(
-//     @Req() req,
-//     // @Body() dto: VerifyUserDto,
-//   ) {
-//     const { userId, role } = req.user;
-//     return this.userService.resetPassword(userId);
-//   }
-
-//   @Post('edite-password')
-//   @UseGuards(JwtAuthGuard)
-//   async editePassword(
-//     @Req() req,
-//     @Body() dto: ResetUserPassword,
-//   ) {
-//     const { email, phone } = req.user;
-//     return this.userService.editePassword(email, phone, dto.newPassword);
-//   }
-
-// }
-
-
 
 import {
   Controller,
@@ -96,6 +9,7 @@ import {
   Req,
   Put,
   Param,
+  Get,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
@@ -144,21 +58,31 @@ export class UserController {
     return this.userAuthService.verifyCode(userId, dto.verify_code);
   }
 
-  @Post('complete')
+  @Post('complete-register')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(FileInterceptor('profile_photo'))
   async complete(
     @Req() req,
     @Body() dto: CompleteUserDto,
-    @UploadedFile() profilePhoto: Express.Multer.File,
+    @UploadedFile() profile_photo: Express.Multer.File,
   ) {
-    const { userId } = req.user;
-    return this.userProfileService.completeProfile(userId, dto, profilePhoto);
+    const { userId } = req.user;    
+    return this.userProfileService.completeProfile(userId, dto, profile_photo);
   }
 
   @Post('login')
   async login(@Body() loginUserDto: LoginUserDto) {
     return this.userAuthService.login(loginUserDto);
+  }
+
+  @Get('get-current')
+  @UseGuards(JwtAuthGuard)
+  async getCurrentUser(
+    @Req() req
+  ) {
+    const { userId } = req.user;
+
+    return this.userAuthService.getCurrentUser(userId);
   }
 
   @Post('reset-password')

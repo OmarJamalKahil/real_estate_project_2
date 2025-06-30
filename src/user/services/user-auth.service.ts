@@ -19,6 +19,7 @@ import { ResetUserPassword } from '../dto/reset-user-password.dto';
 import { generate6DigitCode } from '../../common/utils/generate-code';
 import { USER_ERRORS } from '../user.constants';
 import { CreateAdminDto } from '../dto/create-admin.dto';
+import { UserResponseDto } from '../dto/user-response.dto';
 
 @Injectable()
 export class UserAuthService {
@@ -92,7 +93,7 @@ export class UserAuthService {
     async login(dto: LoginUserDto) {
         const user = await this.userRepository.findOneBy({
             email: dto.email,
-            is_verified:true
+            is_verified: true
         });
 
         if (!user) {
@@ -113,12 +114,37 @@ export class UserAuthService {
         return { ...tokens };
     }
 
+    async getCurrentUser(userId: string): Promise<UserResponseDto> {
+        const user = await this.userRepository.findOne({
+            where: { id: userId },
+            relations: ['profile_photo'],
+        });
+
+        if (!user) {
+            throw new UnauthorizedException(USER_ERRORS.INVALID_CREDENTIALS);
+        }
+
+        // map only safe fields to the DTO
+        const UserResponse: UserResponseDto = {
+            id: user.id,
+            first_name: user.first_name,
+            last_name: user.last_name,
+            profile_photo: user.profile_photo,
+            phone: user.phone,
+            email: user.email,
+            user_role: user.role
+        };
+
+        return UserResponse;
+    }
+
+
     /**
      * Reset password - send code
      */
     async resetPassword(userId: string) {
         const user = await this.userRepository.findOneBy({
-            id:userId,
+            id: userId,
             is_verified: true,
         });
 
@@ -143,7 +169,7 @@ export class UserAuthService {
      */
     async editPassword(userId: string, new_password: string) {
         const user = await this.userRepository.findOneBy({
-            id:userId,
+            id: userId,
             is_verified: true,
         });
 
@@ -159,5 +185,5 @@ export class UserAuthService {
         return { message: 'Password has been reset successfully' };
     }
 
-   
+
 }

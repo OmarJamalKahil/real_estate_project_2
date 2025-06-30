@@ -25,8 +25,12 @@ export class CompleteUserDto {
     @Matches(/(?=.*[@$!%*?&])/, { message: 'Password must contain at least one special character' })
     password: string;
 
-    // @IsOptional()
-    // profile_photo: Express.Multer.File;
-
-
+    
+    
+    
 }
+
+
+// @IsOptional()
+// profile_photo: Express.Multer.File;
+

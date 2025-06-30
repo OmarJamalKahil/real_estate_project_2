@@ -14,8 +14,28 @@ import { Upload } from './user/entities/upload.entity';
 import { Warning } from './user/entities/warning.entity';
 import { Banned } from './user/entities/banned.entity';
 import { UserWarnings } from './user/entities/user-warnings.entity';
+import { OfficeModule } from './office/office.module';
+import { BlogModule } from './blog/blog.module';
+import { SubscriptionModule } from './subscription/subscription.module';
+import { Office } from './office/entities/office.entity';
+import { OfficeSubscription } from './office/entities/office_subscription.entity';
+import { Subscription } from './subscription/entities/subscription.entity';
+import { Blog } from './blog/entities/blog.entity';
+import { BlogMedia } from './blog/entities/blog_media.entity';
 @Module({
   imports: [
+    TypeOrmModule.forFeature([
+      User,
+      Upload,
+      Banned, 
+      Warning, 
+      UserWarnings,
+      Office,
+      OfficeSubscription,
+      Subscription,
+      Blog,
+      BlogMedia
+    ]),
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: 'localhost',
@@ -28,13 +48,13 @@ import { UserWarnings } from './user/entities/user-warnings.entity';
       //  process.env.DB_PASSWORD || 
       database: 'real-estate',
       // process.env.DB_NAME,
-      entities: [User, Upload, Warning,UserWarnings, Banned],
+      entities: [User, Upload, Warning, UserWarnings, Banned],
       // autoLoadEntities: true, // Automatically loads entities registered through TypeOrmModule.forFeature()
       synchronize: true,      // ⚠️ use only in development
     }),
     ConfigModule.forRoot({
-      isGlobal: true, 
-      envFilePath: '.env', 
+      isGlobal: true,
+      envFilePath: '.env',
       validationSchema: Joi.object({
         // Cloudinary
         CLOUDINARY_NAME: Joi.string().required(),
@@ -61,7 +81,14 @@ import { UserWarnings } from './user/entities/user-warnings.entity';
 
       }),
     }),
-    UserModule, AuthModule, MailModule, CloudinaryModule],
+    UserModule, 
+    AuthModule, 
+    MailModule, 
+    CloudinaryModule,
+    OfficeModule, 
+    SubscriptionModule, 
+    BlogModule
+  ],
   controllers: [AppController],
   providers: [AppService, MailService],
 })

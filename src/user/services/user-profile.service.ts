@@ -131,6 +131,7 @@ import { Upload } from '../entities/upload.entity';
 import { CompleteUserDto } from '../dto/complete-user.dto';
 import { USER_ERRORS } from '../user.constants';
 import { UpdateUserDto } from '../dto/update-user.dto';
+import { AuthService } from 'src/auth/auth.service';
 
 @Injectable()
 export class UserProfileService {
@@ -141,6 +142,7 @@ export class UserProfileService {
     @InjectRepository(Upload)
     private readonly uploadRepository: Repository<Upload>,
 
+    private readonly authService:AuthService,
     private readonly configService: ConfigService,
     private readonly cloudinaryService: CloudinaryService,
     private readonly dataSource: DataSource, // inject DataSource for transactions
@@ -195,7 +197,14 @@ export class UserProfileService {
 
       await queryRunner.commitTransaction();
 
-      return { message: 'User profile completed successfully' };
+      const tokens = this.authService.generateTokens({
+        userId: user.id,
+        role: user.role,
+      });
+      return {
+        // message: 'User profile completed successfully',
+          ...tokens
+      };
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw error;
