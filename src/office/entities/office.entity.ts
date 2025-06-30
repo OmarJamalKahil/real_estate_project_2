@@ -15,19 +15,7 @@ export enum OfficeCreatingStatus {
 export class Office {
     @PrimaryGeneratedColumn('uuid')
     id: string
-
-    @OneToOne(() => User)
-    @JoinColumn()
-    user: User;
-
-    @OneToOne(() => OfficeSubscription)
-    @JoinColumn()
-    officeSubscription?: OfficeSubscription;
-
-    @OneToOne(() => LicensePhoto)
-    @JoinColumn()
-    license_photo: LicensePhoto;
-
+    
     @Column({
         nullable: false
     })
@@ -46,16 +34,28 @@ export class Office {
     })
     personal_identity_number: string
 
-
-    @OneToMany(() => Blog, (blog) => blog.office)
-    blogs?: Blog[];
-
-
     @Column({
         type: 'enum',
         enum: OfficeCreatingStatus,
         default: OfficeCreatingStatus.pending,
     })
     status: OfficeCreatingStatus;
+    @OneToOne(() => User, { nullable: false })
+    @JoinColumn()
+    user: User;
+
+    @OneToOne(() => OfficeSubscription)
+    @JoinColumn()
+    officeSubscription?: OfficeSubscription;
+
+    @OneToOne(() => LicensePhoto)
+    @JoinColumn()
+    license_photo: LicensePhoto;
+
+
+    @OneToMany(() => Blog, (blog) => blog.office)
+    blogs?: Blog[];
+
+
 
 }

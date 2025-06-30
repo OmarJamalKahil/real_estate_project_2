@@ -111,7 +111,7 @@ export class UserAuthService {
             role: user.role,
         });
 
-        return { ...tokens };
+        return { ...tokens, role: user.role };
     }
 
     async getCurrentUser(userId: string): Promise<UserResponseDto> {

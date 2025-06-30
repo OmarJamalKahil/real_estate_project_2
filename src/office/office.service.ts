@@ -7,6 +7,7 @@ import { DataSource, Repository } from 'typeorm';
 import { LicensePhoto } from './entities/license_photo.entity';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { UpdateOfficeStatusDto } from './dto/update-office-status.dto';
+import { User } from 'src/user/entities/user.entity';
 
 @Injectable()
 export class OfficeService {
@@ -16,11 +17,13 @@ export class OfficeService {
     private readonly officeRepository: Repository<Office>,
     @InjectRepository(LicensePhoto)
     private readonly licensePhotoRepository: Repository<LicensePhoto>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
     private readonly cloudinaryService: CloudinaryService,
     private readonly dataSource: DataSource,
   ) { }
 
-  async create(createOfficeDto: CreateOfficeDto, license_photo: Express.Multer.File) {
+  async create(createOfficeDto: CreateOfficeDto, license_photo: Express.Multer.File, userId: string) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -28,6 +31,14 @@ export class OfficeService {
     try {
       // Upload to cloudinary
       const uploadedImage = await this.cloudinaryService.uploadImage(license_photo);
+
+      const user = await this.userRepository.findOne({
+        where: { id: userId }
+      })
+
+      if (!user) {
+        throw new NotFoundException("Not Found")
+      }
 
       // Create LicensePhoto
       const licensePhoto = this.licensePhotoRepository.create({
@@ -39,14 +50,19 @@ export class OfficeService {
 
       // Create Office entity
       const office = this.officeRepository.create({
-        ...createOfficeDto,
+        name: createOfficeDto.name,
+        personal_identity_number: createOfficeDto.personal_identity_number,
+        license_number: createOfficeDto.license_number,
         license_photo: licensePhoto,
+        user: user,
       });
 
       await queryRunner.manager.save(office);
 
       await queryRunner.commitTransaction();
-      return office;
+      return {
+        message:"We are gonna see your office creation request and then decided."
+      };
 
     } catch (error) {
       await queryRunner.rollbackTransaction();
@@ -115,9 +131,9 @@ export class OfficeService {
     }
   }
 
-  async updatingStatus(id: string, updateOfficeStatusDto: UpdateOfficeStatusDto){
+  async updatingStatus(id: string, updateOfficeStatusDto: UpdateOfficeStatusDto) {
 
-     const queryRunner = this.dataSource.createQueryRunner();
+    const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 

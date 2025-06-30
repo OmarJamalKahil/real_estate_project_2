@@ -22,13 +22,14 @@ import { OfficeSubscription } from './office/entities/office_subscription.entity
 import { Subscription } from './subscription/entities/subscription.entity';
 import { Blog } from './blog/entities/blog.entity';
 import { BlogMedia } from './blog/entities/blog_media.entity';
+import { LicensePhoto } from './office/entities/license_photo.entity';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
       User,
       Upload,
-      Banned, 
-      Warning, 
+      Banned,
+      Warning,
       UserWarnings,
       Office,
       OfficeSubscription,
@@ -48,7 +49,7 @@ import { BlogMedia } from './blog/entities/blog_media.entity';
       //  process.env.DB_PASSWORD || 
       database: 'real-estate',
       // process.env.DB_NAME,
-      entities: [User, Upload, Warning, UserWarnings, Banned],
+      entities: [User, Upload, Warning, UserWarnings, Banned, LicensePhoto, Subscription,Blog, Office, OfficeSubscription],
       // autoLoadEntities: true, // Automatically loads entities registered through TypeOrmModule.forFeature()
       synchronize: true,      // ⚠️ use only in development
     }),
@@ -60,7 +61,7 @@ import { BlogMedia } from './blog/entities/blog_media.entity';
         CLOUDINARY_NAME: Joi.string().required(),
         CLOUDINARY_API_KEY: Joi.string().required(),
         CLOUDINARY_SECRET_KEY: Joi.string().required(),
-
+ 
         // Auth
         ACCESS_SECRET_KEY: Joi.string().required(),
         ACCESS_EXPIRE_IN: Joi.string().required(),
@@ -81,12 +82,12 @@ import { BlogMedia } from './blog/entities/blog_media.entity';
 
       }),
     }),
-    UserModule, 
-    AuthModule, 
-    MailModule, 
+    UserModule,
+    AuthModule,
+    MailModule,
     CloudinaryModule,
-    OfficeModule, 
-    SubscriptionModule, 
+    OfficeModule,
+    SubscriptionModule,
     BlogModule
   ],
   controllers: [AppController],

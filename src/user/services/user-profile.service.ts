@@ -142,7 +142,7 @@ export class UserProfileService {
     @InjectRepository(Upload)
     private readonly uploadRepository: Repository<Upload>,
 
-    private readonly authService:AuthService,
+    private readonly authService: AuthService,
     private readonly configService: ConfigService,
     private readonly cloudinaryService: CloudinaryService,
     private readonly dataSource: DataSource, // inject DataSource for transactions
@@ -203,7 +203,8 @@ export class UserProfileService {
       });
       return {
         // message: 'User profile completed successfully',
-          ...tokens
+        role: user.role,
+        ...tokens
       };
     } catch (error) {
       await queryRunner.rollbackTransaction();

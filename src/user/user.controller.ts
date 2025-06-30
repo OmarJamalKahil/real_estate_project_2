@@ -41,6 +41,13 @@ export class UserController {
 
   ) { }
 
+  @Get("get-all-users")
+  async getAllUsers(){
+    return this.userAdminService.getAllUsers()
+  }
+
+
+
   @Post('start-register')
   async startRegister(@Body() dto: CreateUserDto) {
     return this.userAuthService.startRegister(dto);

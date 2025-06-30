@@ -142,7 +142,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Role, User } from '../entities/user.entity';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { AuthService } from 'src/auth/auth.service';
 import { MailService } from 'src/mail/mail.service';
 import { ConfigService } from '@nestjs/config';
@@ -248,6 +248,17 @@ export class UserAdminService {
         }
     }
 
+
+
+    async getAllUsers() {
+        const users = await this.userRepository.findBy({
+            role: In(["user", "officeManager"])
+        });
+        return users;
+    }
+
+
+
     async banUser(userId: string, banUserDto: BanUserDto) {
 
         const queryRunner = this.dataSource.createQueryRunner();
@@ -345,7 +356,7 @@ export class UserAdminService {
         } catch (error) {
             await queryRunner.rollbackTransaction();
             throw error;
-        } finally { 
+        } finally {
             await queryRunner.release();
         }
     }
