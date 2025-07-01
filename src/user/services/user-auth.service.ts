@@ -130,6 +130,7 @@ export class UserAuthService {
             first_name: user.first_name,
             last_name: user.last_name,
             profile_photo: user.profile_photo,
+            receiver_identifier:user.receiver_identifier,
             phone: user.phone,
             email: user.email,
             user_role: user.role

@@ -132,6 +132,7 @@ import { CompleteUserDto } from '../dto/complete-user.dto';
 import { USER_ERRORS } from '../user.constants';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { AuthService } from 'src/auth/auth.service';
+import { UserResponseDto } from '../dto/user-response.dto';
 
 @Injectable()
 export class UserProfileService {
@@ -221,7 +222,7 @@ export class UserProfileService {
     userId: string,
     dto: UpdateUserDto,
     file?: Express.Multer.File,
-  ) {
+  ): Promise<UserResponseDto> {
     const queryRunner = this.dataSource.createQueryRunner();
 
     await queryRunner.connect();
@@ -271,7 +272,19 @@ export class UserProfileService {
 
       await queryRunner.commitTransaction();
 
-      return { message: 'User Profile has been updated successfully' };
+
+
+      return {
+        id: user.id,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        receiver_identifier:user.receiver_identifier,
+        profile_photo: user.profile_photo,
+        user_role: user.role,
+        phone: user.phone,
+        email: user.email,
+      }
+      // { message: 'User Profile has been updated successfully' };
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw error;

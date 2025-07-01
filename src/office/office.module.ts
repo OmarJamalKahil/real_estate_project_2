@@ -8,14 +8,17 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CloudinaryModule } from 'src/cloudinary/cloudinary.module';
 import { UserModule } from 'src/user/user.module';
 import { User } from 'src/user/entities/user.entity';
+import { OfficeRating } from './entities/office_rating.entity';
+import { OfficeRatingService } from './office_rating.service';
+import { OfficePhoto } from './entities/office_photo.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Office, OfficeSubscription, LicensePhoto,User]),
+    TypeOrmModule.forFeature([Office, OfficeSubscription, LicensePhoto,User,OfficeRating,OfficePhoto]),
     CloudinaryModule,
   ], // <-- FIX HERE
   controllers: [OfficeController],
-  providers: [OfficeService],
-  exports: [OfficeService],
+  providers: [OfficeService,OfficeRatingService],
+  exports: [OfficeService,OfficeRatingService],
 })
 export class OfficeModule { }

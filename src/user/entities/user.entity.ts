@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import { Upload } from './upload.entity';
 import { Banned } from './banned.entity';
-import {  Warning } from './warning.entity';
+import { Warning } from './warning.entity';
 import { UserWarnings } from './user-warnings.entity';
 
 export enum Role {
@@ -65,7 +65,7 @@ export class User {
     @Column({ nullable: true })
     receiver_identifier: string;
 
-    @OneToOne(() => Upload, { cascade: true, eager: true, nullable: true })
+    @OneToOne(() => Upload, { cascade: true, eager: true, nullable: true, onDelete: 'SET NULL' })
     @JoinColumn()
     profile_photo?: Upload;
 

@@ -3,6 +3,8 @@ import { Column, Entity, JoinColumn, OneToMany, OneToOne, PrimaryGeneratedColumn
 import { LicensePhoto } from "./license_photo.entity";
 import { Blog } from "src/blog/entities/blog.entity";
 import { OfficeSubscription } from "./office_subscription.entity";
+import { OfficeRating } from "./office_rating.entity";
+import { OfficePhoto } from "./office_photo.entity";
 
 
 export enum OfficeCreatingStatus {
@@ -15,11 +17,23 @@ export enum OfficeCreatingStatus {
 export class Office {
     @PrimaryGeneratedColumn('uuid')
     id: string
-    
+
     @Column({
         nullable: false
     })
     name: string;
+
+
+    @Column({
+        nullable: false
+    })
+    office_email: string;
+
+
+    @Column({
+        nullable: false
+    })
+    office_phone: string;
 
     @Column({
         nullable: false,
@@ -40,6 +54,8 @@ export class Office {
         default: OfficeCreatingStatus.pending,
     })
     status: OfficeCreatingStatus;
+
+    
     @OneToOne(() => User, { nullable: false })
     @JoinColumn()
     user: User;
@@ -53,8 +69,16 @@ export class Office {
     license_photo: LicensePhoto;
 
 
+    @OneToOne(() => OfficePhoto)
+    @JoinColumn()
+    office_photo: OfficePhoto;
+
+
     @OneToMany(() => Blog, (blog) => blog.office)
     blogs?: Blog[];
+
+    @OneToMany(() => OfficeRating, (officeRating) => officeRating.office)
+    ratings?: OfficeRating[];
 
 
 

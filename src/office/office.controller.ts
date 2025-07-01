@@ -9,27 +9,35 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { Role } from 'src/user/entities/user.entity';
+import { OfficeRatingService } from './office_rating.service';
+import { CreateOrUpdateOfficeRatingDto } from './dto/create-or-update-office-rating.dto';
 
 @Controller('office')
 export class OfficeController {
-  constructor(private readonly officeService: OfficeService) { }
+  constructor(
+    private readonly officeService: OfficeService,
+    private readonly officeRatingService: OfficeRatingService,
+
+  ) { }
 
   @Post('/create-office')
-  @UseGuards(JwtAuthGuard,RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.OFFICEMANAGER)
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('license_photo'))
+  @UseInterceptors(FileInterceptor('office_photo'))
   uploadFile(
     @Body() createOfficeDto: CreateOfficeDto,
-    @UploadedFile(FileValidationPipe) file: Express.Multer.File,
+    @UploadedFile(FileValidationPipe) license_photo: Express.Multer.File,
+    @UploadedFile(FileValidationPipe) office_photo: Express.Multer.File,
     @Req() req
   ) {
     const { userId } = req.user;
-    return this.officeService.create(createOfficeDto, file, userId)
+    return this.officeService.create(createOfficeDto, license_photo,office_photo, userId)
   }
 
   @Get()
   findAll() {
-    return this.officeService.findAll();
+    return this.officeService.getAllOfficesWithAverageRating();
   }
 
   @Get(':id')
@@ -38,19 +46,44 @@ export class OfficeController {
   }
 
   @Put('/status/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN,Role.SUPERADMIN)
   updateStatus(@Param('id') id: string, @Body() updateOfficeStatusDto: UpdateOfficeStatusDto) {
     return this.officeService.updatingStatus(id, updateOfficeStatusDto);
   }
 
 
   @Put(':id')
-  update(@Param('id') id: string, @Body() updateOfficeDto: UpdateOfficeDto) {
-    return this.officeService.update(id, updateOfficeDto);
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.OFFICEMANAGER)
+  update(
+    @Param('id') id: string,
+    @Body() updateOfficeDto: UpdateOfficeDto,
+    @Req() req,
+  ) {
+    const {userId} = req.user
+    return this.officeService.update(id, updateOfficeDto,userId);
   }
 
 
+  @Post(':officeId/rate')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  async rateOffice(
+    @Param('officeId') officeId: string,
+    @Body() body: CreateOrUpdateOfficeRatingDto,
+    @Req() req,
+  ) {
+    const {userId} = req.user;
+    return this.officeRatingService.rateOffice(officeId,userId, body.rating);
+  }
+
+  @Get('ratings/averages')
+  async getAverages() {
+    return this.officeRatingService.getOfficeAverageRatings();
+  }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   remove(@Param('id') id: string) {
     return this.officeService.remove(id);
   }

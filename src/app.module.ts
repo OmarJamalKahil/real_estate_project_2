@@ -23,6 +23,8 @@ import { Subscription } from './subscription/entities/subscription.entity';
 import { Blog } from './blog/entities/blog.entity';
 import { BlogMedia } from './blog/entities/blog_media.entity';
 import { LicensePhoto } from './office/entities/license_photo.entity';
+import { OfficeRating } from './office/entities/office_rating.entity';
+import { OfficePhoto } from './office/entities/office_photo.entity';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -35,8 +37,10 @@ import { LicensePhoto } from './office/entities/license_photo.entity';
       OfficeSubscription,
       Subscription,
       Blog,
-      BlogMedia
-    ]),
+      BlogMedia,
+      OfficeRating,
+      
+    ]), 
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: 'localhost',
@@ -49,7 +53,20 @@ import { LicensePhoto } from './office/entities/license_photo.entity';
       //  process.env.DB_PASSWORD || 
       database: 'real-estate',
       // process.env.DB_NAME,
-      entities: [User, Upload, Warning, UserWarnings, Banned, LicensePhoto, Subscription,Blog, Office, OfficeSubscription],
+      entities: [
+        User, 
+        Upload, 
+        Warning, 
+        UserWarnings,
+        Banned, 
+        LicensePhoto, 
+        Subscription,
+        Blog, 
+        Office, 
+        OfficeSubscription, 
+        OfficeRating,
+        OfficePhoto,
+      ],
       // autoLoadEntities: true, // Automatically loads entities registered through TypeOrmModule.forFeature()
       synchronize: true,      // ⚠️ use only in development
     }),

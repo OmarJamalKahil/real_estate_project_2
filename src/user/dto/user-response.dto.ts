@@ -11,7 +11,7 @@ export class UserResponseDto {
 
     last_name: string;
 
-    //receiver_identifier:string;
+    receiver_identifier:string;
 
     profile_photo?: Upload;
 

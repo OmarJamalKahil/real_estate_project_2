@@ -139,7 +139,7 @@ export class UserController {
   async updateProfile(
     @Req() req,
     @Body() updateUserDto: UpdateUserDto,
-    @UploadedFile() profilePhoto: Express.Multer.File,
+    @UploadedFile() profilePhoto?: Express.Multer.File,
   ) {
 
     const { userId } = req.user;
