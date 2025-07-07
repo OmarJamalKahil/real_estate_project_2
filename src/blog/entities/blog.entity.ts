@@ -1,5 +1,6 @@
-import { Entity, Column, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Entity, Column, ManyToOne, PrimaryGeneratedColumn, OneToOne, JoinColumn } from "typeorm";
 import { Office } from "src/office/entities/office.entity";
+import { BlogMedia } from "./blog_media.entity";
 
 @Entity()
 export class Blog {
@@ -14,4 +15,8 @@ export class Blog {
 
     @ManyToOne(() => Office, (office) => office.blogs)
     office: Office;
+
+    @OneToOne(() => BlogMedia, { nullable: true,eager:true })
+    @JoinColumn()
+    blog_media?: BlogMedia;
 }

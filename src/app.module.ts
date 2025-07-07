@@ -25,6 +25,16 @@ import { BlogMedia } from './blog/entities/blog_media.entity';
 import { LicensePhoto } from './office/entities/license_photo.entity';
 import { OfficeRating } from './office/entities/office_rating.entity';
 import { OfficePhoto } from './office/entities/office_photo.entity';
+import { PropertyModule } from './property/property.module';
+import { Location } from './property/entities/location.entity';
+import { LicenseType } from './property/entities/license_type.entity';
+import { LicenseDetails } from './property/entities/license_details.entity';
+import { PropertyType } from './property/entities/property_type.entity';
+import { PropertyTypeAttribute } from './property/entities/propertyType_attribute.entity';
+import { Attribute } from './property/entities/attribute.entity';
+import { PropertyAttribute } from './property/entities/property_attribute.entity';
+import { PropertyPhotos } from './property/entities/property_photos.entity';
+import { Property } from './property/entities/property.entity';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -39,8 +49,8 @@ import { OfficePhoto } from './office/entities/office_photo.entity';
       Blog,
       BlogMedia,
       OfficeRating,
-      
-    ]), 
+
+    ]),
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: 'localhost',
@@ -54,18 +64,29 @@ import { OfficePhoto } from './office/entities/office_photo.entity';
       database: 'real-estate',
       // process.env.DB_NAME,
       entities: [
-        User, 
-        Upload, 
-        Warning, 
+        User,
+        Upload,
+        Warning,
         UserWarnings,
-        Banned, 
-        LicensePhoto, 
+        Banned,
+        LicensePhoto,
         Subscription,
-        Blog, 
-        Office, 
-        OfficeSubscription, 
+        Blog,
+        BlogMedia,
+        Office,
+        OfficeSubscription,
         OfficeRating,
         OfficePhoto,
+        Property,
+        PropertyPhotos,
+        PropertyAttribute,
+        Attribute,
+        PropertyType,
+        PropertyTypeAttribute
+        ,
+        LicenseDetails,
+        LicenseType,
+        Location,
       ],
       // autoLoadEntities: true, // Automatically loads entities registered through TypeOrmModule.forFeature()
       synchronize: true,      // ⚠️ use only in development
@@ -78,7 +99,7 @@ import { OfficePhoto } from './office/entities/office_photo.entity';
         CLOUDINARY_NAME: Joi.string().required(),
         CLOUDINARY_API_KEY: Joi.string().required(),
         CLOUDINARY_SECRET_KEY: Joi.string().required(),
- 
+
         // Auth
         ACCESS_SECRET_KEY: Joi.string().required(),
         ACCESS_EXPIRE_IN: Joi.string().required(),
@@ -105,7 +126,8 @@ import { OfficePhoto } from './office/entities/office_photo.entity';
     CloudinaryModule,
     OfficeModule,
     SubscriptionModule,
-    BlogModule
+    BlogModule,
+    PropertyModule
   ],
   controllers: [AppController],
   providers: [AppService, MailService],

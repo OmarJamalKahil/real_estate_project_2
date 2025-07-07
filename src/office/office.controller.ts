@@ -1,8 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, UploadedFile, Put, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, UploadedFile, Put, UseGuards, Req, UploadedFiles } from '@nestjs/common';
 import { OfficeService } from './office.service';
 import { CreateOfficeDto } from './dto/create-office.dto';
 import { UpdateOfficeDto } from './dto/update-office.dto';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileFieldsInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import { FileValidationPipe } from 'src/common/pipes/file-validation.pipe';
 import { UpdateOfficeStatusDto } from './dto/update-office-status.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
@@ -11,6 +11,7 @@ import { Roles } from 'src/common/decorators/roles.decorator';
 import { Role } from 'src/user/entities/user.entity';
 import { OfficeRatingService } from './office_rating.service';
 import { CreateOrUpdateOfficeRatingDto } from './dto/create-or-update-office-rating.dto';
+import { MultiFileValidationPipe } from 'src/common/pipes/multi-files-validation.pipe';
 
 @Controller('office')
 export class OfficeController {
@@ -20,19 +21,39 @@ export class OfficeController {
 
   ) { }
 
+  @Get('user-office')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.OFFICEMANAGER)
+  getUserOffice(
+    @Req() req,
+  ) {
+    const { userId } = req.user;
+    return this.officeService.getCurrentUserOffice(userId);
+  }
+
   @Post('/create-office')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.OFFICEMANAGER)
-  @UseInterceptors(FileInterceptor('license_photo'))
-  @UseInterceptors(FileInterceptor('office_photo'))
-  uploadFile(
+  @UseInterceptors(FileFieldsInterceptor([
+    { name: 'license_photo', maxCount: 1 },
+    { name: 'office_photo', maxCount: 1 },
+  ]))
+  async uploadFile(
     @Body() createOfficeDto: CreateOfficeDto,
-    @UploadedFile(FileValidationPipe) license_photo: Express.Multer.File,
-    @UploadedFile(FileValidationPipe) office_photo: Express.Multer.File,
+    @UploadedFiles(MultiFileValidationPipe) files: {
+      license_photo?: Express.Multer.File[],
+      office_photo?: Express.Multer.File[]
+    },
     @Req() req
   ) {
     const { userId } = req.user;
-    return this.officeService.create(createOfficeDto, license_photo,office_photo, userId)
+
+    return this.officeService.create(
+      createOfficeDto,
+      userId,
+      files.license_photo![0],
+      files.office_photo![0],
+    );
   }
 
   @Get()
@@ -40,14 +61,17 @@ export class OfficeController {
     return this.officeService.getAllOfficesWithAverageRating();
   }
 
+
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.officeService.findOne(id);
   }
 
+
   @Put('/status/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN,Role.SUPERADMIN)
+  @Roles(Role.ADMIN, Role.SUPERADMIN)
   updateStatus(@Param('id') id: string, @Body() updateOfficeStatusDto: UpdateOfficeStatusDto) {
     return this.officeService.updatingStatus(id, updateOfficeStatusDto);
   }
@@ -56,13 +80,15 @@ export class OfficeController {
   @Put(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.OFFICEMANAGER)
+  @UseInterceptors(FileInterceptor('office_photo'))
   update(
     @Param('id') id: string,
     @Body() updateOfficeDto: UpdateOfficeDto,
     @Req() req,
+    @UploadedFile() office_photo?: Express.Multer.File,
   ) {
-    const {userId} = req.user
-    return this.officeService.update(id, updateOfficeDto,userId);
+    const { userId } = req.user
+    return this.officeService.update(id, updateOfficeDto, userId, office_photo);
   }
 
 
@@ -73,18 +99,19 @@ export class OfficeController {
     @Body() body: CreateOrUpdateOfficeRatingDto,
     @Req() req,
   ) {
-    const {userId} = req.user;
-    return this.officeRatingService.rateOffice(officeId,userId, body.rating);
+    const { userId } = req.user;
+    return this.officeRatingService.rateOffice(officeId, userId, body.rating);
   }
 
-  @Get('ratings/averages')
-  async getAverages() {
-    return this.officeRatingService.getOfficeAverageRatings();
-  }
+
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  remove(@Param('id') id: string) {
-    return this.officeService.remove(id);
+  remove(
+    @Param('id') id: string,
+    @Req() req,
+  ) {
+    const { userId } = req.user;
+    return this.officeService.remove(id, userId);
   }
 }

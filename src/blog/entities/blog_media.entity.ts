@@ -15,7 +15,5 @@ export class BlogMedia {
     @Column()
     public_id: string;
 
-    @OneToOne(() => Blog)
-    @JoinColumn()
-    blog: Blog;
+
 }
