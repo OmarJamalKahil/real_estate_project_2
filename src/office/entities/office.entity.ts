@@ -5,6 +5,7 @@ import { Blog } from "src/blog/entities/blog.entity";
 import { OfficeSubscription } from "./office_subscription.entity";
 import { OfficeRating } from "./office_rating.entity";
 import { OfficePhoto } from "./office_photo.entity";
+import { Property } from "src/property/entities/property.entity";
 
 
 export enum OfficeCreatingStatus {
@@ -80,6 +81,8 @@ export class Office {
     @OneToMany(() => OfficeRating, (officeRating) => officeRating.office)
     ratings?: OfficeRating[];
 
-
+    @OneToMany(() => Property, (property) => property.office)
+    properties: Property[];
+    
 
 }

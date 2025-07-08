@@ -7,8 +7,11 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api'); // 👈 this will prefix all routes with /api
   app.enableCors("*")
-  app.useGlobalPipes(new ValidationPipe()); // 👈 Enables DTO validation
+  app.useGlobalPipes(new ValidationPipe({
+    whitelist:true,transform:true
+  })); // 👈 Enables DTO validation
 
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();
+ 

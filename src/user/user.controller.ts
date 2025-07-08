@@ -89,7 +89,7 @@ export class UserController {
   ) {
     const { userId } = req.user;
 
-    return this.userAuthService.getCurrentUser(userId);
+    return this.userAuthService.getUser(userId);
   }
 
   @Post('reset-password')

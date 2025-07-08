@@ -18,6 +18,7 @@ export class Location {
   @Column()
   street: string;
 
-  @OneToMany(() => Property, (property) => property.location)
-  properties: Property[];
 }
+
+// @OneToMany(() => Property, (property) => property.location)
+// properties: Property[];

@@ -1,6 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToMany } from 'typeorm';
 import { Property } from './property.entity';
 import { PropertyTypeAttribute } from './propertyType_attribute.entity';
+import { Attribute } from './attribute.entity';
 
 @Entity()
 export class PropertyType {
@@ -13,6 +14,10 @@ export class PropertyType {
   @OneToMany(() => Property, (property) => property.type)
   properties: Property[];
 
-  @OneToMany(() => PropertyTypeAttribute, (pta) => pta.propertyType)
-  attributes: PropertyTypeAttribute[];
+  // @OneToMany(() => PropertyTypeAttribute, (pta) => pta.propertyType)
+  // attributes: PropertyTypeAttribute[];
+
+  @ManyToMany(() => Attribute)
+  attributes: Attribute[];
+
 }

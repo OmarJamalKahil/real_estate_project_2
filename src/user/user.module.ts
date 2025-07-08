@@ -16,7 +16,7 @@ import { UserWarnings } from './entities/user-warnings.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User,Upload,Banned,Warning,UserWarnings,]),
+    TypeOrmModule.forFeature([User, Upload, Banned, Warning, UserWarnings,]),
     AuthModule, // ✅ this fixes the issue
     MailModule,
     CloudinaryModule,
@@ -28,6 +28,11 @@ import { UserWarnings } from './entities/user-warnings.entity';
     UserProfileService,
     UserAdminService
   ],
-  exports: [UserService]
+  exports: [
+    UserService,
+    UserAuthService,
+    UserProfileService,
+    UserAdminService
+  ]
 })
 export class UserModule { }

@@ -10,6 +10,6 @@ export class PropertyTypeAttribute {
   @ManyToOne(() => PropertyType, (pt) => pt.attributes)
   propertyType: PropertyType;
 
-  @ManyToOne(() => Attribute, (a) => a.propertyTypeAttributes)
+  @ManyToOne(() => Attribute, (a) => a.propertyAttributes)
   attribute: Attribute;
 }

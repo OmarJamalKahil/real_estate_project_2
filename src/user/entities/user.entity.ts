@@ -10,6 +10,7 @@ import { Upload } from './upload.entity';
 import { Banned } from './banned.entity';
 import { Warning } from './warning.entity';
 import { UserWarnings } from './user-warnings.entity';
+import { Property } from 'src/property/entities/property.entity';
 
 export enum Role {
     USER = 'user',
@@ -78,5 +79,7 @@ export class User {
     @JoinColumn()
     userWarnings: UserWarnings;
 
+    @OneToMany(() => Property, (property) => property.owner)
+    properties: Property[];
 
 } 

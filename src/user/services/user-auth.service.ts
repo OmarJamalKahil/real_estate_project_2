@@ -114,7 +114,7 @@ export class UserAuthService {
         return { ...tokens, role: user.role };
     }
 
-    async getCurrentUser(userId: string): Promise<UserResponseDto> {
+    async getUser(userId: string): Promise<UserResponseDto> {
         const user = await this.userRepository.findOne({
             where: { id: userId },
             relations: ['profile_photo'],

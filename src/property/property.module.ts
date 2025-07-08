@@ -12,6 +12,8 @@ import { LicenseDetails } from './entities/license_details.entity';
 import { LicenseType } from './entities/license_type.entity';
 import { Location } from './entities/location.entity';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { OfficeModule } from 'src/office/office.module';
+import { UserModule } from 'src/user/user.module';
 
 @Module({
   imports: [
@@ -26,6 +28,9 @@ import { CloudinaryService } from '../cloudinary/cloudinary.service';
       LicenseType,
       Location,
     ]),
+    OfficeModule,
+    UserModule,
+
   ],
   controllers: [PropertyController],
   providers: [PropertyService, CloudinaryService],

@@ -1,243 +1,131 @@
-// import { Type } from 'class-transformer';
-// import { IsArray, IsNotEmpty, IsNumber, IsString, ValidateNested } from 'class-validator';
-// import { CreateLocationDto } from './location/create-location.dto';
-// import { CreatePropertyAttributeDto } from './property-attribute/create-property-attribute.dto';
 
-// export class CreatePropertyDto {
-
-//     @IsString()
-//     @IsNotEmpty()
-//     propertyNumber: string;
-
-//     @IsNumber()
-//     @Type(() => Number)  // Transform to number
-//     space: number;
-
-//     @IsNumber()
-//     @Type(() => Number)  // Transform to number
-//     price: number;
-
-//     @IsString()
-//     @IsNotEmpty()
-//     description: string;
-
-//     @IsString()
-//     @IsNotEmpty()
-//     propertyType: string;
-
-    
-//     @IsString()
-//     @IsNotEmpty()
-//     governorate: string;
-    
-//     @IsString()
-//     @IsNotEmpty()
-//     province: string;
-    
-    
-//     @IsString()
-//     @IsNotEmpty()
-//     city: string;
-    
-    
-//     @IsString()
-//     @IsNotEmpty()
-//     street: string;
-    
-// @IsArray(
-//      @IsNotEmpty()
-//   @IsString()
-//   attributeName: string;  // use attributeName, clearer casing
-
-//   @IsString()
-//   @IsNotEmpty()
-//   value: string; // value is better as string, can hold numbers as strings
-// )
+import { Transform, Type } from 'class-transformer';
+import { IsString, IsNumber, IsNotEmpty, IsArray, ValidateNested, IsNotEmptyObject, IsObject, IsDefined, IsUUID } from 'class-validator';
 
 
-// }
+export class CreateAttributeDto {
 
+  @IsString()
+  @IsNotEmpty()
+  name: string;
 
-// @IsArray()
-// @IsNotEmpty()
-// @ValidateNested({ each: true })
-// @Type(() => CreatePropertyAttributeDto)
-// attributes: CreatePropertyAttributeDto[];
+  @Type(() => Number)
+  @IsNumber()
+  value: number;
+}
 
-// @IsNotEmpty()
-// @ValidateNested()
-// @Type(() => CreateLocationDto)
-// location: CreateLocationDto;
+class CreateLocationDto {
+  @IsDefined()
+  @IsString()
+  @IsNotEmpty()
+  governorate: string;
 
+  @IsString()
+  @IsDefined()
+  @IsNotEmpty()
+  province: string;
 
-// import { Type } from 'class-transformer';
-// import { IsString, IsNotEmpty, IsNumber, IsArray, ValidateNested } from 'class-validator';
+  @IsString()
+  @IsDefined()
+  @IsNotEmpty()
+  city: string;
 
-// class Attribute {
-//   @IsString()
-//   @IsNotEmpty()
-//   attributeName: string;
+  @IsString()
+  @IsNotEmpty()
+  @IsDefined()
+  street: string;
+}
 
-//   @IsString()
-//   @IsNotEmpty()
-//   value: string;
-// }
-
-// export class CreatePropertyDto {
-//   @IsString()
-//   @IsNotEmpty()
-//   propertyNumber: string;
-
-//   @IsNumber()
-//   @Type(() => Number)
-//   space: number;
-
-//   @IsNumber()
-//   @Type(() => Number)
-//   price: number;
-
-//   @IsString()
-//   @IsNotEmpty()
-//   description: string;
-
-//   @IsString()
-//   @IsNotEmpty()
-//   propertyType: string;
-
-//   // location flattened
-//   @IsString()
-//   @IsNotEmpty()
-//   governorate: string;
-
-//   @IsString()
-//   @IsNotEmpty()
-//   province: string;
-
-//   @IsString()
-//   @IsNotEmpty()
-//   city: string;
-
-//   @IsString()
-//   @IsNotEmpty()
-//   street: string;
-
-//   // attributes as array of objects
-//   @IsArray()
-//   @ValidateNested({ each: true })
-//   @Type(() => Attribute)
-//   attributes: Attribute[];
-// }
-
-
-
-
-
-
-
-
-
-
-
-// import { IsString, IsNotEmpty, IsNumber, IsArray, ValidateNested } from 'class-validator';
-// import { Type } from 'class-transformer';
-
-// class Attribute {
-//   @IsString()
-//   @IsNotEmpty()
-//   attributeName: string;
-
-//   @IsString()
-//   @IsNotEmpty()
-//   value: string;
-// }
-
-// export class CreatePropertyDto {
-//   @IsString()
-//   @IsNotEmpty()
-//   propertyNumber: string;
-
-//   @IsNumber()
-//   space: number;
-
-//   @IsNumber()
-//   price: number;
-
-//   @IsString()
-//   @IsNotEmpty()
-//   description: string;
-
-//   @IsString()
-//   @IsNotEmpty()
-//   propertyType: string;
-
-//   // Flattened location
-//   @IsString()
-//   @IsNotEmpty()
-//   governorate: string;
-
-//   @IsString()
-//   @IsNotEmpty()
-//   province: string;
-
-//   @IsString()
-//   @IsNotEmpty()
-//   city: string;
-
-//   @IsString()
-//   @IsNotEmpty()
-//   street: string;
-
-//   // Attributes as an array of objects
-//   @IsArray()
-//   @ValidateNested({ each: true })
-//   @Type(() => Attribute)
-//   @IsNotEmpty()
-//   attributes: Attribute[];
-// }
-
-
-
-
-
-
-import { IsString, IsNotEmpty, IsArray, IsNumber } from 'class-validator';
 
 export class CreatePropertyDto {
   @IsString()
   @IsNotEmpty()
   propertyNumber: string;
 
-  @IsNumber() 
+  @Type(() => Number)
+  @IsNumber()
   space: number;
 
+  @Type(() => Number)
   @IsNumber()
   price: number;
 
   @IsString()
-  @IsNotEmpty()
   description: string;
 
   @IsString()
-  @IsNotEmpty()
   propertyType: string;
-
+  
   @IsString()
+  @IsUUID()
   @IsNotEmpty()
-  governorate: string;
+  ownerId:string;
+  
+  @Transform(({ value }) => {
+    try {
+      const parsed = typeof value === 'string' ? JSON.parse(value) : value;
+      return Object.assign(new CreateLocationDto(), parsed);
+    } catch {
+      return new CreateLocationDto(); // empty object with correct class type
+    }
+  })
+  @ValidateNested()
+  @Type(() => CreateLocationDto)
+  @IsObject()
+  location: CreateLocationDto;
+  
 
-  @IsString()
-  @IsNotEmpty()
-  province: string;
+  
 
-  @IsString()
-  @IsNotEmpty()
-  city: string;
 
-  @IsString()
-  @IsNotEmpty()
-  street: string;
-
+  
+  
+  
+  
+  @Transform(({ value }) => {
+    try {
+      const parsed = typeof value === 'string' ? JSON.parse(value) : value;
+      return parsed.map((item) => Object.assign(new CreateAttributeDto(), item));
+    } catch {
+      return [];
+    }
+  })
   @IsArray()
-  @IsNotEmpty()
-  attributes: Array<{ attributeName: string; value: string }>;
+  @ValidateNested({ each: true })
+  @Type(() => CreateAttributeDto)
+  attributes: CreateAttributeDto[];
+  
+  
+  
 }
+
+// @IsArray()
+// @ValidateNested({ each: true })
+// @Type(() => CreateAttributeDto)
+// @Transform(({ value }) => {
+  //   try {
+    //     console.log(typeof value);
+    //     console.log(JSON.parse(value));
+    
+    //     return  typeof value === 'string' ? JSON.parse(value) : value;
+    //   } catch {
+      //     return [];
+      //   }
+      // })
+      // attributes: CreateAttributeDto[];
+      
+      
+        // @Type(() => CreateLocationDto)
+        // @IsObject()
+        // @ValidateNested()
+        // @Transform(({ value }) => {
+        //   try {
+        //     console.log(typeof value);
+        //     console.log(JSON.parse(value));
+      
+        //     return { key: typeof value === 'string' ? JSON.parse(value) : value};
+        //   } catch {
+        //     return {};
+        //   }
+        // })
+        // location: CreateLocationDto;
