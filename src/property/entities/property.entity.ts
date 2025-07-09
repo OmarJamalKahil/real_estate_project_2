@@ -6,6 +6,7 @@ import { LicenseDetails } from './license_details.entity';
 import { PropertyAttribute } from './property_attribute.entity';
 import { Office } from 'src/office/entities/office.entity';
 import { User } from 'src/user/entities/user.entity';
+import { PropertyStatus } from '../common/property-status.enum';
 
 @Entity()
 export class Property {
@@ -44,9 +45,11 @@ export class Property {
   publishDate: Date;
 
   @Column({
-    default: 'pending'
+    type:'enum',
+    enum:PropertyStatus,
+    default: PropertyStatus.Pending
   })
-  status: string;
+  status: PropertyStatus;
 
   @Column({ default: false })
   softDelete: boolean;
@@ -61,7 +64,7 @@ export class Property {
   @OneToMany(() => PropertyPhotos, (photo) => photo.property)
   photos: PropertyPhotos[];
 
-  @OneToOne(() => LicenseDetails,)
+  @OneToOne(() => LicenseDetails, (licenseDetails) => licenseDetails.property)
   @JoinColumn()
   licenseDetails: LicenseDetails;
 

@@ -38,9 +38,15 @@ class CreateLocationDto {
 
 
 export class CreatePropertyDto {
+  
   @IsString()
   @IsNotEmpty()
   propertyNumber: string;
+
+
+  @IsString()
+  @IsNotEmpty()
+  licenseNumber: string;
 
   @Type(() => Number)
   @IsNumber()
@@ -54,7 +60,15 @@ export class CreatePropertyDto {
   description: string;
 
   @IsString()
+  @IsNotEmpty()
   propertyType: string;
+
+
+  @IsString()
+  @IsNotEmpty()
+  licenseType: string;
+
+  
   
   @IsString()
   @IsUUID()
@@ -75,13 +89,6 @@ export class CreatePropertyDto {
   location: CreateLocationDto;
   
 
-  
-
-
-  
-  
-  
-  
   @Transform(({ value }) => {
     try {
       const parsed = typeof value === 'string' ? JSON.parse(value) : value;

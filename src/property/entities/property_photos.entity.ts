@@ -6,7 +6,7 @@ export class PropertyPhotos {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => Property, (property) => property.photos)
+  @ManyToOne(() => Property, (property) => property.photos,{eager:false})
   property: Property;
 
   @Column()

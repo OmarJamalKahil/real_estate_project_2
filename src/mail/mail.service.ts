@@ -50,11 +50,11 @@ export class MailService {
       secure: false,
       auth: {
         user: 'ahmed09887766554@gmail.com',
-        pass: 'ybim gjed fhun dwqg',
+        pass: 'ftkv zfan mviz aduq',
       },
 
     });
-  }
+  } 
 
   async sendMail(to: string, code: string): Promise<void> {
     const mailOptions = {

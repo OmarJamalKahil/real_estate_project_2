@@ -12,7 +12,7 @@ export class MultiFileValidationPipe implements PipeTransform {
       [fieldname: string]: Express.Multer.File[];
     }
   ) {
-    const validMimetypes = ['image/png', 'image/jpeg'];
+    const validMimetypes = ['image/png', 'image/jpeg','image/jpg'];
     const maxFileSize = 2 * 1024 * 1024; // 2 MB
 
     // loop through each named field

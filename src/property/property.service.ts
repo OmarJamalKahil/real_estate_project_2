@@ -1,3 +1,116 @@
+// async create(
+//   officeManagerId: string,
+//   createPropertyDto: CreatePropertyDto,
+//   property_photos: Express.Multer.File[],
+// ) {
+//   const queryRunner = this.dataSource.createQueryRunner();
+//   await queryRunner.connect();
+//   await queryRunner.startTransaction();
+
+//   try {
+
+//     const office = await this.officeService.getCurrentUserOffice(officeManagerId);
+
+//     if (!office) {
+//       throw new ForbiddenException()
+//     }
+
+//     const owner = await this.userService.getUser(createPropertyDto.ownerId);
+
+//     if (!owner) {
+//       throw new BadRequestException()
+//     }
+//     // Find propertyType by ID
+//     const propertyType = await queryRunner.manager.findOne(PropertyType, {
+//       where: { name: createPropertyDto.propertyType },
+//     });
+//     if (!propertyType) throw new NotFoundException('PropertyType not found');
+
+//     const licenseType = await queryRunner.manager.findOne(LicenseType, {
+//       where: { name: createPropertyDto.licenseType },
+//     });
+//     if (!licenseType) throw new NotFoundException('LicenseType not found');
+
+//     // Save license_details
+//     const license_details = this.licenseDetailsRepository.create({
+//       licenseNumber: createPropertyDto.licenseNumber,
+//       date: new Date(),
+//       license: licenseType
+//     });
+//     await queryRunner.manager.save(license_details);
+
+
+//     // Save location
+//     const location = this.locationRepository.create(createPropertyDto.location);
+//     await queryRunner.manager.save(location);
+
+
+//     // Create base property
+//     const property = this.propertyRepository.create({
+//       ...createPropertyDto,
+//       location,
+//       owner,
+//       office: office,
+//       type: propertyType,
+//       publishDate: new Date(),
+//       softDelete: false,
+//       licenseDetails: license_details,
+//       propertyAttributes: [],
+//       photos: [],
+//     });
+
+
+//     // await queryRunner.manager.save(Property);
+
+//     const propertyAttributes: PropertyAttribute[] = [];
+//     // Save attributes
+//     for (const attrDto of createPropertyDto.attributes) {
+//       let attribute = await queryRunner.manager.findOne(Attribute, {
+//         where: { name: attrDto.name },
+//       });
+
+//       if (!attribute) {
+//         attribute = this.attributeRepository.create({ name: attrDto.name });
+//         await queryRunner.manager.save(attribute);
+//       }
+
+//       const propertyAttribute = this.propertyAttributeRepository.create({
+//         property: property,
+//         attribute,
+//         value: attrDto.value,
+//       });
+//       propertyAttributes.push(propertyAttribute)
+//       await queryRunner.manager.save(propertyAttribute);
+//     }
+//     property.propertyAttributes = propertyAttributes;
+
+
+//     const photos: PropertyPhotos[] = [];
+//     // Upload photos
+//     for (const file of property_photos) {
+//       const uploadRes = await this.cloudinaryService.uploadImage(file);
+//       const photo = this.photoRepository.create({
+//         property: property,
+//         url: uploadRes.secure_url,
+//         public_id: uploadRes.public_id,
+//       });
+//       photos.push(photo)
+//       await queryRunner.manager.save(photo);
+//     }
+//     property.photos = photos ;
+
+//     await queryRunner.manager.save(property)
+
+//     await queryRunner.commitTransaction();
+
+//     return property;
+//   } catch (error) {
+//     await queryRunner.rollbackTransaction();
+//     throw new InternalServerErrorException(error.message);
+//   } finally {
+//     await queryRunner.release();
+//   }
+// }
 import {
   BadRequestException,
   ForbiddenException,
@@ -23,6 +136,8 @@ import { LicenseDetails } from './entities/license_details.entity';
 import { Office } from 'src/office/entities/office.entity';
 import { OfficeService } from 'src/office/office.service';
 import { UserAuthService } from 'src/user/services/user-auth.service';
+import { LicenseType } from './entities/license_type.entity';
+import { PropertyResponse } from './common/property-response.interface';
 
 @Injectable()
 export class PropertyService {
@@ -42,63 +157,209 @@ export class PropertyService {
     @InjectRepository(PropertyPhotos)
     private readonly photoRepository: Repository<PropertyPhotos>,
     @InjectRepository(LicenseDetails)
-    private readonly licenseRepository: Repository<LicenseDetails>,
+    private readonly licenseDetailsRepository: Repository<LicenseDetails>,
+    @InjectRepository(LicenseType)
+    private readonly licenseTypeRepository: Repository<LicenseType>,
     private readonly cloudinaryService: CloudinaryService,
     private readonly officeService: OfficeService,
     private readonly userService: UserAuthService,
-
     private readonly dataSource: DataSource,
   ) { }
 
+
+
   async create(
-    officeManagerId: string,
-    createPropertyDto: CreatePropertyDto,
-    property_photos: Express.Multer.File[],
-  ) {
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
+  officeManagerId: string,
+  createPropertyDto: CreatePropertyDto,
+  property_photos: Express.Multer.File[],
+) {
+  const queryRunner = this.dataSource.createQueryRunner();
+  await queryRunner.connect();
+  await queryRunner.startTransaction();
 
-    try {
+  try {
+    const office = await this.officeService.getCurrentUserOffice(officeManagerId);
+    if (!office) {
+      throw new ForbiddenException('Office not found or access denied');
+    }
 
-      const office = await this.officeService.getCurrentUserOffice(officeManagerId);
+    const owner = await this.userService.getUser(createPropertyDto.ownerId);
+    if (!owner) {
+      throw new BadRequestException('Owner not found');
+    }
 
-      if (!office) {
-        throw new ForbiddenException()
+    const propertyType = await queryRunner.manager.findOne(PropertyType, {
+      where: { name: createPropertyDto.propertyType },
+    });
+    if (!propertyType) throw new NotFoundException('PropertyType not found');
+
+    const licenseType = await queryRunner.manager.findOne(LicenseType, {
+      where: { name: createPropertyDto.licenseType },
+    });
+    if (!licenseType) throw new NotFoundException('LicenseType not found');
+
+    // Save license details
+    const license_details = this.licenseDetailsRepository.create({
+      licenseNumber: createPropertyDto.licenseNumber,
+      date: new Date(),
+      license: licenseType,
+    });
+    await queryRunner.manager.save(license_details);
+
+    // Save location
+    const location = this.locationRepository.create(createPropertyDto.location);
+    await queryRunner.manager.save(location);
+
+    // Create and save property
+    const property = this.propertyRepository.create({
+      ...createPropertyDto,
+      location,
+      owner,
+      office,
+      type: propertyType,
+      publishDate: new Date(),
+      softDelete: false,
+      licenseDetails: license_details,
+      propertyAttributes: [],
+      photos: [],
+    });
+    await queryRunner.manager.save(property); // Must save before setting relations
+
+    // Save attributes
+    const propertyAttributes: PropertyAttribute[] = [];
+    for (const attrDto of createPropertyDto.attributes) {
+      let attribute = await queryRunner.manager.findOne(Attribute, {
+        where: { name: attrDto.name },
+      });
+
+      if (!attribute) {
+        attribute = this.attributeRepository.create({ name: attrDto.name });
+        await queryRunner.manager.save(attribute);
       }
 
-      const owner = await this.userService.getUser(createPropertyDto.ownerId);
-
-      if (!owner) {
-        throw new BadRequestException()
-      }
-      // Find propertyType by ID
-      const propertyType = await queryRunner.manager.findOne(PropertyType, {
-        where: { name: createPropertyDto.propertyType },
+      const propertyAttribute = this.propertyAttributeRepository.create({
+        property,
+        attribute,
+        value: attrDto.value,
       });
-      if (!propertyType) throw new NotFoundException('PropertyType not found');
-
-      // Save location
-      const location = this.locationRepository.create(createPropertyDto.location);
-      await queryRunner.manager.save(location);
-
-      // Create base property
-      const property = this.propertyRepository.create({
-        ...createPropertyDto,
-        location,
-        owner,
-        office: office,
-        type: propertyType,
-        publishDate: new Date(),
-        softDelete: false,
-        propertyAttributes: [],
+      await queryRunner.manager.save(propertyAttribute);
+      propertyAttributes.push(propertyAttribute);
+    }
+    property.propertyAttributes = propertyAttributes;
+ 
+    // Upload and save photos
+    const photos: PropertyPhotos[] = [];     
+    for (const file of property_photos) {
+      const uploadRes = await this.cloudinaryService.uploadImage(file);
+      const photo = this.photoRepository.create({
+        property,
+        url: uploadRes.secure_url,
+        public_id: uploadRes.public_id,
       });
+      await queryRunner.manager.save(photo);
+      photos.push(photo);
+    }
+    property.photos = photos;
+
+    // Final save to update relations (optional if not using eager)
+    await queryRunner.manager.save(property);
+
+    await queryRunner.commitTransaction();
+    const propertyResposnse:PropertyResponse = property;
+    return propertyResposnse;
+    
+  } catch (error) {
+    await queryRunner.rollbackTransaction();
+    throw new InternalServerErrorException(error.message);
+  } finally {
+    await queryRunner.release();
+  }
+}
+
+// async update(id: string,officeManagerId:string, updateDto: UpdatePropertyDto) {
+//   const queryRunner = this.dataSource.createQueryRunner();
+//   await queryRunner.connect();
+//   await queryRunner.startTransaction();
+
+//   try {
+
+//     const existing = await queryRunner.manager.findOne(Property, {
+//       where: { id },
+//       relations: ['location', 'type'],
+//     });
+
+//     if (!existing) throw new NotFoundException('Property not found');
+
+//    if(existing.office.user.id != officeManagerId){
+//     throw new ForbiddenException("You can't do this!")
+//    }
 
 
-      let savedProperty = await queryRunner.manager.save(property);
+//     if (updateDto.location) {
+//       Object.assign(existing.location, updateDto.location);
+//       await queryRunner.manager.save(existing.location);
+//     }
 
-      // Save attributes
-      for (const attrDto of createPropertyDto.attributes) {
+//     if (updateDto.propertyType) {
+//       const type = await queryRunner.manager.findOne(PropertyType, {
+//         where: { id: updateDto.propertyType },
+//       });
+//       if (!type) throw new NotFoundException('PropertyType not found');
+//       existing.type = type;
+//     }
+
+//     Object.assign(existing, updateDto);
+//     const updated = await queryRunner.manager.save(existing);
+
+//     await queryRunner.commitTransaction();
+//     return updated;
+//   } catch (err) {
+//     await queryRunner.rollbackTransaction();
+//     throw new InternalServerErrorException(err.message);
+//   } finally {
+//     await queryRunner.release();
+//   }
+// }
+
+
+async update(id: string, officeManagerId: string, updateDto: UpdatePropertyDto) {
+  const queryRunner = this.dataSource.createQueryRunner();
+  await queryRunner.connect();
+  await queryRunner.startTransaction();
+
+  try {
+    const existing = await queryRunner.manager.findOne(Property, {
+      where: { id },
+      relations: ['office', 'office.user', 'type', 'propertyAttributes' ,'location' , 'propertyAttributes.attribute'],
+    });
+
+    if (!existing) throw new NotFoundException('Property not found');
+
+    if (existing.office.user.id !== officeManagerId) {
+      throw new ForbiddenException("You can't update this property");
+    }
+
+    // ❌ Prevent location update
+    if (updateDto.location) {
+      throw new BadRequestException('Updating location is not allowed');
+    }
+
+    // ✅ Update property type if provided
+    if (updateDto.propertyType) {
+      const type = await queryRunner.manager.findOne(PropertyType, {
+        where: { name: updateDto.propertyType },
+      });
+      if (!type) throw new NotFoundException('PropertyType not found');
+      existing.type = type;
+    }
+
+    // ✅ Update attributes
+    if (updateDto.attributes) {
+      // Delete old propertyAttributes
+      await queryRunner.manager.delete(PropertyAttribute, { property: { id: existing.id } });
+
+      const newAttributes: PropertyAttribute[] = [];
+      for (const attrDto of updateDto.attributes) {
         let attribute = await queryRunner.manager.findOne(Attribute, {
           where: { name: attrDto.name },
         });
@@ -109,49 +370,38 @@ export class PropertyService {
         }
 
         const propertyAttribute = this.propertyAttributeRepository.create({
-          property: savedProperty,
+          property: existing,
           attribute,
           value: attrDto.value,
         });
-        savedProperty.propertyAttributes.push(propertyAttribute)
+
         await queryRunner.manager.save(propertyAttribute);
+        newAttributes.push(propertyAttribute);
       }
 
-      // Upload photos
-      for (const file of property_photos) {
-        const uploadRes = await this.cloudinaryService.uploadImage(file);
-        const photo = this.photoRepository.create({
-          property: savedProperty,
-          url: uploadRes.secure_url,
-          public_id: uploadRes.public_id,
-        });
-        await queryRunner.manager.save(photo);
-      }
-    savedProperty =  await queryRunner.manager.save(savedProperty)
-      await queryRunner.commitTransaction();
-
-      return savedProperty;
-    } catch (error) {
-      await queryRunner.rollbackTransaction();
-      throw new InternalServerErrorException(error.message);
-    } finally {
-      await queryRunner.release();
+      existing.propertyAttributes = newAttributes;
     }
+
+    // ✅ Update other simple fields (space, price, description, etc.)
+    const updatableFields = ['propertyNumber', 'space', 'price', 'description'];
+    for (const field of updatableFields) {
+      if (updateDto[field] !== undefined) {
+        existing[field] = updateDto[field];
+      }
+    }
+
+    const updated : PropertyResponse  = await queryRunner.manager.save(existing);
+    await queryRunner.commitTransaction();
+    
+    return updated;
+  } catch (err) {
+    await queryRunner.rollbackTransaction();
+    throw new InternalServerErrorException(err.message);
+  } finally {
+    await queryRunner.release();
   }
-  // for (const propertyAttribut of createPropertyDto.attributes) {
-  //   const attribute = await queryRunner.manager.findOne(Attribute, {
-  //     where: {
-  //       name: propertyAttribut.name
-  //     }
-  //   })
-  // if (!attribute) throw new NotFoundException('Attribute not found');
-  //   const newPropertyAttribute = this.propertyAttributeRepository.create({
-  //     property,
-  //     attribute,
-  //     value:propertyAttribut.value
-  //   })
-  //   await queryRunner.manager.save(newPropertyAttribute);
-  // }
+}
+
 
   async findAll() {
     return this.propertyRepository.find({
@@ -182,44 +432,6 @@ export class PropertyService {
     return property;
   }
 
-  async update(id: string, updateDto: UpdatePropertyDto) {
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    try {
-      const existing = await queryRunner.manager.findOne(Property, {
-        where: { id },
-        relations: ['location', 'type'],
-      });
-
-      if (!existing) throw new NotFoundException('Property not found');
-
-      if (updateDto.location) {
-        Object.assign(existing.location, updateDto.location);
-        await queryRunner.manager.save(existing.location);
-      }
-
-      if (updateDto.propertyType) {
-        const type = await queryRunner.manager.findOne(PropertyType, {
-          where: { id: updateDto.propertyType },
-        });
-        if (!type) throw new NotFoundException('PropertyType not found');
-        existing.type = type;
-      }
-
-      Object.assign(existing, updateDto);
-      const updated = await queryRunner.manager.save(existing);
-
-      await queryRunner.commitTransaction();
-      return updated;
-    } catch (err) {
-      await queryRunner.rollbackTransaction();
-      throw new InternalServerErrorException(err.message);
-    } finally {
-      await queryRunner.release();
-    }
-  }
 
   async remove(id: string) {
     const queryRunner = this.dataSource.createQueryRunner();
@@ -245,15 +457,16 @@ export class PropertyService {
       }
 
       // Remove licenseDetails
+      
+      // Remove property
+      await queryRunner.manager.remove(property);
+      
       if (property.licenseDetails) {
         await queryRunner.manager.remove(property.licenseDetails);
       }
 
       // Remove location
       await queryRunner.manager.remove(property.location);
-
-      // Remove property
-      await queryRunner.manager.remove(property);
 
       await queryRunner.commitTransaction();
     } catch (err) {
