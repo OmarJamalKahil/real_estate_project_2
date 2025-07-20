@@ -96,6 +96,8 @@ export class UserAuthService {
             is_verified: true
         });
 
+
+
         if (!user) {
             throw new UnauthorizedException(USER_ERRORS.INVALID_CREDENTIALS);
         }
@@ -105,6 +107,9 @@ export class UserAuthService {
         if (!match) {
             throw new UnauthorizedException(USER_ERRORS.INVALID_CREDENTIALS);
         }
+
+
+
 
         const tokens = this.authService.generateTokens({
             userId: user.id,
@@ -117,8 +122,9 @@ export class UserAuthService {
     async getUser(userId: string): Promise<UserResponseDto> {
         const user = await this.userRepository.findOne({
             where: { id: userId },
-            relations: ['profile_photo'],
+            relations: ['profile_photo', 'banned', 'userWarnings','userWarnings.warnings']
         });
+console.log(user);
 
         if (!user) {
             throw new UnauthorizedException(USER_ERRORS.INVALID_CREDENTIALS);
@@ -130,10 +136,12 @@ export class UserAuthService {
             first_name: user.first_name,
             last_name: user.last_name,
             profile_photo: user.profile_photo,
-            receiver_identifier:user.receiver_identifier,
+            national_number: user.national_number,
             phone: user.phone,
             email: user.email,
-            user_role: user.role
+            role: user.role,
+            banned: user?.banned,
+            userWarnings: user.userWarnings ,
         };
 
         return UserResponse;

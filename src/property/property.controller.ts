@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, UploadedFiles, BadRequestException, UsePipes, ParseArrayPipe, Req, UseGuards, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, UploadedFiles, BadRequestException, UsePipes, ParseArrayPipe, UseGuards, Put, Req, Query } from '@nestjs/common';
 import { PropertyService } from './property.service';
 import { CreatePropertyDto, CreateAttributeDto } from './dto/create-property.dto';
 import { UpdatePropertyDto } from './dto/update-property.dto';
@@ -11,6 +11,8 @@ import { Roles } from 'src/common/decorators/roles.decorator';
 import { Role } from 'src/user/entities/user.entity';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
+import { FilterPropertyDto } from './dto/filter-property.dto';
+import { UpdatePropertyStatusDto } from './dto/update-property-status.dto';
 
 @Controller('property')
 export class PropertyController {
@@ -37,8 +39,30 @@ export class PropertyController {
   @Get()
   getAll(
   ) {
-    return this.propertyService.findAll()
+    return this.propertyService.findAllAcceptedProperties()
   }
+
+
+  @Get('get-all-properties-which-are-still-not-accepted')
+  getAllPropertiesAreStillNotAcceptedYet(
+  ) {
+    return this.propertyService.getAllPropertiesWhoAreStillNotAccepted()
+  }
+
+  @Post('/filter')
+  getPropertiesByFiltering(
+    @Body() filterPropertyDto: FilterPropertyDto
+  ) {
+    return this.propertyService.findPropertiesByFiltering(filterPropertyDto)
+  }
+
+  @Get('office/:officeId')
+  getPropertiesByOfficeId(
+    @Param('officeId') officeId: string
+  ) {
+    return this.propertyService.findByOfficeId(officeId)
+  }
+
 
   @Get(':id')
   getById(
@@ -47,6 +71,12 @@ export class PropertyController {
     return this.propertyService.findOne(id)
   }
 
+  @Put('/status/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.SUPERADMIN)
+  updateStatus(@Param('id') id: string, @Body() updatePropertyStatusDto: UpdatePropertyStatusDto) {
+    return this.propertyService.updatePropertyStatus(id, updatePropertyStatusDto);
+  }
 
   @Put(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)

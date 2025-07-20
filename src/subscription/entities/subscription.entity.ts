@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { OfficeSubscription } from "src/office-subscription/entities/office-subscription.entity";
+import { Column, Entity, ManyToMany, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
 
 export enum Durations {
@@ -42,6 +43,15 @@ export class Subscription {
         enum: Durations
     })
     duration: Durations;
+
+
+    // @OneToMany(() => OfficeSubscription, (officeSubscription) => officeSubscription.subscription)
+    // officeSubscription?: OfficeSubscription[]
+
+
+    @OneToMany(() => OfficeSubscription, (os) => os.subscription)
+    officeSubscriptions: OfficeSubscription[];
+
 
 }
 

@@ -1,5 +1,4 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, OneToOne, JoinColumn } from 'typeorm';
-import { PropertyType } from './property_type.entity';
 import { Location } from './location.entity';
 import { PropertyPhotos } from './property_photos.entity';
 import { LicenseDetails } from './license_details.entity';
@@ -7,6 +6,9 @@ import { PropertyAttribute } from './property_attribute.entity';
 import { Office } from 'src/office/entities/office.entity';
 import { User } from 'src/user/entities/user.entity';
 import { PropertyStatus } from '../common/property-status.enum';
+import { PropertyComment } from 'src/property-comment/entities/property-comment.entity';
+import { PropertyType } from 'src/property-type/entities/property-type.entity';
+import { PropertyTypeOperation } from '../common/property-type-operation.enum';
 
 @Entity()
 export class Property {
@@ -22,6 +24,13 @@ export class Property {
     nullable: false
   })
   propertyNumber: string;
+
+  @Column({
+    type: 'enum',
+    enum: PropertyTypeOperation,
+    default:PropertyTypeOperation.Selling
+  })
+  typeOperation: PropertyTypeOperation;
 
 
   @Column()
@@ -45,8 +54,8 @@ export class Property {
   publishDate: Date;
 
   @Column({
-    type:'enum',
-    enum:PropertyStatus,
+    type: 'enum',
+    enum: PropertyStatus,
     default: PropertyStatus.Pending
   })
   status: PropertyStatus;
@@ -70,6 +79,10 @@ export class Property {
 
   @OneToMany(() => PropertyAttribute, (pa) => pa.property)
   propertyAttributes: PropertyAttribute[];
+
+  @OneToMany(() => PropertyComment, (propertyComment) => propertyComment.property)
+  comments?: PropertyComment[];
+
 }
 
 // @ManyToOne(() => Location, (location) => location.properties)

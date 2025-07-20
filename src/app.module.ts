@@ -18,7 +18,6 @@ import { OfficeModule } from './office/office.module';
 import { BlogModule } from './blog/blog.module';
 import { SubscriptionModule } from './subscription/subscription.module';
 import { Office } from './office/entities/office.entity';
-import { OfficeSubscription } from './office/entities/office_subscription.entity';
 import { Subscription } from './subscription/entities/subscription.entity';
 import { Blog } from './blog/entities/blog.entity';
 import { BlogMedia } from './blog/entities/blog_media.entity';
@@ -29,12 +28,26 @@ import { PropertyModule } from './property/property.module';
 import { Location } from './property/entities/location.entity';
 import { LicenseType } from './property/entities/license_type.entity';
 import { LicenseDetails } from './property/entities/license_details.entity';
-import { PropertyType } from './property/entities/property_type.entity';
 import { PropertyTypeAttribute } from './property/entities/propertyType_attribute.entity';
-import { Attribute } from './property/entities/attribute.entity';
 import { PropertyAttribute } from './property/entities/property_attribute.entity';
 import { PropertyPhotos } from './property/entities/property_photos.entity';
 import { Property } from './property/entities/property.entity';
+import { OfficeSubscriptionModule } from './office-subscription/office-subscription.module';
+import { OfficeSubscription } from './office-subscription/entities/office-subscription.entity';
+import { PaymentCardModule } from './payment-card/payment-card.module';
+import { PaymentCard } from './payment-card/entities/payment-card.entity';
+import { OfficeCommentModule } from './office-comment/office-comment.module';
+import { OfficeComment } from './office-comment/entities/office-comment.entity';
+import { FavoriteOfficeModule } from './favorite-office/favorite-office.module';
+import { FavoriteOffice } from './favorite-office/entities/favorite-office.entity';
+import { PropertyCommentModule } from './property-comment/property-comment.module';
+import { PropertyComment } from './property-comment/entities/property-comment.entity';
+import { FavoritePropertyModule } from './favorite-property/favorite-property.module';
+import { FavoriteProperty } from './favorite-property/entities/favorite-property.entity';
+import { PropertyTypeModule } from './property-type/property-type.module';
+import { AttributeModule } from './attribute/attribute.module';
+import { PropertyType } from './property-type/entities/property-type.entity';
+import { Attribute } from './attribute/entities/attribute.entity';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -44,12 +57,15 @@ import { Property } from './property/entities/property.entity';
       Warning,
       UserWarnings,
       Office,
-      OfficeSubscription,
       Subscription,
-      Blog,
+      Blog, 
       BlogMedia,
       OfficeRating,
-
+      PaymentCard,
+      OfficeComment,
+      FavoriteOffice,
+      PropertyComment,
+      FavoriteProperty,
     ]),
     TypeOrmModule.forRoot({
       type: 'postgres',
@@ -74,19 +90,24 @@ import { Property } from './property/entities/property.entity';
         Blog,
         BlogMedia,
         Office,
-        OfficeSubscription,
         OfficeRating,
         OfficePhoto,
+        OfficeSubscription,
         Property,
         PropertyPhotos,
         PropertyAttribute,
         Attribute,
         PropertyType,
-        PropertyTypeAttribute
-        ,
+        PropertyTypeAttribute,
         LicenseDetails,
         LicenseType,
-        Location,
+        Location, 
+        PaymentCard,
+        OfficeComment,
+        FavoriteOffice,
+        PropertyComment,
+        FavoriteProperty,
+        
       ],
       // autoLoadEntities: true, // Automatically loads entities registered through TypeOrmModule.forFeature()
       synchronize: true,      // ⚠️ use only in development
@@ -116,8 +137,20 @@ import { Property } from './property/entities/property.entity';
         DB_NAME: Joi.string().required(),
         DB_TYPE: Joi.string().required(),
 
-
-
+        // CardSystem
+        CARD_CVV:Joi.string().required(),
+        CARD_NUMBER:Joi.string().required(),
+        CARD_EXPIRY_MONTH:Joi.number().required(),
+        CARD_EXPIRE_YEAR:Joi.number().required(),
+        CARD_TYPE: Joi.string().required(),
+ 
+        // Stripe 
+        STRIPE_SECRET_KEY: Joi.string().required(),
+        STRIPE_PUBLISHABLE_KEY: Joi.string().required(),
+        STRIPE_WEBHOOK_SECRET: Joi.string().required(),
+     
+ 
+     
       }),
     }),
     UserModule,
@@ -127,11 +160,20 @@ import { Property } from './property/entities/property.entity';
     OfficeModule,
     SubscriptionModule,
     BlogModule,
-    PropertyModule
+    PropertyModule,
+    OfficeSubscriptionModule,
+    PaymentCardModule,
+    OfficeCommentModule,
+    FavoriteOfficeModule,
+    PropertyCommentModule,
+    FavoritePropertyModule,
+    PropertyTypeModule,
+    AttributeModule,
+    // StripeModule
   ],
   controllers: [AppController],
   providers: [AppService, MailService],
 })
-export class AppModule {
+export class AppModule { 
 
 }

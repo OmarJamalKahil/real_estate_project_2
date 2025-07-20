@@ -21,6 +21,8 @@ import { AuthService } from "src/auth/auth.service";
 import { MailService } from "src/mail/mail.service";
 import { CloudinaryService } from "src/cloudinary/cloudinary.service";
 import { LoginUserDto } from "./dto/login-user.dto";
+import { UserResponseDto } from "./dto/user-response.dto";
+import { GetUserByNationalNumberDto } from "./dto/get-user-by-national-number.dto";
 
 @Injectable()
 export class UserService {
@@ -40,7 +42,7 @@ export class UserService {
   /**
    * Register user and send verification code
    */
-  async startRegister(dto: CreateUserDto,role:Role = Role.USER) {
+  async startRegister(dto: CreateUserDto, role: Role = Role.USER) {
     const code = this.generateCode();
 
     // Check if phone or email already registered
@@ -68,8 +70,8 @@ export class UserService {
     await this.mailService.sendMail(dto.email, code);
 
     const tokens = this.authService.generateTokens({
-      userId:user.id,
-      role:user.role
+      userId: user.id,
+      role: user.role
     });
 
     return {
@@ -119,7 +121,7 @@ export class UserService {
 
     user.first_name = dto.first_name;
     user.last_name = dto.last_name;
-    user.receiver_identifier = dto.receiver_identifier;
+    user.national_number = dto.national_number;
 
     const saltOrRounds = Number(this.configService.get<number>('SALT_OR_ROUND', 10));
     user.password = await bcrypt.hash(dto.password, saltOrRounds);
@@ -146,23 +148,26 @@ export class UserService {
 
   async login(loginUserDto: LoginUserDto) {
 
-    const user = await this.userRepository.findOneBy({
-      email:loginUserDto.email,
+    const user = await this.userRepository.findOne({
+      where: {
+        email: loginUserDto.email,
+      },
+
     });
 
-    if(!user){
+    if (!user) {
       throw new UnauthorizedException('user or password is not valid or correct')
     }
 
-    const result = await bcrypt.compare(loginUserDto.password,user.password)
+    const result = await bcrypt.compare(loginUserDto.password, user.password)
 
-    if(!result){
+    if (!result) {
       throw new UnauthorizedException('user or password is not valid or correct')
     }
 
-     const tokens = this.authService.generateTokens({
-      userId:user.id,
-      role:user.role
+    const tokens = this.authService.generateTokens({
+      userId: user.id,
+      role: user.role
     });
 
     return {
@@ -171,14 +176,14 @@ export class UserService {
 
   }
 
-  
 
 
 
-  async resetPassword(userId:string) {
+
+  async resetPassword(userId: string) {
 
     const user = await this.userRepository.findOneBy({
-      id:userId,
+      id: userId,
       is_verified: true,
     });
 
@@ -204,7 +209,7 @@ export class UserService {
   ) {
 
     const user = await this.userRepository.findOneBy({
-      id:userId,
+      id: userId,
       is_verified: true,
     });
 
@@ -220,6 +225,28 @@ export class UserService {
     return { message: 'Password has been Reseted successfully' };
 
 
+  }
+
+
+  async getUserByNationalNumber(getUserByNationalNumberDto: GetUserByNationalNumberDto) {
+    const user = await this.userRepository.findOne({
+      where: { national_number: getUserByNationalNumberDto.national_number },
+      relations: ['banned', 'userWarnings']
+
+    });
+
+    if (!user) {
+      throw new NotFoundException('User Not Found');
+    }
+
+    // map only safe fields to the DTO
+    const UserResponse = {
+      id: user.id,
+      full_name: `${user.first_name} ${user.last_name}`,
+      national_number: user.national_number,
+    };
+
+    return UserResponse;
   }
 
   /**

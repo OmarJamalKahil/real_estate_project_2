@@ -1,120 +1,3 @@
-// import {
-//     Injectable,
-//     NotFoundException,
-// } from '@nestjs/common';
-// import { InjectRepository } from '@nestjs/typeorm';
-// import { Repository } from 'typeorm';
-// import * as bcrypt from 'bcrypt';
-// import { ConfigService } from '@nestjs/config';
-// import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
-
-// import { User } from '../entities/user.entity';
-// import { Upload } from '../entities/upload.entity';
-// import { CompleteUserDto } from '../dto/complete-user.dto';
-// import { USER_ERRORS } from '../user.constants';
-// import { UpdateUserDto } from '../dto/update-user.dto';
-
-// @Injectable()
-// export class UserProfileService {
-//     constructor(
-//         @InjectRepository(User)
-//         private readonly userRepository: Repository<User>,
-
-//         @InjectRepository(Upload)
-//         private readonly uploadRepository: Repository<Upload>,
-
-//         private readonly configService: ConfigService,
-//         private readonly cloudinaryService: CloudinaryService,
-//     ) { }
-
-//     /**
-//      * Complete user profile after verification
-//      */
-//     async completeProfile(
-//         userId: string,
-//         dto: CompleteUserDto,
-//         file?: Express.Multer.File,
-//     ) {
-//         const user = await this.userRepository.findOneBy({
-//             id: userId,
-//             is_verified: true,
-//         });
-
-//         if (!user) {
-//             throw new NotFoundException(USER_ERRORS.USER_NOT_VERIFIED);
-//         }
-
-//         user.first_name = dto.first_name;
-//         user.last_name = dto.last_name;
-//         user.receiver_identifier = dto.receiver_identifier;
-
-//         const saltOrRounds = Number(this.configService.get<number>('SALT_OR_ROUND', 10));
-//         user.password = await bcrypt.hash(dto.password, saltOrRounds);
-
-//         if (file) {
-//             const { public_id, url } = await this.cloudinaryService.uploadImage(file);
-
-//             const upload = this.uploadRepository.create({
-//                 url,
-//                 public_id,
-//             });
-
-//             await this.uploadRepository.save(upload);
-
-//             user.profile_photo = upload;
-//         }
-
-//         await this.userRepository.save(user);
-
-//         return { message: 'User profile completed successfully' };
-//     }
-
-
-
-//     async updateUserProfile(
-//         userId: string,
-//         dto: UpdateUserDto,
-//         file: Express.Multer.File
-//     ) {
-
-
-//         let user = await this.userRepository.findOneBy({ id: userId })
-
-//         if (!user) {
-//             throw new NotFoundException(USER_ERRORS.USER_NOT_VERIFIED);
-//         }
-
-//         user.first_name = dto.first_name;
-//         user.last_name = dto.last_name;
-//         user.receiver_identifier = dto.receiver_identifier;
-
-
-//         if (file) {
-//             const { public_id, url } = await this.cloudinaryService.uploadImage(file);
-
-//             const upload = this.uploadRepository.create({
-//                 url,
-//                 public_id,
-//             });
-
-//             await this.uploadRepository.save(upload);
-
-//             user.profile_photo = upload;
-//         }
-
-//         await this.userRepository.save(user);
-
-
-//         return {
-//             message:"User Profile updated successfully"
-//         }
-
-
-//     }
-// }
-
-
-
 
 import {
   Injectable,
@@ -173,7 +56,7 @@ export class UserProfileService {
 
       user.first_name = dto.first_name;
       user.last_name = dto.last_name;
-      user.receiver_identifier = dto.receiver_identifier;
+      user.national_number = dto.national_number;
 
       const saltOrRounds = Number(
         this.configService.get<number>('SALT_OR_ROUND', 10),
@@ -244,7 +127,7 @@ export class UserProfileService {
         user.last_name = dto.last_name;
       }
       if (dto.receiver_identifier) {
-        user.receiver_identifier = dto.receiver_identifier;
+        user.national_number = dto.receiver_identifier;
       }
 
       if (file) {
@@ -278,11 +161,13 @@ export class UserProfileService {
         id: user.id,
         first_name: user.first_name,
         last_name: user.last_name,
-        receiver_identifier:user.receiver_identifier,
+        national_number:user.national_number,
         profile_photo: user.profile_photo,
-        user_role: user.role,
+        role: user.role,
         phone: user.phone,
         email: user.email,
+        banned:user?.banned, 
+        userWarnings:user?.userWarnings
       }
       // { message: 'User Profile has been updated successfully' };
     } catch (error) {

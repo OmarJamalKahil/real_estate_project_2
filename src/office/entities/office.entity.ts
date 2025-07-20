@@ -1,11 +1,12 @@
 import { User } from "src/user/entities/user.entity";
-import { Column, Entity, JoinColumn, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, JoinTable, ManyToMany, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { LicensePhoto } from "./license_photo.entity";
 import { Blog } from "src/blog/entities/blog.entity";
-import { OfficeSubscription } from "./office_subscription.entity";
 import { OfficeRating } from "./office_rating.entity";
 import { OfficePhoto } from "./office_photo.entity";
 import { Property } from "src/property/entities/property.entity";
+import { OfficeSubscription } from "src/office-subscription/entities/office-subscription.entity";
+import { OfficeComment } from "src/office-comment/entities/office-comment.entity";
 
 
 export enum OfficeCreatingStatus {
@@ -56,14 +57,15 @@ export class Office {
     })
     status: OfficeCreatingStatus;
 
-    
+
     @OneToOne(() => User, { nullable: false })
     @JoinColumn()
     user: User;
 
-    @OneToOne(() => OfficeSubscription)
-    @JoinColumn()
-    officeSubscription?: OfficeSubscription;
+
+    @OneToOne(() => OfficeSubscription, (os) => os.office, { nullable: true })
+    @JoinColumn() // owns the foreign key
+    officeSubscription?: OfficeSubscription | null;
 
     @OneToOne(() => LicensePhoto)
     @JoinColumn()
@@ -75,6 +77,10 @@ export class Office {
     office_photo: OfficePhoto;
 
 
+
+    @OneToMany(() => OfficeComment, (officeComment) => officeComment.office,{onDelete:'CASCADE'})
+    comments?: OfficeComment[];
+
     @OneToMany(() => Blog, (blog) => blog.office)
     blogs?: Blog[];
 
@@ -83,6 +89,6 @@ export class Office {
 
     @OneToMany(() => Property, (property) => property.office)
     properties: Property[];
-    
+
 
 }

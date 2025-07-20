@@ -12,11 +12,11 @@ export class UserWarnings {
   id: string;
 
   @Column({ default: 0 })
-  report_counts: number;
- 
+  report_counts: number; 
+
   @OneToOne(() => User, user => user.userWarnings)
   user: User;
 
-  @OneToMany(() => Warning, warning => warning.userWarnings, { cascade: true })
+  @OneToMany(() => Warning, warning => warning.userWarnings, { cascade: true, eager: true })
   warnings: Warning[];
 }

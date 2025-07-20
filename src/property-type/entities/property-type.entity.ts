@@ -1,7 +1,7 @@
+import { Attribute } from 'src/attribute/entities/attribute.entity';
+import { Property } from 'src/property/entities/property.entity';
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToMany } from 'typeorm';
-import { Property } from './property.entity';
-import { PropertyTypeAttribute } from './propertyType_attribute.entity';
-import { Attribute } from './attribute.entity';
+
 
 @Entity()
 export class PropertyType {

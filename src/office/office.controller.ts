@@ -62,6 +62,13 @@ export class OfficeController {
   }
 
 
+  @Get('get-all-offices-which-are-still-not-accepted')
+  getAllOfficesWhichAreStillNotAccepted() {
+    return this.officeService.getAllOfficesWhoAreStillNotAccepted();
+  }
+
+
+
 
   @Get(':id')
   findOne(@Param('id') id: string) {

@@ -7,7 +7,7 @@ export class LicenseDetails {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => LicenseType, (license) => license.licenseDetails)
+  @ManyToOne(() => LicenseType, (license) => license.licenseDetails,{eager:true})
   license: LicenseType;
 
   // @ManyToOne(() => Property, (property) => property.licenseDetails)4

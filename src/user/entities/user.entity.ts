@@ -11,6 +11,11 @@ import { Banned } from './banned.entity';
 import { Warning } from './warning.entity';
 import { UserWarnings } from './user-warnings.entity';
 import { Property } from 'src/property/entities/property.entity';
+import { PaymentCard } from 'src/payment-card/entities/payment-card.entity';
+import { OfficeComment } from 'src/office-comment/entities/office-comment.entity';
+import { Office } from 'src/office/entities/office.entity';
+import { FavoriteOffice } from 'src/favorite-office/entities/favorite-office.entity';
+import { FavoriteProperty } from 'src/favorite-property/entities/favorite-property.entity';
 
 export enum Role {
     USER = 'user',
@@ -64,7 +69,7 @@ export class User {
     role: Role;
 
     @Column({ nullable: true })
-    receiver_identifier: string;
+    national_number: string;
 
     @OneToOne(() => Upload, { cascade: true, eager: true, nullable: true, onDelete: 'SET NULL' })
     @JoinColumn()
@@ -72,14 +77,25 @@ export class User {
 
     @OneToOne(() => Banned, { cascade: true, eager: true, nullable: true })
     @JoinColumn()
-    banned: Banned;
+    banned?: Banned;
 
 
-    @OneToOne(() => UserWarnings, userWarnings => userWarnings.user, { cascade: true, eager: true })
+    @OneToOne(() => UserWarnings, userWarnings => userWarnings.user, { cascade: true, eager: true, nullable: true })
     @JoinColumn()
-    userWarnings: UserWarnings;
+    userWarnings?: UserWarnings;
 
     @OneToMany(() => Property, (property) => property.owner)
     properties: Property[];
+
+
+    @OneToMany(() => OfficeComment, (officeComment) => officeComment.user)
+    comments?: OfficeComment[];
+
+    @OneToMany(() => FavoriteOffice, (favoriteOffice) => favoriteOffice.user)
+    favoriteOffices?: FavoriteOffice[];
+
+
+    @OneToMany(() => FavoriteProperty, (favoriteProperty) => favoriteProperty.user)
+    favoriteProperties?: FavoriteProperty[];
 
 } 

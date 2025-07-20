@@ -5,8 +5,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Property } from './entities/property.entity';
 import { PropertyPhotos } from './entities/property_photos.entity';
 import { PropertyAttribute } from './entities/property_attribute.entity';
-import { Attribute } from './entities/attribute.entity';
-import { PropertyType } from './entities/property_type.entity';
 import { PropertyTypeAttribute } from './entities/propertyType_attribute.entity';
 import { LicenseDetails } from './entities/license_details.entity';
 import { LicenseType } from './entities/license_type.entity';
@@ -14,6 +12,8 @@ import { Location } from './entities/location.entity';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { OfficeModule } from 'src/office/office.module';
 import { UserModule } from 'src/user/user.module';
+import { PropertyType } from 'src/property-type/entities/property-type.entity';
+import { Attribute } from 'src/attribute/entities/attribute.entity';
 
 @Module({
   imports: [
@@ -21,12 +21,12 @@ import { UserModule } from 'src/user/user.module';
       Property,
       PropertyPhotos,
       PropertyAttribute,
-      Attribute,
       PropertyType,
       PropertyTypeAttribute,
       LicenseDetails,
       LicenseType,
       Location,
+      Attribute,
     ]),
     OfficeModule,
     UserModule,

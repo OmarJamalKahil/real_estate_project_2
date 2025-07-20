@@ -22,7 +22,7 @@ export class CreateAdminDto {
 
     @IsString()
     @IsNotEmpty()
-    receiver_identifier: string;
+    national_number: string;
 
 
     @IsString()

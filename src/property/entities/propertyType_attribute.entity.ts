@@ -1,11 +1,11 @@
 import { Entity, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
-import { PropertyType } from './property_type.entity';
-import { Attribute } from './attribute.entity';
+import { PropertyType } from 'src/property-type/entities/property-type.entity';
+import { Attribute } from 'src/attribute/entities/attribute.entity';
 
 @Entity()
 export class PropertyTypeAttribute {
   @PrimaryGeneratedColumn('uuid')
-  uniqueId: string;
+  id: string;
 
   @ManyToOne(() => PropertyType, (pt) => pt.attributes)
   propertyType: PropertyType;

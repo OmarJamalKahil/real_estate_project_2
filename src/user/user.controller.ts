@@ -30,6 +30,8 @@ import { UserAdminService } from './services/user-admin.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { BanUserDto } from './dto/ban-user.dto';
 import { WarnUserDto } from './dto/warn-user.dto';
+import { GetUserByNationalNumberDto } from './dto/get-user-by-national-number.dto';
+import { UserService } from './user.service';
 
 @Controller('user')
 
@@ -38,11 +40,12 @@ export class UserController {
     private readonly userAuthService: UserAuthService,
     private readonly userProfileService: UserProfileService,
     private readonly userAdminService: UserAdminService,
+    private readonly userService: UserService,
 
   ) { }
 
   @Get("get-all-users")
-  async getAllUsers(){
+  async getAllUsers() {
     return this.userAdminService.getAllUsers()
   }
 
@@ -73,7 +76,7 @@ export class UserController {
     @Body() dto: CompleteUserDto,
     @UploadedFile() profile_photo: Express.Multer.File,
   ) {
-    const { userId } = req.user;    
+    const { userId } = req.user;
     return this.userProfileService.completeProfile(userId, dto, profile_photo);
   }
 
@@ -90,6 +93,16 @@ export class UserController {
     const { userId } = req.user;
 
     return this.userAuthService.getUser(userId);
+  }
+
+
+  @Get('get-user-national-number/:national_number')
+  @UseGuards(JwtAuthGuard, RolesGuard) 
+  @Roles(Role.OFFICEMANAGER)
+  async getUserByNationalNumber(
+    @Param() getUserByNationalNumberDto: GetUserByNationalNumberDto
+  ) {
+    return this.userService.getUserByNationalNumber(getUserByNationalNumberDto);
   }
 
   @Post('reset-password')

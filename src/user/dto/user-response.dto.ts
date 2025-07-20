@@ -1,6 +1,9 @@
 import { Office } from "src/office/entities/office.entity";
 import { Upload } from "../entities/upload.entity";
 import { Role } from "../entities/user.entity";
+import { Banned } from "../entities/banned.entity";
+import { Warning } from "../entities/warning.entity";
+import { UserWarnings } from "../entities/user-warnings.entity";
 
 
 export class UserResponseDto {
@@ -11,11 +14,11 @@ export class UserResponseDto {
 
     last_name: string;
 
-    receiver_identifier:string;
+    national_number: string;
 
     profile_photo?: Upload;
 
-    user_role: Role;
+    role: Role;
 
     // office?: Office ;
 
@@ -24,6 +27,9 @@ export class UserResponseDto {
 
     email: string;
 
+    banned?: Banned | undefined;
+
+    userWarnings?: UserWarnings | undefined;
 
 
 
