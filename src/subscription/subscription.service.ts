@@ -74,21 +74,24 @@ export class SubscriptionService {
   }
 
   // DELETE
-  async remove(id: string): Promise<void> {
+  async remove(id: string): Promise<string> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
       const subscription = await queryRunner.manager.findOne(Subscription, { where: { id } });
+      
       if (!subscription) throw new NotFoundException(`Subscription #${id} not found`);
 
       await queryRunner.manager.remove(subscription);
 
       await queryRunner.commitTransaction();
+      
+      return id;
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      throw new InternalServerErrorException('Failed to delete subscription');
+      throw new InternalServerErrorException('Failed to delete subscription maybe there are some people who are subscriping in this subscription.');
     } finally {
       await queryRunner.release();
     }

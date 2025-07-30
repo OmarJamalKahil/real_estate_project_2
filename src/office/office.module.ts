@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { OfficeService } from './office.service';
 import { OfficeController } from './office.controller';
 import { Office } from './entities/office.entity';
@@ -10,11 +10,14 @@ import { User } from 'src/user/entities/user.entity';
 import { OfficeRating } from './entities/office_rating.entity';
 import { OfficeRatingService } from './office_rating.service';
 import { OfficePhoto } from './entities/office_photo.entity';
+import { OfficeSubscription } from 'src/office-subscription/entities/office-subscription.entity';
+import { OfficeSubscriptionModule } from 'src/office-subscription/office-subscription.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Office, LicensePhoto,User,OfficeRating,OfficePhoto]),
+    TypeOrmModule.forFeature([Office, LicensePhoto,User,OfficeRating,OfficePhoto,OfficeSubscription]),
     CloudinaryModule,
+forwardRef(() => OfficeSubscriptionModule),
   ], // <-- FIX HERE
   controllers: [OfficeController],
   providers: [OfficeService,OfficeRatingService],

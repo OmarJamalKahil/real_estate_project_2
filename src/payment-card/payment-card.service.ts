@@ -5,14 +5,14 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, EntityManager, QueryRunner } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 
 import { SearchPaymentCardDto } from './dto/create-payment-card.dto';
 import { PaymentCard, PaymentCardType } from './entities/payment-card.entity';
 
 @Injectable()
-export class PaymentCardService {
+export class PaymentCardService { 
   constructor(
     @InjectRepository(PaymentCard)
     private readonly paymentCardRepository: Repository<PaymentCard>,
@@ -22,15 +22,17 @@ export class PaymentCardService {
 
   async searchAndWithdraw(
     searchPaymentCardDto: SearchPaymentCardDto,
-    amount: number
+    amount: number,
+    manager: EntityManager 
   ) {
-    const queryRunner = this.dataSource.createQueryRunner();
 
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
+    // const queryRunner = manager;
+
+    // await queryRunner.connect();
+    // await queryRunner.startTransaction();
 
     try {
-      const userCard = await queryRunner.manager.findOne(PaymentCard, {
+      const userCard = await manager.findOne(PaymentCard, {
         where: {
           cvv: searchPaymentCardDto.cvv,
           cardNumber: searchPaymentCardDto.cardNumber,
@@ -48,7 +50,7 @@ export class PaymentCardService {
         throw new BadRequestException('Not enough funds to subscribe');
       }
 
-      const systemCard = await queryRunner.manager.findOne(PaymentCard, {
+      const systemCard = await manager.findOne(PaymentCard, {
         where: {
           cvv: this.configService.get<string>('CARD_CCV'),
           cardNumber: this.configService.get<string>('CARD_NUMBER'),
@@ -67,15 +69,14 @@ export class PaymentCardService {
       systemCard.money = Number(systemCard.money) + Number(amount);
 
 
-      await queryRunner.manager.save([userCard, systemCard]);
+      await manager.save([userCard, systemCard]);
 
-      await queryRunner.commitTransaction();
+      // await queryRunner.commitTransaction(); 
       return { success: true };
     } catch (error) {
-      await queryRunner.rollbackTransaction();
+      // await queryRunner.rollbackTransaction();
+                
       throw error;
-    } finally {
-      await queryRunner.release();
-    }
+    } 
   }
 }

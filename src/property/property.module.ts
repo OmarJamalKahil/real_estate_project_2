@@ -34,5 +34,6 @@ import { Attribute } from 'src/attribute/entities/attribute.entity';
   ],
   controllers: [PropertyController],
   providers: [PropertyService, CloudinaryService],
+  exports:[PropertyService]
 })
 export class PropertyModule {}

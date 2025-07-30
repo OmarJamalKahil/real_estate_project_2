@@ -12,6 +12,7 @@ export class PropertyPhotos {
   @Column()
   public_id: string;
 
-  @Column()
+  @Column() 
   url: string;
 }
+  

@@ -13,6 +13,7 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { FilterPropertyDto } from './dto/filter-property.dto';
 import { UpdatePropertyStatusDto } from './dto/update-property-status.dto';
+import { PaginationDto } from '../common/utils/pagination.dto';
 
 @Controller('property')
 export class PropertyController {
@@ -38,29 +39,47 @@ export class PropertyController {
 
   @Get()
   getAll(
+    @Query() paginationDto: PaginationDto
   ) {
-    return this.propertyService.findAllAcceptedProperties()
+    return this.propertyService.findAllAcceptedProperties(paginationDto)
   }
 
 
   @Get('get-all-properties-which-are-still-not-accepted')
   getAllPropertiesAreStillNotAcceptedYet(
+    @Query() paginationDto: PaginationDto
   ) {
-    return this.propertyService.getAllPropertiesWhoAreStillNotAccepted()
+    return this.propertyService.getAllPropertiesWhoAreStillNotAccepted(paginationDto)
   }
 
   @Post('/filter')
   getPropertiesByFiltering(
-    @Body() filterPropertyDto: FilterPropertyDto
+    @Body() filterPropertyDto: FilterPropertyDto,
+    @Query() paginationDto: PaginationDto
+
   ) {
-    return this.propertyService.findPropertiesByFiltering(filterPropertyDto)
+    return this.propertyService.findPropertiesByFiltering(filterPropertyDto, paginationDto)
   }
+
+  @Get('/reserved')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.USER,Role.OFFICEMANAGER)
+  getReservedProperties(
+    @Query() paginationDto: PaginationDto,
+    @Req() req,
+  ) {
+    const { userId } = req.user
+    return this.propertyService.findAllReservedPropertiesForUser(userId,paginationDto)
+  }
+
 
   @Get('office/:officeId')
   getPropertiesByOfficeId(
-    @Param('officeId') officeId: string
+    @Param('officeId') officeId: string,
+    @Query() paginationDto: PaginationDto
+
   ) {
-    return this.propertyService.findByOfficeId(officeId)
+    return this.propertyService.findByOfficeId(officeId, paginationDto)
   }
 
 

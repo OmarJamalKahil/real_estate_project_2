@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, UploadedFile, Put, UseGuards, Req, UploadedFiles } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, UploadedFile, Put, UseGuards, Req, UploadedFiles, Query } from '@nestjs/common';
 import { OfficeService } from './office.service';
 import { CreateOfficeDto } from './dto/create-office.dto';
 import { UpdateOfficeDto } from './dto/update-office.dto';
@@ -12,6 +12,7 @@ import { Role } from 'src/user/entities/user.entity';
 import { OfficeRatingService } from './office_rating.service';
 import { CreateOrUpdateOfficeRatingDto } from './dto/create-or-update-office-rating.dto';
 import { MultiFileValidationPipe } from 'src/common/pipes/multi-files-validation.pipe';
+import { PaginationDto } from 'src/common/utils/pagination.dto';
 
 @Controller('office')
 export class OfficeController {
@@ -28,7 +29,8 @@ export class OfficeController {
     @Req() req,
   ) {
     const { userId } = req.user;
-    return this.officeService.getCurrentUserOffice(userId);
+    
+    return this.officeService.getCurrentUserOffice(userId,true);
   }
 
   @Post('/create-office')
@@ -57,14 +59,19 @@ export class OfficeController {
   }
 
   @Get()
-  findAll() {
-    return this.officeService.getAllOfficesWithAverageRating();
+  findAll(
+    @Query() paginationDto:PaginationDto
+  ) {
+    return this.officeService.getAllOfficesWithAverageRating(paginationDto);
   }
 
 
   @Get('get-all-offices-which-are-still-not-accepted')
-  getAllOfficesWhichAreStillNotAccepted() {
-    return this.officeService.getAllOfficesWhoAreStillNotAccepted();
+  getAllOfficesWhichAreStillNotAccepted(
+    @Query() paginationDto:PaginationDto
+
+  ) {
+    return this.officeService.getAllOfficesWhoAreStillNotAccepted(paginationDto);
   }
 
 
@@ -109,9 +116,9 @@ export class OfficeController {
     const { userId } = req.user;
     return this.officeRatingService.rateOffice(officeId, userId, body.rating);
   }
+ 
 
-
-
+ 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   remove(

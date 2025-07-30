@@ -63,9 +63,9 @@ export class Office {
     user: User;
 
 
-    @OneToOne(() => OfficeSubscription, (os) => os.office, { nullable: true })
-    @JoinColumn() // owns the foreign key
-    officeSubscription?: OfficeSubscription | null;
+    // Office entity
+    @OneToOne(() => OfficeSubscription, (os) => os.office)
+    officeSubscription: OfficeSubscription;
 
     @OneToOne(() => LicensePhoto)
     @JoinColumn()
@@ -78,7 +78,7 @@ export class Office {
 
 
 
-    @OneToMany(() => OfficeComment, (officeComment) => officeComment.office,{onDelete:'CASCADE'})
+    @OneToMany(() => OfficeComment, (officeComment) => officeComment.office, { onDelete: 'CASCADE' })
     comments?: OfficeComment[];
 
     @OneToMany(() => Blog, (blog) => blog.office)

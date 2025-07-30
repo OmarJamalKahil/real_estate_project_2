@@ -9,7 +9,7 @@ import { UserAuthService } from 'src/user/services/user-auth.service';
 
 @Injectable()
 export class FavoritePropertyService {
-constructor(
+  constructor(
     @InjectRepository(FavoriteProperty)
     private readonly favoritePropertyRepository: Repository<FavoriteProperty>,
 
@@ -23,7 +23,7 @@ constructor(
 
 
 
-  
+
   async create(userId: string, dto: CreateFavoritePropertyDto) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -86,6 +86,7 @@ constructor(
           user: { id: user.id },
           property: { id: propertyId },
         },
+        relations:['user','property']
       });
 
       if (!favorite) throw new NotFoundException('Favorite not found');
@@ -93,7 +94,7 @@ constructor(
       await queryRunner.manager.remove(FavoriteProperty, favorite);
       await queryRunner.commitTransaction();
 
-      return { message: 'Favorite property removed successfully' };
+      return propertyId;
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw new InternalServerErrorException(error.message);

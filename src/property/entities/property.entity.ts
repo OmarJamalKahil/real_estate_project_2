@@ -1,4 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, OneToOne, JoinColumn } from 'typeorm';
+
+
+// src/property/entities/property.entity.ts
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, OneToOne, JoinColumn, DeleteDateColumn } from 'typeorm'; // Import DeleteDateColumn
 import { Location } from './location.entity';
 import { PropertyPhotos } from './property_photos.entity';
 import { LicenseDetails } from './license_details.entity';
@@ -9,12 +12,12 @@ import { PropertyStatus } from '../common/property-status.enum';
 import { PropertyComment } from 'src/property-comment/entities/property-comment.entity';
 import { PropertyType } from 'src/property-type/entities/property-type.entity';
 import { PropertyTypeOperation } from '../common/property-type-operation.enum';
+import { Reservation } from 'src/reservation/entities/reservation.entity';
 
 @Entity()
 export class Property {
   @PrimaryGeneratedColumn('uuid')
   id: string;
-
 
   @ManyToOne(() => Office, (office) => office.properties)
   office: Office;
@@ -28,10 +31,9 @@ export class Property {
   @Column({
     type: 'enum',
     enum: PropertyTypeOperation,
-    default:PropertyTypeOperation.Selling
+    default: PropertyTypeOperation.Selling
   })
   typeOperation: PropertyTypeOperation;
-
 
   @Column()
   space: number;
@@ -45,8 +47,7 @@ export class Property {
   @ManyToOne(() => PropertyType, (pt) => pt.properties)
   type: PropertyType;
 
-
-  @OneToOne(() => Location, { nullable: false })
+  @OneToOne(() => Location, { nullable: false, cascade: true }) // Consider cascading for Location
   @JoinColumn()
   location: Location;
 
@@ -60,30 +61,44 @@ export class Property {
   })
   status: PropertyStatus;
 
-  @Column({ default: false })
+    @Column({ default: false })
   softDelete: boolean;
 
-  // @Column()
-  // owner: string;
+  // REMOVE 'softDelete' column if you use DeleteDateColumn
+  // @Column({ default: false })
+  // softDelete: boolean;
 
+  // @DeleteDateColumn() // THIS IS THE KEY FOR TYPEORM SOFT DELETE
+  // deletedAt: Date; // This column will store the date/time of deletion
 
   @ManyToOne(() => User, (user) => user.properties)
   owner: User;
 
-  @OneToMany(() => PropertyPhotos, (photo) => photo.property)
+  // IMPORTANT: For one-to-one relations that should also be soft-deleted
+  // or managed on deletion, you might need to handle them in your service.
+  // cascade: true with onDelete: 'SET NULL' on PropertyAttribute is fine,
+  // but for LicenseDetails you might want to either soft-delete it too,
+  // or make sure it's not strictly coupled if the property is soft-deleted.
+  @OneToMany(() => PropertyPhotos, (photo) => photo.property, { cascade: true }) // Cascade for photos if they should be deleted with property (or soft-deleted via separate logic)
   photos: PropertyPhotos[];
 
-  @OneToOne(() => LicenseDetails, (licenseDetails) => licenseDetails.property)
+  // Consider { cascade: ['insert', 'update'] } for LicenseDetails if it's created/updated with property.
+  // For deletion, if you soft-delete Property, LicenseDetails will remain. You'd need to soft-delete it separately if desired.
+  @OneToOne(() => LicenseDetails, (licenseDetails) => licenseDetails.property, { nullable: true, onDelete: 'CASCADE' }) // If property is hard-deleted, license details should also be deleted
   @JoinColumn()
   licenseDetails: LicenseDetails;
 
-  @OneToMany(() => PropertyAttribute, (pa) => pa.property)
+
+  @OneToOne(() => Reservation, (reservation) => reservation.property) // Or handle reservation soft-deletion if it applies
+  reservation: Reservation; 
+
+  // onDelete: 'SET NULL' means when a Property is deleted (hard or soft),
+  // the propertyId in PropertyAttribute will become NULL.
+  // If you want PropertyAttribute to stay linked even after soft delete, don't use onDelete.
+  // If you want PropertyAttribute to be soft-deleted too, you'd apply @DeleteDateColumn to PropertyAttribute.
+  @OneToMany(() => PropertyAttribute, (pa) => pa.property, { onDelete: 'CASCADE' }) // Usually, attributes belong to the property and should be removed/soft-deleted with it
   propertyAttributes: PropertyAttribute[];
 
-  @OneToMany(() => PropertyComment, (propertyComment) => propertyComment.property)
+  @OneToMany(() => PropertyComment, (propertyComment) => propertyComment.property, { onDelete: 'SET NULL' }) // Comments might remain or be soft-deleted separately
   comments?: PropertyComment[];
-
 }
-
-// @ManyToOne(() => Location, (location) => location.properties)
-// location: Location;

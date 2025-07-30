@@ -124,7 +124,6 @@ export class UserAuthService {
             where: { id: userId },
             relations: ['profile_photo', 'banned', 'userWarnings','userWarnings.warnings']
         });
-console.log(user);
 
         if (!user) {
             throw new UnauthorizedException(USER_ERRORS.INVALID_CREDENTIALS);

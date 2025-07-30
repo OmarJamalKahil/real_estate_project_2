@@ -16,6 +16,9 @@ import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { CreateOfficeDto } from './dto/create-office.dto';
 import { UpdateOfficeDto } from './dto/update-office.dto';
 import { UpdateOfficeStatusDto } from './dto/update-office-status.dto';
+import { PaginationDto } from 'src/common/utils/pagination.dto';
+import { PaginatedResponse } from 'src/common/utils/paginated-response.interface';
+import { OfficeSubscription } from 'src/office-subscription/entities/office-subscription.entity';
 
 @Injectable()
 export class OfficeService {
@@ -136,40 +139,52 @@ export class OfficeService {
   // }
 
 
+  async getAllOfficesWithAverageRating(
+    paginationDto: PaginationDto,
+  ): Promise<PaginatedResponse<any>> {
+    const { page = 1, limit = 10 } = paginationDto;
+    const skip = (page - 1) * limit;
 
-  async getAllOfficesWithAverageRating() {
-    const offices = await this.officeRepository
+    const query = this.officeRepository
       .createQueryBuilder('office')
       .leftJoinAndSelect('office.office_photo', 'office_photo')
-      .leftJoinAndSelect('office.blogs', 'blogs') // <-- Ensure this is selected if you need blogs data
+      .leftJoinAndSelect('office.blogs', 'blogs')
       .leftJoin('office.ratings', 'rating')
-      .where('office.status = :status', { status: 'accepted' }) // <-- CORRECTED LINE
-      // If you want average rating, you'd add something like:
-      // .addSelect('AVG(rating.score)', 'office_averageRating') // Assuming 'score' is the rating value column
-      .loadRelationCountAndMap('office.ratingsCount', 'office.ratings') // Still counts ratings
+      .loadRelationCountAndMap('office.ratingsCount', 'office.ratings')
+      .where('office.status = :status', { status: 'accepted' })
       .select([
         'office.id',
         'office.name',
         'office.office_phone',
-        'office.office_email', // Add other simple office columns you need directly
-        'office.status', // Important for filtering and displaying
+        'office.office_email',
+        'office.status',
         'office_photo',
-        'blogs', // <-- Un-commented to load blogs data
+        'blogs',
       ])
-      // If you added AVG, you'd need: .groupBy('office.id')
-      .getMany();
+      .skip(skip)
+      .take(limit);
 
-    return offices.map((office) => ({
+    // Get paginated data
+    const [data, total] = await query.getManyAndCount();
+
+    const offices = data.map((office) => ({
       id: office.id,
       name: office.name,
       office_phone: office.office_phone,
-      office_email: office.office_email, // Added if selected
-      status: office.status, // Added if selected
+      office_email: office.office_email,
+      status: office.status,
       office_photo: office.office_photo,
-      ratingsCount: office['ratingsCount'], // loadRelationCountAndMap
-      blogs: office.blogs, // full blogs entities
-      // averageRating: office['office_averageRating'] ? parseFloat(office['office_averageRating']) : 0, // If you calculate average
+      ratingsCount: office['ratingsCount'],
+      blogs: office.blogs,
     }));
+
+    return {
+      data: offices,
+      total,
+      page,
+      limit,
+      pageCount: Math.ceil(total / limit),
+    };
   }
 
   /**
@@ -203,7 +218,6 @@ export class OfficeService {
   /**
    * Get the current user's office with ratings and blogs
    */
-
   async getCurrentUserOffice(userId: string, withSubscription: boolean = false) {
     const query = this.officeRepository
       .createQueryBuilder('office')
@@ -216,17 +230,22 @@ export class OfficeService {
       .where('office.user.id = :userId', { userId });
 
     if (withSubscription) {
-      query.leftJoinAndSelect('office.officeSubscription', 'OfficeSubscription');
+      query.leftJoinAndSelect('office.officeSubscription', 'OfficeSubscription')
+        .leftJoinAndSelect('OfficeSubscription.subscription', 'Subscription'); // if you also want the Subscription info
     }
-
+    
     const office = await query.getOne();
     return office;
   }
 
 
-  async getAllOfficesWhoAreStillNotAccepted() {
 
-    const offices = await this.officeRepository.find({
+  async getAllOfficesWhoAreStillNotAccepted(paginationDto: PaginationDto) {
+
+    const { page = 1, limit = 10 } = paginationDto;
+    const [data, total] = await this.officeRepository.findAndCount({
+      skip: (page - 1) * limit, // ✅ apply offset
+      take: limit,
       where: {
         status: OfficeCreatingStatus.pending
       },
@@ -234,7 +253,13 @@ export class OfficeService {
 
     })
 
-    return offices;
+    return {
+      data,
+      total,
+      page,
+      limit,
+      pageCount: Math.ceil(total / limit),
+    };
 
 
   }

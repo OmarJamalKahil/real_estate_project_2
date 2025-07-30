@@ -48,6 +48,12 @@ import { PropertyTypeModule } from './property-type/property-type.module';
 import { AttributeModule } from './attribute/attribute.module';
 import { PropertyType } from './property-type/entities/property-type.entity';
 import { Attribute } from './attribute/entities/attribute.entity';
+import { ReservationModule } from './reservation/reservation.module';
+import { CronModule } from './cron/cron.module';
+import { Reservation } from './reservation/entities/reservation.entity';
+import { NotificationModule } from './notification/notification.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { Notification } from './notification/entities/notification.entity';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -58,7 +64,7 @@ import { Attribute } from './attribute/entities/attribute.entity';
       UserWarnings,
       Office,
       Subscription,
-      Blog, 
+      Blog,
       BlogMedia,
       OfficeRating,
       PaymentCard,
@@ -66,7 +72,11 @@ import { Attribute } from './attribute/entities/attribute.entity';
       FavoriteOffice,
       PropertyComment,
       FavoriteProperty,
+      Reservation,
+      Notification 
+
     ]),
+    ScheduleModule.forRoot(),
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: 'localhost',
@@ -101,13 +111,15 @@ import { Attribute } from './attribute/entities/attribute.entity';
         PropertyTypeAttribute,
         LicenseDetails,
         LicenseType,
-        Location, 
+        Location,
         PaymentCard,
         OfficeComment,
         FavoriteOffice,
         PropertyComment,
         FavoriteProperty,
-        
+        Reservation,
+        Notification
+
       ],
       // autoLoadEntities: true, // Automatically loads entities registered through TypeOrmModule.forFeature()
       synchronize: true,      // ⚠️ use only in development
@@ -138,19 +150,19 @@ import { Attribute } from './attribute/entities/attribute.entity';
         DB_TYPE: Joi.string().required(),
 
         // CardSystem
-        CARD_CVV:Joi.string().required(),
-        CARD_NUMBER:Joi.string().required(),
-        CARD_EXPIRY_MONTH:Joi.number().required(),
-        CARD_EXPIRE_YEAR:Joi.number().required(),
+        CARD_CVV: Joi.string().required(),
+        CARD_NUMBER: Joi.string().required(),
+        CARD_EXPIRY_MONTH: Joi.number().required(),
+        CARD_EXPIRE_YEAR: Joi.number().required(),
         CARD_TYPE: Joi.string().required(),
- 
+
         // Stripe 
         STRIPE_SECRET_KEY: Joi.string().required(),
         STRIPE_PUBLISHABLE_KEY: Joi.string().required(),
         STRIPE_WEBHOOK_SECRET: Joi.string().required(),
-     
- 
-     
+
+
+
       }),
     }),
     UserModule,
@@ -169,11 +181,14 @@ import { Attribute } from './attribute/entities/attribute.entity';
     FavoritePropertyModule,
     PropertyTypeModule,
     AttributeModule,
+    ReservationModule,
+    NotificationModule,
+    // CronModule,
     // StripeModule
   ],
   controllers: [AppController],
   providers: [AppService, MailService],
 })
-export class AppModule { 
+export class AppModule {
 
 }

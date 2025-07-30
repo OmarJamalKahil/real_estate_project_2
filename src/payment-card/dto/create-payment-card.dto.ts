@@ -19,7 +19,7 @@ export class SearchPaymentCardDto {
   expiryMonth: number;
 
   @IsNumber()
-  @Min(new Date().getFullYear()) // adjust logic as needed
+  // @Min(new Date().getFullYear()) // adjust logic as needed
   @Max(new Date().getFullYear() + 20)
   expiryYear: number;
 

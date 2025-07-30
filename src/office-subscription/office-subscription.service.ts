@@ -5,7 +5,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { CreateOfficeSubscriptionDto } from './dto/create-office-subscription.dto';
 import { UpdateOfficeSubscriptionDto } from './dto/update-office-subscription.dto';
 import { OfficeSubscription } from './entities/office-subscription.entity';
@@ -27,52 +27,151 @@ export class OfficeSubscriptionService {
 
     private readonly paymentCardService: PaymentCardService,
 
+    private readonly dataSource: DataSource, // Inject DataSource for transactions
+
+
   ) { }
 
+
+
+  // async create(officeManagerId: string, createDto: CreateOfficeSubscriptionDto) {
+  //   const queryRunner = this.dataSource.createQueryRunner();
+
+  //   await queryRunner.connect();
+  //   await queryRunner.startTransaction();
+
+  //   try {
+  //     const subscription = await queryRunner.manager.findOne(Subscription, {
+  //       where: { id: createDto.subscriptionId },
+  //     });
+
+  //     const office = await queryRunner.manager.findOne(Office, {
+  //       where: {
+  //         user: { id: officeManagerId },
+  //       },
+  //       relations: ['properties', 'user'],
+  //     });
+
+
+
+  //     if (!office || !subscription) {
+  //       throw new NotFoundException('Office or Subscription not found');
+  //     }
+
+  //     const officeSubscription = await queryRunner.manager.findOne(OfficeSubscription, {
+  //       where: {
+  //         office: {
+  //           id: office.id
+  //         },
+  //         subscription: {
+  //           id: subscription.id
+  //         }
+  //       },
+  //     });
+
+
+
+  //     if (officeSubscription) {
+  //       await queryRunner.manager.delete(OfficeSubscription, { id: officeSubscription.id });
+  //     }
+
+
+  //     await this.paymentCardService.searchAndWithdraw(
+  //       { ...createDto },
+  //       subscription.price!,
+  //       queryRunner.manager,
+  //     );
+
+  //     const newOfficeSubscription = queryRunner.manager.create(OfficeSubscription, {
+  //       start_date: new Date(),
+  //       end_date: this.returnTheEndDate(subscription.duration),
+  //       current_number_promotions: 0,
+  //       current_number_property: office.properties.length,
+  //       remaining_properties: subscription.propertyNumber - office.properties.length,
+  //       remaining_promotions: subscription.numberOfPromotion,
+  //       office,
+  //       subscription,
+  //     });
+
+  //     const savedSubscription = await queryRunner.manager.save(OfficeSubscription, newOfficeSubscription);
+
+  //     await queryRunner.commitTransaction();
+  //     return savedSubscription;
+  //   } catch (err) {
+  //     await queryRunner.rollbackTransaction();
+  //     console.error(err);
+  //     throw new InternalServerErrorException('Failed to create subscription');
+  //   } finally {
+  //     await queryRunner.release();
+  //   }
+  // }
+
+
   async create(officeManagerId: string, createDto: CreateOfficeSubscriptionDto) {
+  const queryRunner = this.dataSource.createQueryRunner();
+  await queryRunner.connect();
+  await queryRunner.startTransaction();
 
-
-    const subscription = await this.subscriptionRepository.findOne({
+  try {
+    // Find the subscription by ID
+    const subscription = await queryRunner.manager.findOne(Subscription, {
       where: { id: createDto.subscriptionId },
     });
 
-    
-    const office = await this.officeRepository.findOne({
-      where: {
-        user: {
-          id: officeManagerId,
-        },
-      },
-      relations: ['properties', 'user']
-      
+    // Find the office by manager ID and load properties
+    const office = await queryRunner.manager.findOne(Office, {
+      where: { user: { id: officeManagerId } },
+      relations: ['properties', 'user'],
     });
-    
-    
-    if (!office || !subscription) {
+
+    if (!subscription || !office) {
       throw new NotFoundException('Office or Subscription not found');
     }
-    
-    this.paymentCardService.searchAndWithdraw({ ...createDto }, subscription?.price!)
-  
-    const newOfficeSubscription = this.officeSubscriptionRepository.create({
+
+    // Check if the office already has a subscription
+    const existingSubscription = await queryRunner.manager.findOne(OfficeSubscription, {
+      where: {
+        office: { id: office.id },
+      },
+      relations: ['office', 'subscription'],
+    });
+
+    // Delete existing subscription if it exists
+    if (existingSubscription) {
+      await queryRunner.manager.delete(OfficeSubscription, { id: existingSubscription.id });
+    }
+
+    // Attempt to withdraw payment
+    await this.paymentCardService.searchAndWithdraw(
+      { ...createDto },
+      subscription.price!,
+      queryRunner.manager
+    );
+
+    // Create and save new office subscription
+    const newOfficeSubscription = queryRunner.manager.create(OfficeSubscription, {
       start_date: new Date(),
       end_date: this.returnTheEndDate(subscription.duration),
       current_number_promotions: 0,
       current_number_property: office.properties.length,
-      remaining_properties: (subscription.propertyNumber - office.properties.length),
-      remaining_promotions: (subscription.numberOfPromotion - 0),
+      remaining_properties: subscription.propertyNumber - office.properties.length,
+      remaining_promotions: subscription.numberOfPromotion,
       office,
       subscription,
     });
 
-    try {
-      return await this.officeSubscriptionRepository.save(newOfficeSubscription);
-    } catch (err) {
-      console.log(err);
-
-      throw new InternalServerErrorException('Failed to create subscription');
-    }
+    const saved = await queryRunner.manager.save(OfficeSubscription, newOfficeSubscription);
+    await queryRunner.commitTransaction();
+    return saved;
+  } catch (error) {
+    await queryRunner.rollbackTransaction();
+    console.error('Subscription creation failed:', error);
+    throw new InternalServerErrorException('Failed to create subscription');
+  } finally {
+    await queryRunner.release();
   }
+}
+
 
   async findAll() {
     return await this.officeSubscriptionRepository.find({
@@ -114,7 +213,7 @@ export class OfficeSubscriptionService {
       throw new ForbiddenException("You don't have a subscription to delete it!")
     }
 
-    office.officeSubscription = null;
+    // office.officeSubscription = null;
 
     await this.officeRepository.save(office);
 

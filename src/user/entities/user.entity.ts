@@ -16,6 +16,8 @@ import { OfficeComment } from 'src/office-comment/entities/office-comment.entity
 import { Office } from 'src/office/entities/office.entity';
 import { FavoriteOffice } from 'src/favorite-office/entities/favorite-office.entity';
 import { FavoriteProperty } from 'src/favorite-property/entities/favorite-property.entity';
+import { Reservation } from 'src/reservation/entities/reservation.entity';
+import { Notification } from 'src/notification/entities/notification.entity';
 
 export enum Role {
     USER = 'user',
@@ -94,8 +96,13 @@ export class User {
     @OneToMany(() => FavoriteOffice, (favoriteOffice) => favoriteOffice.user)
     favoriteOffices?: FavoriteOffice[];
 
+    @OneToMany(() => Notification, (notification) => notification.user)
+    notifications?:Notification[];
+
 
     @OneToMany(() => FavoriteProperty, (favoriteProperty) => favoriteProperty.user)
     favoriteProperties?: FavoriteProperty[];
 
-} 
+    @OneToMany(() => Reservation, (reservation) => reservation.user)
+    reservations:Reservation[];
+}  
