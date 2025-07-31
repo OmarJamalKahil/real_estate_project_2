@@ -53,6 +53,7 @@ export class UserController {
 
   @Post('start-register')
   async startRegister(@Body() dto: CreateUserDto) {
+    console.log("done");
     return this.userAuthService.startRegister(dto);
   }
 

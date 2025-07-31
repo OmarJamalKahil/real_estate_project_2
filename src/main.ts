@@ -11,7 +11,9 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.setGlobalPrefix('api'); // 👈 this will prefix all routes with /api
-  app.enableCors("*")
+  app.enableCors({
+    origin: '*'
+})
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true, transform: true
   })); // 👈 Enables DTO validation
