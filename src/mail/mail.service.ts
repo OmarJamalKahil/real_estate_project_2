@@ -13,8 +13,15 @@ export class MailService {
       auth: {
         // user: 'ahmed09887766554@gmail.com',
         // pass: 'ftkv zfan mviz aduq',
-        user: 'ahmed7733931@gmail.com',
-        pass: 'mrfv gpsk dvac whkg',
+
+        // user: 'ahmed7733931@gmail.com',
+        // pass: 'mrfv gpsk dvac whkg',
+
+        user: 'omar.kahil.2004.9@gmail.com',
+        pass: 'coxr fbrc bjqg hbnc',
+        
+        // user: 'obida567@gmail.com',
+        // pass: 'mgem qbzh jlnf hrrn',
       },
 
     });
