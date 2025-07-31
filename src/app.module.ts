@@ -202,3 +202,6 @@ import { FinancialStatistics } from './statistics/entities/financial_statistics.
 export class AppModule {
 
 }
+
+
+// abd branch
