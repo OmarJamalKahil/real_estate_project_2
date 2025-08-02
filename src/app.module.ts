@@ -93,9 +93,9 @@ import { FinancialStatistics } from './statistics/entities/financial_statistics.
       // Number(process.env.DB_PORT),
       username: 'postgres',
       // process.env.DB_USER_NAME,
-      password: "12345678910",
+      password: "0940468172mtn",
       //  process.env.DB_PASSWORD || 
-      database: 'real_estate_project',
+      database: 'real-estate',
       // process.env.DB_NAME,
       entities: [
         User,
@@ -191,7 +191,7 @@ import { FinancialStatistics } from './statistics/entities/financial_statistics.
     AttributeModule,
     ReservationModule,
     NotificationModule,
-    // CronModule,
+    CronModule,
     // StripeModule
     StatisticsModule,
     ArchiveModule
@@ -202,8 +202,5 @@ import { FinancialStatistics } from './statistics/entities/financial_statistics.
 export class AppModule {
 
 }
-// omarhfsdhkfs
 
-
-// ...... //
  
