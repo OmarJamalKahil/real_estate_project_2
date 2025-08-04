@@ -13,15 +13,25 @@ import { UserAuthService } from './services/user-auth.service';
 import { UserProfileService } from './services/user-profile.service';
 import { UserAdminService } from './services/user-admin.service';
 import { UserWarnings } from './entities/user-warnings.entity';
+import { OfficeModule } from 'src/office/office.module';
+import { Office } from 'src/office/entities/office.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, Upload, Banned, Warning, UserWarnings,]),
+    TypeOrmModule.forFeature([User, Upload, Banned, Warning, UserWarnings, 
+    
+    //omar add office entity here
+    Office]),
+
     AuthModule, // ✅ this fixes the issue
     MailModule,
     CloudinaryModule,
+
+
+    //omar add office module here
+    OfficeModule
   ],
-  controllers: [UserController],
+  controllers: [UserController], 
   providers: [
     UserService,
     UserAuthService,

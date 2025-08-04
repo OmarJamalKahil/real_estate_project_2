@@ -10,7 +10,7 @@ import * as bcrypt from 'bcrypt';
 
 import { ConfigService } from "@nestjs/config";
 
-import { Role, User } from "./entities/user.entity";
+import {  User } from "./entities/user.entity";
 import { Upload } from "./entities/upload.entity";
 
 import { CreateUserDto } from "./dto/create-user.dto";
@@ -23,6 +23,7 @@ import { CloudinaryService } from "src/cloudinary/cloudinary.service";
 import { LoginUserDto } from "./dto/login-user.dto";
 import { UserResponseDto } from "./dto/user-response.dto";
 import { GetUserByNationalNumberDto } from "./dto/get-user-by-national-number.dto";
+import { Role } from "src/common/enums/role.enum";
 
 @Injectable()
 export class UserService {
