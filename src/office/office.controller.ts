@@ -8,11 +8,11 @@ import { UpdateOfficeStatusDto } from './dto/update-office-status.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { Roles } from 'src/common/decorators/roles.decorator';
-import { Role } from 'src/user/entities/user.entity';
 import { OfficeRatingService } from './office_rating.service';
 import { CreateOrUpdateOfficeRatingDto } from './dto/create-or-update-office-rating.dto';
 import { MultiFileValidationPipe } from 'src/common/pipes/multi-files-validation.pipe';
 import { PaginationDto } from 'src/common/utils/pagination.dto';
+import { Role } from 'src/common/enums/role.enum';
 
 @Controller('office')
 export class OfficeController {
@@ -102,7 +102,7 @@ export class OfficeController {
     @UploadedFile() office_photo?: Express.Multer.File,
   ) {
     const { userId } = req.user
-    return this.officeService.update(id, updateOfficeDto, userId, office_photo);
+    return this.officeService.update(id, updateOfficeDto, /*omar comment this*/ /*userId,*/  office_photo);
   }
 
 

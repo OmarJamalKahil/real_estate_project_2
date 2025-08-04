@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, IsString, Matches, MinLength } from "class-validator";
+import { IsBoolean, IsEmail, IsNotEmpty, IsString, Matches, MinLength } from "class-validator";
 
 
 
@@ -19,5 +19,9 @@ export class LoginUserDto {
     @Matches(/(?=.*\d)/, { message: 'Password must contain at least one number' })
     @Matches(/(?=.*[@$!%*?&])/, { message: 'Password must contain at least one special character' })
     password: string;
+
+    @IsBoolean()
+    @IsNotEmpty()
+    type: boolean
 
 }

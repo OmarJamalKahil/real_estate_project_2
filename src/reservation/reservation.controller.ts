@@ -3,10 +3,10 @@ import { ReservationService } from './reservation.service';
 import { CreateReservationDto } from './dto/create-reservation.dto';
 import { UpdateReservationDto } from './dto/update-reservation.dto';
 import { Roles } from 'src/common/decorators/roles.decorator';
-import { Role } from 'src/user/entities/user.entity';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { CreateReservationParamDto } from './dto/create-reservation-param.dto';
+import { Role } from 'src/common/enums/role.enum';
 
 @Controller('reservation')
 export class ReservationController {

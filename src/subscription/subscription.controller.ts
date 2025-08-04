@@ -5,7 +5,7 @@ import { UpdateSubscriptionDto } from './dto/update-subscription.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { Roles } from 'src/common/decorators/roles.decorator';
-import { Role } from 'src/user/entities/user.entity';
+import { Role } from 'src/common/enums/role.enum';
 
 @Controller('subscription')
 export class SubscriptionController {
