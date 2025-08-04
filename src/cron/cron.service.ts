@@ -94,7 +94,7 @@ export class CronService implements OnModuleInit {
   }
 
   // ✅ Cron to delete notifications older than 3 days (runs every day at 2 AM)
-  @Cron(CronExpression.EVERY_DAY_AT_2AM)
+  @Cron(CronExpression.EVERY_10_SECONDS)
   async deleteOldNotifications(): Promise<void> {
     this.logger.log('Checking for old notifications to delete...');
 
