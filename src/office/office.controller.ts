@@ -5,7 +5,6 @@ import { UpdateOfficeDto } from './dto/update-office.dto';
 import { FileFieldsInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import { FileValidationPipe } from 'src/common/pipes/file-validation.pipe';
 import { UpdateOfficeStatusDto } from './dto/update-office-status.dto';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { Role } from 'src/user/entities/user.entity';
@@ -13,6 +12,7 @@ import { OfficeRatingService } from './office_rating.service';
 import { CreateOrUpdateOfficeRatingDto } from './dto/create-or-update-office-rating.dto';
 import { MultiFileValidationPipe } from 'src/common/pipes/multi-files-validation.pipe';
 import { PaginationDto } from 'src/common/utils/pagination.dto';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
 @Controller('office')
 export class OfficeController {
