@@ -128,7 +128,13 @@ export class ReservationService {
 
       property.status = PropertyStatus.Reserved;
 
-      this.notificationService.notifyUser(queryRunner,property.office.user.id, "New Reservation", `${user.first_name} ${user.last_name} has reserved a property from yours with this property number:${property.propertyNumber}.`)
+      this.notificationService.notifyUser(queryRunner, 
+
+        //omar comment this
+        /*property.office.user.id*/ property.office.id, 
+
+        
+        "New Reservation", `${user.first_name} ${user.last_name} has reserved a property from yours with this property number:${property.propertyNumber}.`)
 
 
 

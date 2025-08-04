@@ -19,6 +19,7 @@ import { UpdateOfficeStatusDto } from './dto/update-office-status.dto';
 import { PaginationDto } from 'src/common/utils/pagination.dto';
 import { PaginatedResponse } from 'src/common/utils/paginated-response.interface';
 import { OfficeSubscription } from 'src/office-subscription/entities/office-subscription.entity';
+import { of } from 'rxjs';
 
 @Injectable()
 export class OfficeService {
@@ -42,7 +43,7 @@ export class OfficeService {
    */
   async create(
     createOfficeDto: CreateOfficeDto,
-    userId: string,
+    /*userId: string,*/ /**omar */officeId: string,
     license_photo?: Express.Multer.File,
     office_photo?: Express.Multer.File,
   ) {
@@ -51,50 +52,83 @@ export class OfficeService {
     await queryRunner.startTransaction();
 
     try {
-      if (!license_photo || !office_photo) {
-        throw new BadRequestException(
-          'license_photo or office_photo is missed',
-        );
-      }
+      // if (!license_photo || !office_photo) {
+      //   throw new BadRequestException(
+      //     'license_photo or office_photo is missed',
+      //   );
+      //}
 
-      const user = await this.userRepository.findOne({
-        where: { id: userId },
-      });
-      if (!user) throw new NotFoundException('User not found');
+      //omar comment this
+      // const user = await this.userRepository.findOne({
+      //   where: { id: userId },
+      // });
+      //if (!user) throw new NotFoundException('User not found');
 
       let office = await this.officeRepository.findOne({
         where: {
-          user,
+          //user,
+
+          //omar
+          id: officeId
         },
       });
 
-      if (office) {
-        throw new BadRequestException("you can't have multiple offices");
+      console.log(office?.office_email)
+      console.log(officeId)
+            console.log(office);
+
+
+      // if (office) {
+      //   throw new BadRequestException("you can't have multiple offices");
+      // }
+
+      var licensePhoto;
+      var officePhotoEntity;
+
+      if(license_photo){
+
+        const uploadedLicense =
+          await this.cloudinaryService.uploadImage(license_photo);
+
+        licensePhoto = this.licensePhotoRepository.create({
+          url: uploadedLicense.secure_url,
+          public_id: uploadedLicense.public_id,
+        });
+
+        await queryRunner.manager.save(licensePhoto);
+
       }
-      const uploadedLicense =
-        await this.cloudinaryService.uploadImage(license_photo);
-      const uploadedOffice =
-        await this.cloudinaryService.uploadImage(office_photo);
 
-      const licensePhoto = this.licensePhotoRepository.create({
-        url: uploadedLicense.secure_url,
-        public_id: uploadedLicense.public_id,
-      });
+      if(office_photo){
 
-      const officePhotoEntity = this.officePhotoRepository.create({
-        url: uploadedOffice.secure_url,
-        public_id: uploadedOffice.public_id,
-      });
+        const uploadedOffice =
+          await this.cloudinaryService.uploadImage(office_photo);
 
-      await queryRunner.manager.save(licensePhoto);
-      await queryRunner.manager.save(officePhotoEntity);
+        officePhotoEntity = this.officePhotoRepository.create({
+          url: uploadedOffice.secure_url,
+          public_id: uploadedOffice.public_id,
+        });
 
-      office = this.officeRepository.create({
-        ...createOfficeDto,
-        user,
-        license_photo: licensePhoto,
-        office_photo: officePhotoEntity,
-      });
+        await queryRunner.manager.save(officePhotoEntity);
+
+      }
+
+      if(office){
+        office.license_number = createOfficeDto.license_number ;
+        office.password = createOfficeDto.password;
+        office.name = createOfficeDto.name;
+        office.personal_identity_number = createOfficeDto.personal_identity_number;
+        office.receiver_identifier = createOfficeDto.receiver_identifier;
+
+        if(licensePhoto){
+          office.license_photo = licensePhoto;
+        }
+
+        if(officePhotoEntity){
+          office.office_photo = officePhotoEntity
+        }
+
+      }      
 
       await queryRunner.manager.save(office);
       await queryRunner.commitTransaction();
@@ -327,7 +361,10 @@ export class OfficeService {
   async update(
     officeId: string,
     updateOfficeDto: UpdateOfficeDto,
-    userId: string,
+
+    //omar comment this
+    /*userId: string,*/ 
+
     office_photo?: Express.Multer.File,
   ) {
     const queryRunner = this.dataSource.createQueryRunner();
@@ -353,9 +390,10 @@ export class OfficeService {
 
       if (!office) throw new NotFoundException('Office not found');
 
-      if (office.user.id !== userId) {
-        throw new ForbiddenException("it's forbidden to do this!");
-      }
+      //omar comment this
+      // if (office.user.id !== userId) {
+      //   throw new ForbiddenException("it's forbidden to do this!");
+      // }
 
       if (office_photo) {
         if (office.office_photo?.public_id) {
@@ -441,9 +479,10 @@ export class OfficeService {
 
       if (!office) throw new NotFoundException('Office not found');
 
-      if (office.user.id !== userId) {
-        throw new ForbiddenException("it's forbidden to do this!");
-      }
+      //omar comment this
+      // if (office.user.id !== userId) {
+      //   throw new ForbiddenException("it's forbidden to do this!");
+      // }
 
       if (office.license_photo?.public_id) {
         await this.cloudinaryService.deleteImage(
