@@ -37,7 +37,6 @@ export class OfficeService {
     private readonly officeRatingRepository: Repository<OfficeRating>,
     private readonly cloudinaryService: CloudinaryService,
     private readonly dataSource: DataSource,
-    private readonly configService: ConfigService,
 
   ) { }
 
@@ -60,7 +59,7 @@ export class OfficeService {
           'license_photo or office_photo is missed',
         );
       }
-
+console.log("dfha");
       const user = await this.userRepository.findOne({
         where: { id: userId },
       });
@@ -76,12 +75,6 @@ export class OfficeService {
         throw new BadRequestException("you can't have multiple offices");
       }
 
-      const saltOrRounds = Number(
-              this.configService.get<number>('SALT_OR_ROUND', 10),
-            );
-      user.password = await bcrypt.hash(createOfficeDto.password, saltOrRounds);
-      
-      user.receiver_identifier = createOfficeDto.receiver_identifier;
 
       const uploadedLicense =
         await this.cloudinaryService.uploadImage(license_photo);
