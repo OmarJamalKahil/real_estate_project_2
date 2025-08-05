@@ -18,7 +18,9 @@ import { UpdateOfficeDto } from './dto/update-office.dto';
 import { UpdateOfficeStatusDto } from './dto/update-office-status.dto';
 import { PaginationDto } from 'src/common/utils/pagination.dto';
 import { PaginatedResponse } from 'src/common/utils/paginated-response.interface';
-import { OfficeSubscription } from 'src/office-subscription/entities/office-subscription.entity';
+import * as bcrypt from 'bcrypt';
+import { ConfigService } from '@nestjs/config';
+
 
 @Injectable()
 export class OfficeService {
@@ -35,6 +37,8 @@ export class OfficeService {
     private readonly officeRatingRepository: Repository<OfficeRating>,
     private readonly cloudinaryService: CloudinaryService,
     private readonly dataSource: DataSource,
+    private readonly configService: ConfigService,
+
   ) { }
 
   /**
@@ -71,6 +75,14 @@ export class OfficeService {
       if (office) {
         throw new BadRequestException("you can't have multiple offices");
       }
+
+      const saltOrRounds = Number(
+              this.configService.get<number>('SALT_OR_ROUND', 10),
+            );
+      user.password = await bcrypt.hash(createOfficeDto.password, saltOrRounds);
+      
+      user.receiver_identifier = createOfficeDto.receiver_identifier;
+
       const uploadedLicense =
         await this.cloudinaryService.uploadImage(license_photo);
       const uploadedOffice =
@@ -97,6 +109,8 @@ export class OfficeService {
       });
 
       await queryRunner.manager.save(office);
+      await queryRunner.manager.save(user);
+
       await queryRunner.commitTransaction();
 
       return {
