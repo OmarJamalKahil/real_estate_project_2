@@ -57,6 +57,7 @@ export class UserProfileService {
       user.first_name = dto.first_name;
       user.last_name = dto.last_name;
       user.national_number = dto.national_number;
+      user.receiver_identifier = dto.receiver_identifier;
 
       const saltOrRounds = Number(
         this.configService.get<number>('SALT_OR_ROUND', 10),
