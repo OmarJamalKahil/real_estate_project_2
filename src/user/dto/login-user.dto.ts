@@ -20,8 +20,4 @@ export class LoginUserDto {
     @Matches(/(?=.*[@$!%*?&])/, { message: 'Password must contain at least one special character' })
     password: string;
 
-    @IsBoolean()
-    @IsNotEmpty()
-    type: boolean
-
 }
