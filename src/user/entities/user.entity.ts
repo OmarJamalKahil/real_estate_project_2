@@ -18,9 +18,13 @@ import { FavoriteOffice } from 'src/favorite-office/entities/favorite-office.ent
 import { FavoriteProperty } from 'src/favorite-property/entities/favorite-property.entity';
 import { Reservation } from 'src/reservation/entities/reservation.entity';
 import { Notification } from 'src/notification/entities/notification.entity';
-import { Role } from 'src/common/enums/role.enum';
 
-
+export enum Role {
+    USER = 'user',
+    OFFICEMANAGER = 'officeManager',
+    ADMIN = 'admin',
+    SUPERADMIN = 'superAdmin',
+}
 
 @Entity()
 export class User {

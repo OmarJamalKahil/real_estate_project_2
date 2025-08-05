@@ -7,7 +7,7 @@ import {
     NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from '../entities/user.entity';
+import { Role, User } from '../entities/user.entity';
 import { DataSource, In, Repository } from 'typeorm';
 import { AuthService } from 'src/auth/auth.service';
 import { MailService } from 'src/mail/mail.service';
@@ -22,7 +22,6 @@ import { Banned } from '../entities/banned.entity';
 import { WarnUserDto } from '../dto/warn-user.dto';
 import { Warning } from '../entities/warning.entity';
 import { UserWarnings } from '../entities/user-warnings.entity';
-import { Role } from 'src/common/enums/role.enum';
 
 @Injectable()
 export class UserAdminService {

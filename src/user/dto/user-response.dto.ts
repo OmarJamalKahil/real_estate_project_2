@@ -3,7 +3,7 @@ import { Upload } from "../entities/upload.entity";
 import { Banned } from "../entities/banned.entity";
 import { Warning } from "../entities/warning.entity";
 import { UserWarnings } from "../entities/user-warnings.entity";
-import { Role } from "src/common/enums/role.enum";
+import { Role } from "../entities/user.entity";
 
 
 export class UserResponseDto {

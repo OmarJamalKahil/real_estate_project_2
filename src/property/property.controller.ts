@@ -13,7 +13,7 @@ import { RolesGuard } from 'src/common/guards/roles.guard';
 import { FilterPropertyDto } from './dto/filter-property.dto';
 import { UpdatePropertyStatusDto } from './dto/update-property-status.dto';
 import { PaginationDto } from '../common/utils/pagination.dto';
-import { Role } from 'src/common/enums/role.enum';
+import { Role } from 'src/user/entities/user.entity';
 
 @Controller('property')
 export class PropertyController {

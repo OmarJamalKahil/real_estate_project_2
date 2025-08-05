@@ -5,7 +5,7 @@ import { UpdateOfficeSubscriptionDto } from './dto/update-office-subscription.dt
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
-import { Role } from 'src/common/enums/role.enum';
+import { Role } from 'src/user/entities/user.entity';
 
 @Controller('office-subscription')
 export class OfficeSubscriptionController {

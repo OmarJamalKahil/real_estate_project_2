@@ -26,7 +26,9 @@ export class CompleteUserDto {
     password: string;
 
     
-    
+    @IsNotEmpty()
+    @IsString()
+    receiver_identifier: string;
     
 }
 

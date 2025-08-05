@@ -349,10 +349,9 @@ export class PropertyService {
 
       if (!existing) throw new NotFoundException('Property not found');
 
-      //omar comment this
-      // if (existing.office.user.id !== officeManagerId) {
-      //   throw new ForbiddenException("You can't update this property");
-      // }
+      if (existing.office.user.id !== officeManagerId) {
+        throw new ForbiddenException("You can't update this property");
+      }
 
       // ❌ Prevent location update
       if (updateDto.location) {

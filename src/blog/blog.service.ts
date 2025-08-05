@@ -223,23 +223,18 @@ export class BlogService {
   ) { }
 
   // CREATE
-  async createBlog(createBlogDto: CreateBlogDto, /*userId: string*/ /*omar*/officeId: string , file?: Express.Multer.File): Promise<Blog> {
+  async createBlog(createBlogDto: CreateBlogDto, userId: string, file?: Express.Multer.File): Promise<Blog> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
-      const user = await queryRunner.manager.findOne(User, { where: { id: officeId } });
+      const user = await queryRunner.manager.findOne(User, { where: { id: userId } });
       if (!user) throw new NotFoundException('User not found');
 
       const office = await queryRunner.manager.findOne(Office, {
-        where: { 
-          //user: { id: userId } 
-        
-          //omar 
-          id: officeId
-        },
-        //relations: ['user'],
+        where: { user: { id: userId } },
+        relations: ['user'],
       });
       if (!office) throw new NotFoundException('Office not found');
 
@@ -280,15 +275,12 @@ export class BlogService {
     });
   }
 
-  async getAllBlogsForOffice(/*userId: string*/ /*omar */ officeId: string): Promise<Blog[]> {
+  async getAllBlogsForOffice(userId: string): Promise<Blog[]> {
     return this.blogRepository.find({
       where: {
-        // office: {
-        //   user: { id: userId },
-        // },
-
-        //omar
-        id: officeId
+        office: {
+          user: { id: userId },
+        },
       },
       relations: ['office', 'blog_media'],
     });
@@ -387,8 +379,6 @@ export class BlogService {
       await queryRunner.release();
     }
   }
-
-
 
 
 }

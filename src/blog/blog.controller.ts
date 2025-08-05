@@ -6,7 +6,7 @@ import { Roles } from 'src/common/decorators/roles.decorator';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { Role } from 'src/common/enums/role.enum';
+import { Role } from 'src/user/entities/user.entity';
 
 @Controller('blog')
 export class BlogController {
