@@ -201,11 +201,12 @@ console.log("dfha");
     const office = await this.officeRepository
       .createQueryBuilder('office')
       .leftJoinAndSelect('office.office_photo', 'office_photo')
+      .leftJoinAndSelect('office.license_photo', 'license_photo')
       .leftJoinAndSelect('office.blogs', 'blogs')
       .leftJoin('office.ratings', 'rating')
       .loadRelationCountAndMap('office.ratingsCount', 'office.ratings')
       .where('office.id = :officeId', { officeId })
-      .select(['office', 'office_photo', 'blogs'])
+      .select(['office', 'office_photo', 'blogs', 'license_photo'])
       .getOne();
 
     if (!office) {
@@ -215,8 +216,12 @@ console.log("dfha");
     return {
       id: office.id,
       name: office.name,
+      office_email: office.office_email,
       office_phone: office.office_phone,
       office_photo: office.office_photo,
+      license_photo: office.license_photo,
+      license_Number : office.license_number,
+      personal_identity_number : office.personal_identity_number,
       ratingsCount: office['ratingsCount'],
       blogs: office.blogs,
     };
