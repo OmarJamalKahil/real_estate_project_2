@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, Double, Repository } from 'typeorm';
 import { Office, OfficeCreatingStatus } from './entities/office.entity';
 import { LicensePhoto } from './entities/license_photo.entity';
 import { OfficePhoto } from './entities/office_photo.entity';
@@ -156,8 +156,6 @@ console.log("dfha");
       .createQueryBuilder('office')
       .leftJoinAndSelect('office.office_photo', 'office_photo')
       .leftJoinAndSelect('office.blogs', 'blogs')
-      .leftJoin('office.ratings', 'rating')
-      .loadRelationCountAndMap('office.ratingsCount', 'office.ratings')
       .where('office.status = :status', { status: 'accepted' })
       .select([
         'office.id',
@@ -174,6 +172,24 @@ console.log("dfha");
     // Get paginated data
     const [data, total] = await query.getManyAndCount();
 
+    const officeRatingsMap = new Map<string, number>();
+
+    for (const office of data) {
+      const ratings = await this.officeRatingRepository
+        .createQueryBuilder('rating')
+        .select('rating.rating', 'score')
+        .where('rating.officeId = :officeId', { officeId: office.id })
+        .getRawMany(); // [{ score: 4 }, { score: 5 }, ...]
+
+      const scores = ratings.map(r => Number(r.score));
+      const average =
+        scores.length > 0
+          ? scores.reduce((acc, curr) => acc + curr, 0) / scores.length
+          : 0;
+
+      officeRatingsMap.set(office.id, average);
+    }
+
     const offices = data.map((office) => ({
       id: office.id,
       name: office.name,
@@ -181,7 +197,7 @@ console.log("dfha");
       office_email: office.office_email,
       status: office.status,
       office_photo: office.office_photo,
-      ratingsCount: office['ratingsCount'],
+      ratings: officeRatingsMap.get(office.id) ,
       blogs: office.blogs,
     }));
 
@@ -203,8 +219,6 @@ console.log("dfha");
       .leftJoinAndSelect('office.office_photo', 'office_photo')
       .leftJoinAndSelect('office.license_photo', 'license_photo')
       .leftJoinAndSelect('office.blogs', 'blogs')
-      .leftJoin('office.ratings', 'rating')
-      .loadRelationCountAndMap('office.ratingsCount', 'office.ratings')
       .where('office.id = :officeId', { officeId })
       .select(['office', 'office_photo', 'blogs', 'license_photo'])
       .getOne();
@@ -213,6 +227,19 @@ console.log("dfha");
       throw new NotFoundException('Office not found');
     }
 
+    const ratings = await this.officeRatingRepository
+      .createQueryBuilder('rating')
+      .select('rating.rating', 'score')
+      .where('rating.officeId = :officeId', { officeId: office.id })
+      .getRawMany();
+
+    var avgRating = 0;
+    const ratingValues = ratings.map(r => r.score);
+
+    for(var rating of ratingValues){
+      avgRating += rating;
+    }
+ 
     return {
       id: office.id,
       name: office.name,
@@ -222,7 +249,7 @@ console.log("dfha");
       license_photo: office.license_photo,
       license_Number : office.license_number,
       personal_identity_number : office.personal_identity_number,
-      ratingsCount: office['ratingsCount'],
+      rating: avgRating/ratingValues.length,
       blogs: office.blogs,
     };
   }

@@ -11,8 +11,7 @@ export class OfficeRating {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
-    @OneToOne(() => User, { nullable: false })
-    @JoinColumn()
+    @ManyToOne(() => User, (user) => user.ratings, { nullable: false })
     user: User;
 
     @ManyToOne(() => Office, (office) => office.ratings)
