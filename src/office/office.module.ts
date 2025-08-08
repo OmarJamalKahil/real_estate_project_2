@@ -17,7 +17,7 @@ import { OfficeSubscriptionModule } from 'src/office-subscription/office-subscri
   imports: [
     TypeOrmModule.forFeature([Office, LicensePhoto,User,OfficeRating,OfficePhoto,OfficeSubscription]),
     CloudinaryModule,
-forwardRef(() => OfficeSubscriptionModule),
+    forwardRef(() => OfficeSubscriptionModule),
   ], // <-- FIX HERE
   controllers: [OfficeController],
   providers: [OfficeService,OfficeRatingService],

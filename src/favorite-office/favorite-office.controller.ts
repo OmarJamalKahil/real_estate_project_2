@@ -26,6 +26,17 @@ export class FavoriteOfficeController {
     return this.favoriteOfficeService.findAllFavoriteOfficeByUserId(userId);
   }
 
+  // omar added this
+  @Get(':officeId')
+  @UseGuards(JwtAuthGuard)
+  checkIfOfficeIsFavorite(
+    @Param('officeId') officeId: string,
+    @Req() req,
+  ) {
+    const { userId } = req.user;
+    return this.favoriteOfficeService.checkIfOfficeIsFavorite(userId, officeId);
+  }
+
   @Delete('allOffices')
   @UseGuards(JwtAuthGuard)
   remove(

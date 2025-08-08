@@ -3,6 +3,8 @@ import {
   NotFoundException,
   ConflictException,
   InternalServerErrorException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FavoriteOffice } from './entities/favorite-office.entity';
@@ -10,6 +12,7 @@ import { Repository, DataSource } from 'typeorm';
 import { Office } from 'src/office/entities/office.entity';
 import { UserAuthService } from 'src/user/services/user-auth.service';
 import { CreateFavoriteOfficeDto } from './dto/create-favorite-office.dto';
+import { OfficeService } from 'src/office/office.service';
 
 @Injectable()
 export class FavoriteOfficeService {
@@ -23,6 +26,8 @@ export class FavoriteOfficeService {
     private readonly userService: UserAuthService,
 
     private readonly dataSource: DataSource,
+
+    private readonly officeService: OfficeService
   ) { }
 
   async create(userId: string, dto: CreateFavoriteOfficeDto) {
@@ -66,10 +71,21 @@ export class FavoriteOfficeService {
     const user = await this.userService.getUser(userId);
     if (!user) throw new NotFoundException('User not found');
 
-    return this.favoriteOfficeRepository.find({
+    const favoriteOffices =  await this.favoriteOfficeRepository.find({
       where: { user: { id: user.id } },
-      relations: ['office','office.office_photo'],
+      relations: ['office'],
     });
+
+    var offices = favoriteOffices.map(r => r.office);
+
+    var favoriteOfficesDetails : any[] = [];
+
+    for(let i = 0; i < offices.length; i++){
+      favoriteOfficesDetails[i] = await this.officeService.findOne(offices[i].id);
+    }
+
+    return favoriteOfficesDetails;
+    
   }
 
   async removeByUserId(userId: string, officeId: string) {
@@ -132,8 +148,19 @@ export class FavoriteOfficeService {
     }
   }
 
+/**
+ * this func check if the office is in your favorite list
+ * @param userId the id of the user requesting the func
+ * @param officeId the id of the office 
+ * @returns a boolean value, if (true) then the office is in favorite list
+ */
+ async checkIfOfficeIsFavorite(userId: string, officeId: string){
+  const thisOfficeIsFavorite = await this.favoriteOfficeRepository.exists({
+    where: {office: {id: officeId}, user: {id: userId}}
+  });
 
-
+  return thisOfficeIsFavorite;
+ }
 
 
 }

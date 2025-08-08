@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Double, Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { Office, OfficeCreatingStatus } from './entities/office.entity';
 import { LicensePhoto } from './entities/license_photo.entity';
 import { OfficePhoto } from './entities/office_photo.entity';
@@ -18,9 +18,6 @@ import { UpdateOfficeDto } from './dto/update-office.dto';
 import { UpdateOfficeStatusDto } from './dto/update-office-status.dto';
 import { PaginationDto } from 'src/common/utils/pagination.dto';
 import { PaginatedResponse } from 'src/common/utils/paginated-response.interface';
-import * as bcrypt from 'bcrypt';
-import { ConfigService } from '@nestjs/config';
-
 
 @Injectable()
 export class OfficeService {
@@ -239,6 +236,7 @@ console.log("dfha");
     for(var rating of ratingValues){
       avgRating += rating;
     }
+
  
     return {
       id: office.id,
@@ -249,7 +247,7 @@ console.log("dfha");
       license_photo: office.license_photo,
       license_Number : office.license_number,
       personal_identity_number : office.personal_identity_number,
-      rating: avgRating/ratingValues.length,
+      rating: avgRating/ratingValues.length > 0 ? avgRating/ratingValues.length : 0,
       blogs: office.blogs,
     };
   }

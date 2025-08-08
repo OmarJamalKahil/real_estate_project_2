@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { FavoriteOfficeService } from './favorite-office.service';
 import { FavoriteOfficeController } from './favorite-office.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
