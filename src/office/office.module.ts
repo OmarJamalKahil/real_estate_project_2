@@ -9,18 +9,21 @@ import { UserModule } from 'src/user/user.module';
 import { User } from 'src/user/entities/user.entity';
 import { OfficeRating } from './entities/office_rating.entity';
 import { OfficeRatingService } from './office_rating.service';
-import { OfficePhoto } from './entities/office_photo.entity';
 import { OfficeSubscription } from 'src/office-subscription/entities/office-subscription.entity';
 import { OfficeSubscriptionModule } from 'src/office-subscription/office-subscription.module';
+import { NotificationModule } from 'src/notification/notification.module';
+import { Notification } from 'src/notification/entities/notification.entity';
+import { Photo } from 'src/common/entities/Photo.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Office, LicensePhoto,User,OfficeRating,OfficePhoto,OfficeSubscription]),
+    TypeOrmModule.forFeature([Office, LicensePhoto, User, OfficeRating, Photo, OfficeSubscription, Notification]),
     CloudinaryModule,
-forwardRef(() => OfficeSubscriptionModule),
+    NotificationModule,
+    forwardRef(() => OfficeSubscriptionModule),
   ], // <-- FIX HERE
   controllers: [OfficeController],
-  providers: [OfficeService,OfficeRatingService],
-  exports: [OfficeService,OfficeRatingService],
+  providers: [OfficeService, OfficeRatingService],
+  exports: [OfficeService, OfficeRatingService],
 })
 export class OfficeModule { }

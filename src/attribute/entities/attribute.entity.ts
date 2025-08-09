@@ -1,6 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToMany, JoinTable } from 'typeorm';
 import { PropertyType } from 'src/property-type/entities/property-type.entity';
 import { PropertyAttribute } from 'src/property/entities/property_attribute.entity';
+import { PropertyTypeAttribute } from 'src/property/entities/propertyType_attribute.entity';
 
 @Entity()
 export class Attribute {
@@ -13,16 +14,10 @@ export class Attribute {
   @OneToMany(() => PropertyAttribute, (pa) => pa.attribute)
   propertyAttributes: PropertyAttribute[];
   
+  @OneToMany(() => PropertyTypeAttribute, (pta) => pta.attribute)
+  propertyTypeAttributes: PropertyTypeAttribute[];
   
-  @ManyToMany(() => PropertyType)
-  @JoinTable()
-  propertyType: PropertyType[];
 }
 
 
 
-// @Column({ default: false })
-// isUnique: boolean;
-
-// @OneToMany(() => PropertyTypeAttribute, (pta) => pta.attribute)
-// propertyTypeAttributes: PropertyTypeAttribute[];

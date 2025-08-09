@@ -8,11 +8,12 @@ import { LicenseDetails } from './license_details.entity';
 import { PropertyAttribute } from './property_attribute.entity';
 import { Office } from 'src/office/entities/office.entity';
 import { User } from 'src/user/entities/user.entity';
-import { PropertyStatus } from '../common/property-status.enum';
+import { EnumStatus } from '../common/property-status.enum';
 import { PropertyComment } from 'src/property-comment/entities/property-comment.entity';
 import { PropertyType } from 'src/property-type/entities/property-type.entity';
 import { PropertyTypeOperation } from '../common/property-type-operation.enum';
 import { Reservation } from 'src/reservation/entities/reservation.entity';
+import { RentalExpirationDate } from 'src/property-request/entities/rental-expiration-date.entity';
 
 @Entity()
 export class Property {
@@ -56,23 +57,23 @@ export class Property {
 
   @Column({
     type: 'enum',
-    enum: PropertyStatus,
-    default: PropertyStatus.Pending
+    enum: EnumStatus,
+    default: EnumStatus.Pending
   })
-  status: PropertyStatus;
+  status: EnumStatus;
 
-    @Column({ default: false })
+  @Column({ default: false })
   softDelete: boolean;
 
-  // REMOVE 'softDelete' column if you use DeleteDateColumn
-  // @Column({ default: false })
-  // softDelete: boolean;
 
-  // @DeleteDateColumn() // THIS IS THE KEY FOR TYPEORM SOFT DELETE
-  // deletedAt: Date; // This column will store the date/time of deletion
+  @Column({
+    nullable: false,
+    type: 'varchar'
+  })
+  owner: string;
 
-  @ManyToOne(() => User, (user) => user.properties)
-  owner: User;
+  @OneToOne(() => RentalExpirationDate, (rentalExpirationDate) => rentalExpirationDate.property)
+  rentalExpirationDate: RentalExpirationDate
 
   // IMPORTANT: For one-to-one relations that should also be soft-deleted
   // or managed on deletion, you might need to handle them in your service.
@@ -86,11 +87,11 @@ export class Property {
   // For deletion, if you soft-delete Property, LicenseDetails will remain. You'd need to soft-delete it separately if desired.
   @OneToOne(() => LicenseDetails, (licenseDetails) => licenseDetails.property, { nullable: true, onDelete: 'CASCADE' }) // If property is hard-deleted, license details should also be deleted
   @JoinColumn()
-  licenseDetails: LicenseDetails;
+  licenseDetails: LicenseDetails; 
 
 
   @OneToOne(() => Reservation, (reservation) => reservation.property) // Or handle reservation soft-deletion if it applies
-  reservation: Reservation; 
+  reservation: Reservation;
 
   // onDelete: 'SET NULL' means when a Property is deleted (hard or soft),
   // the propertyId in PropertyAttribute will become NULL.
@@ -101,4 +102,11 @@ export class Property {
 
   @OneToMany(() => PropertyComment, (propertyComment) => propertyComment.property, { onDelete: 'SET NULL' }) // Comments might remain or be soft-deleted separately
   comments?: PropertyComment[];
+
+  @Column({
+    type: 'date',
+    default: new Date()
+  })
+  createdAt: Date
+
 }

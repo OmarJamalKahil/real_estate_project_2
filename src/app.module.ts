@@ -26,7 +26,6 @@ import { OfficeRating } from './office/entities/office_rating.entity';
 import { OfficePhoto } from './office/entities/office_photo.entity';
 import { PropertyModule } from './property/property.module';
 import { Location } from './property/entities/location.entity';
-import { LicenseType } from './property/entities/license_type.entity';
 import { LicenseDetails } from './property/entities/license_details.entity';
 import { PropertyTypeAttribute } from './property/entities/propertyType_attribute.entity';
 import { PropertyAttribute } from './property/entities/property_attribute.entity';
@@ -62,11 +61,18 @@ import { Client } from './archive/entities/client.entity';
 import { EarningStatistics } from './statistics/entities/earning_statistics.entity';
 import { GeneralStatistics } from './statistics/entities/general_statistics.entity';
 import { FinancialStatistics } from './statistics/entities/financial_statistics.entity';
+import { Photo } from './common/entities/Photo.entity';
+import { RentalExpirationDate } from './property-request/entities/rental-expiration-date.entity';
+import { PropertyRequestPhoto } from './property-request/entities/property-request-photo.entity';
+import { PropertyRequest } from './property-request/entities/property-request.entity';
+import { LicenseTypeModule } from './license-type/license-type.module';
+import { PropertyRequestModule } from './property-request/property-request.module';
+import { LicenseType } from './license-type/entities/license_type.entity';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
       User,
-      Upload,
+      Photo,
       Banned,
       Warning,
       UserWarnings,
@@ -81,10 +87,10 @@ import { FinancialStatistics } from './statistics/entities/financial_statistics.
       PropertyComment,
       FavoriteProperty,
       Reservation,
-      Notification 
+      Notification
 
     ]),
-    ScheduleModule.forRoot(),
+    ScheduleModule.forRoot(), 
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: 'localhost',
@@ -99,7 +105,6 @@ import { FinancialStatistics } from './statistics/entities/financial_statistics.
       // process.env.DB_NAME,
       entities: [
         User,
-        Upload,
         Warning,
         UserWarnings,
         Banned,
@@ -109,7 +114,7 @@ import { FinancialStatistics } from './statistics/entities/financial_statistics.
         BlogMedia,
         Office,
         OfficeRating,
-        OfficePhoto,
+        Photo,
         OfficeSubscription,
         Property,
         PropertyPhotos,
@@ -127,7 +132,9 @@ import { FinancialStatistics } from './statistics/entities/financial_statistics.
         FavoriteProperty,
         Reservation,
         Notification,
-
+        PropertyRequest,
+        PropertyRequestPhoto,
+        RentalExpirationDate,
         Archive,
         Owner,
         Client,
@@ -170,7 +177,7 @@ import { FinancialStatistics } from './statistics/entities/financial_statistics.
         CARD_EXPIRE_YEAR: Joi.number().required(),
         CARD_TYPE: Joi.string().required(),
 
-        
+
       }),
     }),
     UserModule,
@@ -192,7 +199,8 @@ import { FinancialStatistics } from './statistics/entities/financial_statistics.
     ReservationModule,
     NotificationModule,
     CronModule,
-    // StripeModule
+    PropertyRequestModule,
+    LicenseTypeModule,
     StatisticsModule,
     ArchiveModule
   ],
@@ -207,4 +215,3 @@ export class AppModule {
 // klfdskldflklkdfskfdslkkldfsdfskl
 // klfdskldflklkdfskfdslkkldfsdfskl
 
- 

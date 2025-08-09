@@ -22,6 +22,7 @@ import { VerifyUserDto } from './dto/verify-user.dto';
 import { CompleteUserDto } from './dto/complete-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { ResetUserPassword } from './dto/reset-user-password.dto';
+import { Role } from './entities/user.entity';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { CreateAdminDto } from './dto/create-admin.dto';
@@ -31,7 +32,6 @@ import { BanUserDto } from './dto/ban-user.dto';
 import { WarnUserDto } from './dto/warn-user.dto';
 import { GetUserByNationalNumberDto } from './dto/get-user-by-national-number.dto';
 import { UserService } from './user.service';
-import { Role } from 'src/common/enums/role.enum';
 
 @Controller('user')
 
@@ -53,27 +53,16 @@ export class UserController {
 
   @Post('start-register')
   async startRegister(@Body() dto: CreateUserDto) {
-    console.log("done");
-    return this.userAuthService.startRegister(dto, false);
+    return this.userAuthService.startRegister(dto);
   }
 
-  @Post('start-register-office-manager')
-  async startRegisterOfficeManager(@Body() dto: CreateUserDto) {
-    return this.userAuthService.startRegister(dto, true, Role.OFFICEMANAGER );
-  }
 
-  @Post('verify-code-user')
+
+  @Post('verify-code')
   @UseGuards(JwtAuthGuard)
-  async verifyCodeUser(@Req() req, @Body() dto: VerifyUserDto) {
+  async verifyCode(@Req() req, @Body() dto: VerifyUserDto) {
     const { userId } = req.user;
-    return this.userAuthService.verifyCodeUser(userId, dto.verify_code);
-  }
-
-  @Post('verify-code-office')
-  @UseGuards(JwtAuthGuard)
-  async verifyCodeOffice(@Req() req, @Body() dto: VerifyUserDto) {
-    const { officeId } = req.user;
-    return this.userAuthService.verifyCodeOffice(officeId, dto.verify_code);
+    return this.userAuthService.verifyCode(userId, dto.verify_code);
   }
 
   @Post('complete-register')
@@ -99,13 +88,22 @@ export class UserController {
     @Req() req
   ) {
     const { userId } = req.user;
+    console.log("this is something");
 
     return this.userAuthService.getUser(userId);
   }
 
 
+  @Get(':id')
+  @UseGuards(JwtAuthGuard)
+  async getUserById(
+    @Param() id: string
+  ) {
+    return this.userService.getUserById(id);
+  }
+
   @Get('get-user-national-number/:national_number')
-  @UseGuards(JwtAuthGuard, RolesGuard) 
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.OFFICEMANAGER)
   async getUserByNationalNumber(
     @Param() getUserByNationalNumberDto: GetUserByNationalNumberDto

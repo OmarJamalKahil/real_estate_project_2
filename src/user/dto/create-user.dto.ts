@@ -1,4 +1,4 @@
-import { IsBoolean, IsEmail, IsNotEmpty, IsPhoneNumber } from "class-validator";
+import { IsEmail, IsNotEmpty, IsPhoneNumber } from "class-validator";
 
 
 

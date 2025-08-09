@@ -8,12 +8,12 @@ import { CreatePropertyValidationPipe } from 'src/common/pipes/create-property-v
 import { validateDto } from 'src/common/functions/validate-dto.function';
 import { plainToInstance } from 'class-transformer';
 import { Roles } from 'src/common/decorators/roles.decorator';
+import { Role } from 'src/user/entities/user.entity';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { FilterPropertyDto } from './dto/filter-property.dto';
 import { UpdatePropertyStatusDto } from './dto/update-property-status.dto';
 import { PaginationDto } from '../common/utils/pagination.dto';
-import { Role } from 'src/common/enums/role.enum';
 
 @Controller('property')
 export class PropertyController {
@@ -53,12 +53,15 @@ export class PropertyController {
   }
 
   @Post('/filter')
+  @UseGuards(JwtAuthGuard)
   getPropertiesByFiltering(
     @Body() filterPropertyDto: FilterPropertyDto,
-    @Query() paginationDto: PaginationDto
+    @Query() paginationDto: PaginationDto,
+    @Req() req,
 
   ) {
-    return this.propertyService.findPropertiesByFiltering(filterPropertyDto, paginationDto)
+    const {userId} = req.user
+    return this.propertyService.findPropertiesByFiltering(filterPropertyDto, paginationDto,userId)
   }
 
   @Get('/reserved')

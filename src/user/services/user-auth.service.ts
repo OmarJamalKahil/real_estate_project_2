@@ -11,7 +11,7 @@ import { ConfigService } from '@nestjs/config';
 import { AuthService } from 'src/auth/auth.service';
 import { MailService } from 'src/mail/mail.service';
 
-import { User } from '../entities/user.entity';
+import { User, Role } from '../entities/user.entity';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { LoginUserDto } from '../dto/login-user.dto';
 import { ResetUserPassword } from '../dto/reset-user-password.dto';
@@ -20,16 +20,12 @@ import { generate6DigitCode } from '../../common/utils/generate-code';
 import { USER_ERRORS } from '../user.constants';
 import { CreateAdminDto } from '../dto/create-admin.dto';
 import { UserResponseDto } from '../dto/user-response.dto';
-import { Office } from 'src/office/entities/office.entity';
-import { Role } from 'src/common/enums/role.enum';
 
 @Injectable()
 export class UserAuthService {
     constructor(
         @InjectRepository(User)
         private readonly userRepository: Repository<User>,
-        @InjectRepository(Office)
-        private readonly officeRepository: Repository<Office>,
         private readonly authService: AuthService,
         private readonly mailService: MailService,
         private readonly configService: ConfigService,
@@ -38,56 +34,26 @@ export class UserAuthService {
     /**
      * Register user and send verification code
      */
-    async startRegister(dto: CreateUserDto, office_or_client: boolean, role: Role = Role.USER) {
+    async startRegister(dto: CreateUserDto, role: Role = Role.USER) {
         const code = generate6DigitCode();
 
         const existingUser = await this.userRepository.findOne({
             where: [{ phone: dto.phone }, { email: dto.email }],
         });
 
-        //omar
-        const existingOffice = await this.officeRepository.findOne({
-            where: [{ office_phone: dto.phone }, { office_email: dto.email }],
-        });
-
-        if (existingUser || existingOffice) {
+        if (existingUser) {
             throw new BadRequestException(USER_ERRORS.EMAIL_PHONE_REGISTERED);
         }
 
-        //omar
-        var user;
-        console.log("fkdakl");
-        console.log(dto.email);
-        console.log(dto.phone);
+        const user = this.userRepository.create({
+            email: dto.email,
+            phone: dto.phone,
+            verify_code: code,
+            is_verified: false,
+            role,
+        });
 
-        if(office_or_client){
-                    console.log("fdalk");
-
-            user = this.officeRepository.create({
-                office_email: dto.email,
-                office_phone: dto.phone,
-                verify_code: code,
-                is_verified: false,
-                role,
-            });
-            console.log("kbnkjds");
-            await this.officeRepository.save(user);
-                        console.log("kbnkjds");
-
-        } else{
-                    console.log("fkdaoghsdiugkl");
-            user = this.userRepository.create({
-                email: dto.email,
-                phone: dto.phone,
-                verify_code: code,
-                is_verified: false,
-                role,
-            });
-
-            await this.userRepository.save(user);
-
-        }
-        
+        await this.userRepository.save(user);
 
         await this.mailService.sendMail(dto.email, code);
 
@@ -105,7 +71,7 @@ export class UserAuthService {
     /**
      * Verify the sent code
      */
-    async verifyCodeUser(userId: string, verify_code: string) {
+    async verifyCode(userId: string, verify_code: string) {
         const user = await this.userRepository.findOneBy({
             id: userId,
             verify_code,
@@ -121,45 +87,20 @@ export class UserAuthService {
         return { message: 'User verified successfully' };
     }
 
-    async verifyCodeOffice(officeId: string, verify_code: string) {
-        const user = await this.officeRepository.findOneBy({
-            id: officeId,
-            verify_code,
-        });
-
-        if (!user) {
-            throw new NotFoundException(USER_ERRORS.INVALID_VERIFICATION);
-        }
-
-        user.is_verified = true;
-        await this.officeRepository.save(user);
-
-        return { message: 'User verified successfully' };
-    }
-
     /**
      * Login
      */
     async login(dto: LoginUserDto) {
+        const user = await this.userRepository.findOneBy({
+            email: dto.email,
+            is_verified: true
+        });
 
-        var user;
-        if(dto.type){
-            user = await this.officeRepository.findOneBy({
-                office_email: dto.email,
-                is_verified: true
-            });
-        } else{
-            user = await this.userRepository.findOneBy({
-                email: dto.email,
-                is_verified: true
-            });
-        }
 
 
         if (!user) {
             throw new UnauthorizedException(USER_ERRORS.INVALID_CREDENTIALS);
         }
-        console.log(user)
 
         const match = await bcrypt.compare(dto.password, user.password);
 
@@ -168,7 +109,7 @@ export class UserAuthService {
         }
 
 
-        console.log("dfhk")
+
 
         const tokens = this.authService.generateTokens({
             userId: user.id,

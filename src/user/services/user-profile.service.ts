@@ -10,12 +10,12 @@ import { ConfigService } from '@nestjs/config';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 
 import { User } from '../entities/user.entity';
-import { Upload } from '../entities/upload.entity';
 import { CompleteUserDto } from '../dto/complete-user.dto';
 import { USER_ERRORS } from '../user.constants';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { AuthService } from 'src/auth/auth.service';
 import { UserResponseDto } from '../dto/user-response.dto';
+import { Photo } from 'src/common/entities/Photo.entity';
 
 @Injectable()
 export class UserProfileService {
@@ -23,8 +23,8 @@ export class UserProfileService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
 
-    @InjectRepository(Upload)
-    private readonly uploadRepository: Repository<Upload>,
+    @InjectRepository(Photo)
+    private readonly uploadRepository: Repository<Photo>,
 
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
@@ -72,7 +72,7 @@ export class UserProfileService {
           public_id,
         });
 
-        await queryRunner.manager.save(Upload, upload);
+        await queryRunner.manager.save(Photo, upload);
 
         user.profile_photo = upload;
       }
@@ -146,7 +146,7 @@ export class UserProfileService {
           public_id,
         });
 
-        await queryRunner.manager.save(Upload, upload);
+        await queryRunner.manager.save(Photo, upload);
 
         user.profile_photo = upload;
       }
