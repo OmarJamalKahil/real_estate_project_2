@@ -6,17 +6,17 @@ import { User } from './entities/user.entity';
 import { AuthModule } from 'src/auth/auth.module';
 import { Banned } from './entities/banned.entity';
 import { Warning } from './entities/warning.entity';
-import { Upload } from './entities/upload.entity';
 import { MailModule } from 'src/mail/mail.module';
 import { CloudinaryModule } from 'src/cloudinary/cloudinary.module';
 import { UserAuthService } from './services/user-auth.service';
 import { UserProfileService } from './services/user-profile.service';
 import { UserAdminService } from './services/user-admin.service';
 import { UserWarnings } from './entities/user-warnings.entity';
+import { Photo } from 'src/common/entities/Photo.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, Upload, Banned, Warning, UserWarnings,]),
+    TypeOrmModule.forFeature([User, Photo, Banned, Warning, UserWarnings,]),
     AuthModule, // ✅ this fixes the issue
     MailModule,
     CloudinaryModule,

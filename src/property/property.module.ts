@@ -7,7 +7,7 @@ import { PropertyPhotos } from './entities/property_photos.entity';
 import { PropertyAttribute } from './entities/property_attribute.entity';
 import { PropertyTypeAttribute } from './entities/propertyType_attribute.entity';
 import { LicenseDetails } from './entities/license_details.entity';
-import { LicenseType } from './entities/license_type.entity';
+import { LicenseType } from '../license-type/entities/license_type.entity';
 import { Location } from './entities/location.entity';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { OfficeModule } from 'src/office/office.module';

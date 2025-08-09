@@ -35,7 +35,7 @@ export class OfficeController {
 
   @Post('/create-office')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.OFFICEMANAGER)
+  // @Roles(Role.OFFICEMANAGER)
   @UseInterceptors(FileFieldsInterceptor([
     { name: 'license_photo', maxCount: 1 },
     { name: 'office_photo', maxCount: 1 },
@@ -59,10 +59,13 @@ export class OfficeController {
   }
 
   @Get()
+  @UseGuards(JwtAuthGuard)
   findAll(
-    @Query() paginationDto:PaginationDto
+    @Query() paginationDto:PaginationDto,
+    @Req() req,
   ) {
-    return this.officeService.getAllOfficesWithAverageRating(paginationDto);
+    const {userId} = req.user;
+    return this.officeService.getAllOfficesWithAverageRating(userId,paginationDto);
   }
 
 

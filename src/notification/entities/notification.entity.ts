@@ -15,6 +15,9 @@ export class Notification {
   @Column({ default: false })
   isRead: boolean;
 
+  @Column({ default: false })
+  notified: boolean;
+
   @ManyToOne(() => User, (user) => user.notifications, { eager: false })
   user: User;
 

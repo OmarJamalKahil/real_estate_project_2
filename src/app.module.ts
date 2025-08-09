@@ -10,7 +10,6 @@ import * as Joi from 'joi'
 import { MailService } from './mail/mail.service';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { User } from './user/entities/user.entity';
-import { Upload } from './user/entities/upload.entity';
 import { Warning } from './user/entities/warning.entity';
 import { Banned } from './user/entities/banned.entity';
 import { UserWarnings } from './user/entities/user-warnings.entity';
@@ -23,10 +22,9 @@ import { Blog } from './blog/entities/blog.entity';
 import { BlogMedia } from './blog/entities/blog_media.entity';
 import { LicensePhoto } from './office/entities/license_photo.entity';
 import { OfficeRating } from './office/entities/office_rating.entity';
-import { OfficePhoto } from './office/entities/office_photo.entity';
 import { PropertyModule } from './property/property.module';
 import { Location } from './property/entities/location.entity';
-import { LicenseType } from './property/entities/license_type.entity';
+import { LicenseType } from './license-type/entities/license_type.entity';
 import { LicenseDetails } from './property/entities/license_details.entity';
 import { PropertyTypeAttribute } from './property/entities/propertyType_attribute.entity';
 import { PropertyAttribute } from './property/entities/property_attribute.entity';
@@ -54,11 +52,17 @@ import { Reservation } from './reservation/entities/reservation.entity';
 import { NotificationModule } from './notification/notification.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { Notification } from './notification/entities/notification.entity';
+import { PropertyRequestModule } from './property-request/property-request.module';
+import { Photo } from './common/entities/Photo.entity';
+import { PropertyRequest } from './property-request/entities/property-request.entity';
+import { PropertyRequestPhoto } from './property-request/entities/property-request-photo.entity';
+import { RentalExpirationDate } from './property-request/entities/rental-expiration-date.entity';
+import { LicenseTypeModule } from './license-type/license-type.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
       User,
-      Upload,
+      Photo,
       Banned,
       Warning,
       UserWarnings,
@@ -73,7 +77,7 @@ import { Notification } from './notification/entities/notification.entity';
       PropertyComment,
       FavoriteProperty,
       Reservation,
-      Notification 
+      Notification
 
     ]),
     ScheduleModule.forRoot(),
@@ -91,7 +95,6 @@ import { Notification } from './notification/entities/notification.entity';
       // process.env.DB_NAME,
       entities: [
         User,
-        Upload,
         Warning,
         UserWarnings,
         Banned,
@@ -101,7 +104,7 @@ import { Notification } from './notification/entities/notification.entity';
         BlogMedia,
         Office,
         OfficeRating,
-        OfficePhoto,
+        Photo,
         OfficeSubscription,
         Property,
         PropertyPhotos,
@@ -118,7 +121,10 @@ import { Notification } from './notification/entities/notification.entity';
         PropertyComment,
         FavoriteProperty,
         Reservation,
-        Notification
+        Notification,
+        PropertyRequest,
+        PropertyRequestPhoto,
+        RentalExpirationDate
 
       ],
       // autoLoadEntities: true, // Automatically loads entities registered through TypeOrmModule.forFeature()
@@ -183,8 +189,9 @@ import { Notification } from './notification/entities/notification.entity';
     AttributeModule,
     ReservationModule,
     NotificationModule,
-    // CronModule,
-    // StripeModule
+    CronModule,
+    PropertyRequestModule,
+    LicenseTypeModule,
   ],
   controllers: [AppController],
   providers: [AppService, MailService],

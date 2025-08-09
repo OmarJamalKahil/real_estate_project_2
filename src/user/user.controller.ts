@@ -56,10 +56,7 @@ export class UserController {
     return this.userAuthService.startRegister(dto);
   }
 
-  @Post('start-register-office-manager')
-  async startRegisterOfficeManager(@Body() dto: CreateUserDto) {
-    return this.userAuthService.startRegister(dto, Role.OFFICEMANAGER);
-  }
+
 
   @Post('verify-code')
   @UseGuards(JwtAuthGuard)
@@ -91,13 +88,22 @@ export class UserController {
     @Req() req
   ) {
     const { userId } = req.user;
+    console.log("this is something");
 
     return this.userAuthService.getUser(userId);
   }
 
 
+  @Get(':id')
+  @UseGuards(JwtAuthGuard)
+  async getUserById(
+    @Param() id: string
+  ) {
+    return this.userService.getUserById(id);
+  }
+
   @Get('get-user-national-number/:national_number')
-  @UseGuards(JwtAuthGuard, RolesGuard) 
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.OFFICEMANAGER)
   async getUserByNationalNumber(
     @Param() getUserByNationalNumberDto: GetUserByNationalNumberDto

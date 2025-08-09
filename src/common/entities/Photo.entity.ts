@@ -1,7 +1,7 @@
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
-export class OfficePhoto {
+export class Photo {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 

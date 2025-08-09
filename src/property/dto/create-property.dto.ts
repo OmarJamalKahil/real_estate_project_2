@@ -1,6 +1,7 @@
 
 import { Transform, Type } from 'class-transformer';
-import { IsString, IsNumber, IsNotEmpty, IsArray, ValidateNested, IsNotEmptyObject, IsObject, IsDefined, IsUUID } from 'class-validator';
+import { IsString, IsNumber, IsNotEmpty, IsArray, ValidateNested, IsNotEmptyObject, IsObject, IsDefined, IsUUID, IsEnum } from 'class-validator';
+import { PropertyTypeOperation } from '../common/property-type-operation.enum';
 
 
 export class CreateAttributeDto {
@@ -38,10 +39,17 @@ class CreateLocationDto {
 
 
 export class CreatePropertyDto {
+
+
+
   
   @IsString()
   @IsNotEmpty()
   propertyNumber: string;
+
+  @IsEnum(PropertyTypeOperation)
+  @IsNotEmpty()
+  typeOperation:PropertyTypeOperation
 
 
   @IsString()
@@ -71,9 +79,8 @@ export class CreatePropertyDto {
   
   
   @IsString()
-  @IsUUID()
   @IsNotEmpty()
-  ownerId:string;
+  owner:string;
   
   @Transform(({ value }) => {
     try {

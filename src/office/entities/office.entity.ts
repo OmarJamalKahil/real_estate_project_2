@@ -1,19 +1,13 @@
 import { User } from "src/user/entities/user.entity";
 import { Column, Entity, JoinColumn, JoinTable, ManyToMany, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
-import { LicensePhoto } from "./license_photo.entity";
 import { Blog } from "src/blog/entities/blog.entity";
 import { OfficeRating } from "./office_rating.entity";
-import { OfficePhoto } from "./office_photo.entity";
 import { Property } from "src/property/entities/property.entity";
 import { OfficeSubscription } from "src/office-subscription/entities/office-subscription.entity";
 import { OfficeComment } from "src/office-comment/entities/office-comment.entity";
-
-
-export enum OfficeCreatingStatus {
-    pending = 'pending',
-    accepted = 'accepted',
-    rejected = 'rejected',
-}
+import { EnumStatus } from "src/property/common/property-status.enum";
+import { Photo } from "src/common/entities/Photo.entity";
+import { LicensePhoto } from "./license_photo.entity";
 
 @Entity()
 export class Office {
@@ -52,19 +46,19 @@ export class Office {
 
     @Column({
         type: 'enum',
-        enum: OfficeCreatingStatus,
-        default: OfficeCreatingStatus.pending,
+        enum: EnumStatus,
+        default: EnumStatus.Pending,
     })
-    status: OfficeCreatingStatus;
+    status: EnumStatus;
 
 
     @OneToOne(() => User, { nullable: false })
     @JoinColumn()
-    user: User;
+    user: User; 
 
 
     // Office entity
-    @OneToOne(() => OfficeSubscription, (os) => os.office)
+    @OneToOne(() => OfficeSubscription, (os) => os.office)  
     officeSubscription: OfficeSubscription;
 
     @OneToOne(() => LicensePhoto)
@@ -72,9 +66,9 @@ export class Office {
     license_photo: LicensePhoto;
 
 
-    @OneToOne(() => OfficePhoto)
+    @OneToOne(() => Photo)
     @JoinColumn()
-    office_photo: OfficePhoto;
+    office_photo: Photo;
 
 
 

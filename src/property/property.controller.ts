@@ -53,12 +53,15 @@ export class PropertyController {
   }
 
   @Post('/filter')
+  @UseGuards(JwtAuthGuard)
   getPropertiesByFiltering(
     @Body() filterPropertyDto: FilterPropertyDto,
-    @Query() paginationDto: PaginationDto
+    @Query() paginationDto: PaginationDto,
+    @Req() req,
 
   ) {
-    return this.propertyService.findPropertiesByFiltering(filterPropertyDto, paginationDto)
+    const {userId} = req.user
+    return this.propertyService.findPropertiesByFiltering(filterPropertyDto, paginationDto,userId)
   }
 
   @Get('/reserved')
