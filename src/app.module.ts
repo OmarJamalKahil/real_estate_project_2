@@ -89,9 +89,9 @@ import { LicenseTypeModule } from './license-type/license-type.module';
       // Number(process.env.DB_PORT),
       username: 'postgres',
       // process.env.DB_USER_NAME,
-      password: "0940468172mtn",
+      password: "12345678910",
       //  process.env.DB_PASSWORD || 
-      database: 'real-estate',
+      database: 'Real_Estate_Project',
       // process.env.DB_NAME,
       entities: [
         User,
@@ -162,11 +162,7 @@ import { LicenseTypeModule } from './license-type/license-type.module';
         CARD_EXPIRE_YEAR: Joi.number().required(),
         CARD_TYPE: Joi.string().required(),
 
-        // Stripe 
-        STRIPE_SECRET_KEY: Joi.string().required(),
-        STRIPE_PUBLISHABLE_KEY: Joi.string().required(),
-        STRIPE_WEBHOOK_SECRET: Joi.string().required(),
-
+        
 
 
       }),

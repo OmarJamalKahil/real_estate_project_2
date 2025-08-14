@@ -6,9 +6,9 @@ import { PropertyTypeOperation } from '../common/property-type-operation.enum';
 
 export class CreateAttributeDto {
 
-  @IsString()
+  @IsUUID()
   @IsNotEmpty()
-  name: string;
+  attributeId: string;
 
   @Type(() => Number)
   @IsNumber()
@@ -43,7 +43,7 @@ export class CreatePropertyDto {
 
 
   
-  @IsString()
+  @IsUUID()
   @IsNotEmpty()
   propertyNumber: string;
 
@@ -51,10 +51,6 @@ export class CreatePropertyDto {
   @IsNotEmpty()
   typeOperation:PropertyTypeOperation
 
-
-  @IsString()
-  @IsNotEmpty()
-  licenseNumber: string;
 
   @Type(() => Number)
   @IsNumber()
@@ -67,21 +63,10 @@ export class CreatePropertyDto {
   @IsString()
   description: string;
 
-  @IsString()
+  @IsUUID()
   @IsNotEmpty()
-  propertyType: string;
+  propertyTypeId: string;
 
-
-  @IsString()
-  @IsNotEmpty()
-  licenseType: string;
-
-  
-  
-  @IsString()
-  @IsNotEmpty()
-  owner:string;
-  
   @Transform(({ value }) => {
     try {
       const parsed = typeof value === 'string' ? JSON.parse(value) : value;
@@ -94,6 +79,19 @@ export class CreatePropertyDto {
   @Type(() => CreateLocationDto)
   @IsObject()
   location: CreateLocationDto;
+
+  @IsString()
+  @IsNotEmpty()
+  licenseType: string;
+
+  
+  @IsString()
+  @IsNotEmpty()
+  licenseNumber: string;
+  
+  // @IsString()
+  // @IsNotEmpty()
+  // owner:string;
   
 
   @Transform(({ value }) => {

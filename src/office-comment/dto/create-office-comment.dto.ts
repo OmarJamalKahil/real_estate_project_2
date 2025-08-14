@@ -14,4 +14,8 @@ export class CreateOfficeCommentDto {
     @IsUUID()
     officeId: string;
 
+    @IsString()
+    @IsNotEmpty()
+    @IsUUID()
+    officeRatingId: string;
 }

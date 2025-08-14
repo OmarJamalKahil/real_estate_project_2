@@ -18,7 +18,7 @@ export interface PropertyResponse {
     space: number;
     price: number;
     description: string;
-    type: {
+    propertyType: {
         id: string;
         name: string;
     };

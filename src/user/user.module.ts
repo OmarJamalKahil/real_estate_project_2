@@ -13,7 +13,7 @@ import { UserProfileService } from './services/user-profile.service';
 import { UserAdminService } from './services/user-admin.service';
 import { UserWarnings } from './entities/user-warnings.entity';
 import { Photo } from 'src/common/entities/Photo.entity';
-
+ 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User, Photo, Banned, Warning, UserWarnings,]),

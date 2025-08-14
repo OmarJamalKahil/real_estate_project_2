@@ -12,7 +12,7 @@ export class PropertyType {
   @Column()
   name: string;
 
-  @OneToMany(() => Property, (property) => property.type)
+  @OneToMany(() => Property, (property) => property.propertyType)
   properties: Property[];
 
   @OneToMany(() => PropertyTypeAttribute, (pta) => pta.propertyType)

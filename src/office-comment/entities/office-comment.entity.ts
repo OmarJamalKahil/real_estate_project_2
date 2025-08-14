@@ -1,6 +1,7 @@
 import { Office } from "src/office/entities/office.entity";
+import { OfficeRating } from "src/office/entities/office_rating.entity";
 import { User } from "src/user/entities/user.entity";
-import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 
 
 
@@ -27,4 +28,14 @@ export class OfficeComment {
     @ManyToOne(() => User,(user)=> user.comments,{onDelete:'CASCADE'})
     user: User;
 
+    // these are new
+    @Column({
+        type: 'date',
+        nullable: false
+    }) 
+    date: Date;
+ 
+    @OneToOne(() => OfficeRating, {nullable : true})
+    @JoinColumn()
+    rate: OfficeRating;
 }

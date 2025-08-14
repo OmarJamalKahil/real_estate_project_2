@@ -11,6 +11,9 @@ export class Attribute {
   @Column()
   name: string;
 
+  @Column()
+  type: string;
+
   @OneToMany(() => PropertyAttribute, (pa) => pa.attribute)
   propertyAttributes: PropertyAttribute[];
   

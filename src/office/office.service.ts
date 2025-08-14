@@ -113,7 +113,6 @@ export class OfficeService {
    * Get all offices with average ratings
    */
   async getAllOfficesWithAverageRating(
-    userId:string,
     paginationDto: PaginationDto,
   ): Promise<PaginatedResponse<any>> {
     const { page = 1, limit = 10 } = paginationDto;
@@ -123,10 +122,7 @@ export class OfficeService {
       .createQueryBuilder('office')
       .leftJoinAndSelect('office.office_photo', 'office_photo')
       .leftJoinAndSelect('office.blogs', 'blogs')
-      .leftJoin('office.ratings', 'rating')
-      .loadRelationCountAndMap('office.ratingsCount', 'office.ratings')
       .where('office.status = :status', { status: 'accepted' })
-      .where('office.user.id != :userId', { userId : userId})
       .select([
         'office.id',
         'office.name',
@@ -142,6 +138,27 @@ export class OfficeService {
     // Get paginated data
     const [data, total] = await query.getManyAndCount();
 
+    const officeRatingsMap = new Map<string, number>();
+
+
+    for (const office of data) {
+      const ratings = await this.officeRatingRepository
+        .createQueryBuilder('rating')
+        .select('rating.rating', 'score')
+        .where('rating.officeId = :officeId', { officeId: office.id })
+        .getRawMany(); // [{ score: 4 }, { score: 5 }, ...]
+
+
+      const scores = ratings.map(r => Number(r.score));
+      const average =
+        scores.length > 0
+          ? scores.reduce((acc, curr) => acc + curr, 0) / scores.length
+          : 0;
+
+      officeRatingsMap.set(office.id, average);
+    }
+
+
     const offices = data.map((office) => ({
       id: office.id,
       name: office.name,
@@ -149,9 +166,10 @@ export class OfficeService {
       office_email: office.office_email,
       status: office.status,
       office_photo: office.office_photo,
-      ratingsCount: office['ratingsCount'],
+      ratings: officeRatingsMap.get(office.id),
       blogs: office.blogs,
     }));
+
 
     return {
       data: offices,
@@ -165,27 +183,44 @@ export class OfficeService {
   /**
    * Get single office by id with ratings
    */
-  async findOne(officeId: string) {
+async findOne(officeId: string) {
     const office = await this.officeRepository
       .createQueryBuilder('office')
       .leftJoinAndSelect('office.office_photo', 'office_photo')
+      .leftJoinAndSelect('office.license_photo', 'license_photo')
       .leftJoinAndSelect('office.blogs', 'blogs')
-      .leftJoin('office.ratings', 'rating')
-      .loadRelationCountAndMap('office.ratingsCount', 'office.ratings')
       .where('office.id = :officeId', { officeId })
-      .select(['office', 'office_photo', 'blogs'])
+      .select(['office', 'office_photo', 'blogs', 'license_photo'])
       .getOne();
 
     if (!office) {
       throw new NotFoundException('Office not found');
     }
 
+    const ratings = await this.officeRatingRepository
+      .createQueryBuilder('rating')
+      .select('rating.rating', 'score')
+      .where('rating.officeId = :officeId', { officeId: office.id })
+      .getRawMany();
+
+    var avgRating = 0;
+    const ratingValues = ratings.map(r => r.score);
+
+    for(var rating of ratingValues){
+      avgRating += rating;
+    }
+
+ 
     return {
       id: office.id,
       name: office.name,
+      office_email: office.office_email,
       office_phone: office.office_phone,
       office_photo: office.office_photo,
-      ratingsCount: office['ratingsCount'],
+      license_photo: office.license_photo,
+      license_Number : office.license_number,
+      personal_identity_number : office.personal_identity_number,
+      ratings: avgRating/ratingValues.length > 0 ? avgRating/ratingValues.length : 0,
       blogs: office.blogs,
     };
   }

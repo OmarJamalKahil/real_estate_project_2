@@ -46,7 +46,7 @@ export class Property {
   description: string;
 
   @ManyToOne(() => PropertyType, (pt) => pt.properties)
-  type: PropertyType;
+  propertyType: PropertyType;
 
   @OneToOne(() => Location, { nullable: false, cascade: true }) // Consider cascading for Location
   @JoinColumn()
@@ -66,15 +66,17 @@ export class Property {
   softDelete: boolean;
 
 
-  @Column({
-    nullable: false,
-    type: 'varchar'
-  })
-  owner: string;
+  // omar commented this
+  // @Column({
+  //   nullable: false,
+  //   type: 'varchar'
+  // })
+  // owner: string;
 
   @OneToOne(() => RentalExpirationDate, (rentalExpirationDate) => rentalExpirationDate.property)
   rentalExpirationDate: RentalExpirationDate
 
+  
   // IMPORTANT: For one-to-one relations that should also be soft-deleted
   // or managed on deletion, you might need to handle them in your service.
   // cascade: true with onDelete: 'SET NULL' on PropertyAttribute is fine,

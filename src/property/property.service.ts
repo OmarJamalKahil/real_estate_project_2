@@ -91,7 +91,7 @@ export class PropertyService {
 
 
       const propertyType = await queryRunner.manager.findOne(PropertyType, {
-        where: { id: createPropertyDto.propertyType },
+        where: { id: createPropertyDto.propertyTypeId },
       });
       if (!propertyType) throw new NotFoundException('PropertyType not found');
 
@@ -117,7 +117,7 @@ export class PropertyService {
         ...createPropertyDto,
         location,
         office,
-        type: propertyType,
+        propertyType: propertyType,
         publishDate: new Date(),
         softDelete: false,
         licenseDetails: license_details,
@@ -129,12 +129,13 @@ export class PropertyService {
       const propertyAttributes: PropertyAttribute[] = [];
       for (const attrDto of createPropertyDto.attributes) {
         let attribute = await queryRunner.manager.findOne(Attribute, {
-          where: { name: attrDto.name },
+          where: { id: attrDto.attributeId },
         });
 
         if (!attribute) {
-          attribute = this.attributeRepository.create({ name: attrDto.name });
-          await queryRunner.manager.save(attribute);
+          // attribute = this.attributeRepository.create({ name: attrDto.name });
+          // await queryRunner.manager.save(attribute);
+          return null;
         }
 
         const propertyAttribute = this.propertyAttributeRepository.create({
@@ -250,12 +251,12 @@ export class PropertyService {
       }
 
       // ✅ Update property type if provided
-      if (updateDto.propertyType) {
+      if (updateDto.propertyTypeId) {
         const type = await queryRunner.manager.findOne(PropertyType, {
-          where: { name: updateDto.propertyType },
+          where: { id: updateDto.propertyTypeId },
         });
         if (!type) throw new NotFoundException('PropertyType not found');
-        existing.type = type;
+        existing.propertyType = type;
       }
 
       // ✅ Update attributes
@@ -266,12 +267,13 @@ export class PropertyService {
         const newAttributes: PropertyAttribute[] = [];
         for (const attrDto of updateDto.attributes) {
           let attribute = await queryRunner.manager.findOne(Attribute, {
-            where: { name: attrDto.name },
+            where: { id: attrDto.attributeId },
           });
 
           if (!attribute) {
-            attribute = this.attributeRepository.create({ name: attrDto.name });
-            await queryRunner.manager.save(attribute);
+            // attribute = this.attributeRepository.create({ name: attrDto.name });
+            // await queryRunner.manager.save(attribute);
+            return null;
           }
 
           const propertyAttribute = this.propertyAttributeRepository.create({

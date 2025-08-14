@@ -40,7 +40,7 @@ export class OfficeController {
     { name: 'license_photo', maxCount: 1 },
     { name: 'office_photo', maxCount: 1 },
   ]))
-  async uploadFile(
+  async createOffice(
     @Body() createOfficeDto: CreateOfficeDto,
     @UploadedFiles(MultiFileValidationPipe) files: {
       license_photo?: Express.Multer.File[],
@@ -59,13 +59,10 @@ export class OfficeController {
   }
 
   @Get()
-  @UseGuards(JwtAuthGuard)
   findAll(
     @Query() paginationDto:PaginationDto,
-    @Req() req,
   ) {
-    const {userId} = req.user;
-    return this.officeService.getAllOfficesWithAverageRating(userId,paginationDto);
+    return this.officeService.getAllOfficesWithAverageRating(paginationDto);
   }
 
 

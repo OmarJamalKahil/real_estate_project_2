@@ -10,6 +10,7 @@ import { UserAuthService } from 'src/user/services/user-auth.service';
 import { CreateOfficeCommentDto } from './dto/create-office-comment.dto';
 import { UpdateOfficeCommentDto } from './dto/update-office-comment.dto';
 import { InjectRepository } from '@nestjs/typeorm';
+import { OfficeRating } from 'src/office/entities/office_rating.entity';
 
 @Injectable()
 export class OfficeCommentService {
@@ -18,6 +19,13 @@ export class OfficeCommentService {
     private readonly officeCommentRepository: Repository<OfficeComment>,
     @InjectRepository(Office)
     private readonly officeRepository: Repository<Office>,
+
+
+    //Office Rating Repo is new
+    @InjectRepository(OfficeRating)
+    private readonly officeRatingRepository: Repository<OfficeRating>,
+
+
     private readonly userAuthService: UserAuthService,
     private readonly dataSource: DataSource,
   ) { }
@@ -28,7 +36,9 @@ export class OfficeCommentService {
     await queryRunner.startTransaction();
 
     try {
-      const { officeId, content } = createOfficeCommentDto;
+      //const { officeId, content } = createOfficeCommentDto;
+
+      const { officeId, officeRatingId, content } = createOfficeCommentDto;
 
       const user = await this.userAuthService.getUser(userId);
       if (!user) throw new NotFoundException('User not found');
@@ -38,10 +48,23 @@ export class OfficeCommentService {
       });
       if (!office) throw new NotFoundException('Office not found');
 
+      // from here
+      const officeRating = await this.officeRatingRepository.findOne({
+        where: {id: officeRatingId},
+      });
+
+      if(!officeRating)
+        throw new NotFoundException('you have to give a rating then comment');
+      // to here is new
+
       const comment = queryRunner.manager.create(OfficeComment, {
         content,
         user,
         office,
+
+        // these rate and date are new
+        rate: officeRating,
+        date: new Date()
       });
 
       await queryRunner.manager.save(comment);
@@ -63,16 +86,43 @@ export class OfficeCommentService {
     });
   }
 
-  async findAllByOfficeId(officeId: string) {
-    const office = await this.officeRepository.findOne({ where: { id: officeId } });
-    if (!office) throw new NotFoundException('Office not found');
+  // async findAllByOfficeId(officeId: string) {
+  //   const office = await this.officeRepository.findOne({ where: { id: officeId } });
+  //   if (!office) throw new NotFoundException('Office not found');
 
-    return this.officeCommentRepository.find({
-      where: { office: { id: officeId } },
-      relations: ['user'],
-      order: { id: 'DESC' },
-    });
-  }
+  //   return this.officeCommentRepository.find({
+  //     where: { office: { id: officeId } },
+  //     relations: ['user'],
+  //     order: { id: 'DESC' },
+  //   });
+  // }
+
+  // this func is an anhanced version of the above func
+  async findAllByOfficeId(officeId: string) {
+  const office = await this.officeRepository.findOne({ where: { id: officeId } });
+  if (!office) throw new NotFoundException('Office not found');
+
+  const comments = await this.officeCommentRepository
+  .createQueryBuilder('comment')
+  .select([
+    'comment.id',
+    'comment.content',
+    'comment.date',
+    'user.id',
+    'user.first_name',
+    'user.last_name',
+    'rate.rating',
+    'profilePhoto.url',    // رابط الصورة (لو عندك عمود url)
+  ])
+  .leftJoin('comment.user', 'user')
+  .leftJoin('comment.rate', 'rate')
+  .leftJoin('user.profile_photo', 'profilePhoto')
+  .where('comment.officeId = :officeId', { officeId })
+  .orderBy('comment.id', 'DESC')
+  .getMany();
+
+  return comments;
+}
 
   async findOne(id: string) {
     const comment = await this.officeCommentRepository.findOne({

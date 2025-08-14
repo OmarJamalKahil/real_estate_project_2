@@ -80,7 +80,7 @@ export class PropertyTypeService {
   async findAll(): Promise<PropertyType[]> {
     // Update to include relations, fetching attributes for each property type
     return await this.propertyTypeRepository.find({
-      relations: ['attributes', 'attributes.attribute'],
+      relations: [ 'attributes.attribute'],
     });
   }
 

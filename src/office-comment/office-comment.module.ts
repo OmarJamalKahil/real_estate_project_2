@@ -6,11 +6,15 @@ import { OfficeComment } from './entities/office-comment.entity';
 import { UserModule } from 'src/user/user.module';
 import { OfficeModule } from 'src/office/office.module';
 import { Office } from 'src/office/entities/office.entity';
+import { OfficeRating } from 'src/office/entities/office_rating.entity';
 
 @Module({
   imports:[
     TypeOrmModule.forFeature([
-      OfficeComment,Office
+      OfficeComment,Office,
+      
+      // Office Rating is new
+      OfficeRating
     ]),
     UserModule,
     OfficeModule,

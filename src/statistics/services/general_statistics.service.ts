@@ -6,7 +6,7 @@ import { Archive } from "src/archive/entities/archive.entity";
 import { Owner } from "src/archive/entities/owner.entity";
 import { Property } from "src/property/entities/property.entity";
 import { PropertyTypeOperation } from "src/property/common/property-type-operation.enum";
-import { PropertyStatus } from "src/property/common/property-status.enum";
+import { EnumStatus } from "src/property/common/property-status.enum";
 
 
 @Injectable()
@@ -66,11 +66,11 @@ export class GeneralStatisticsService{
 
 
         for(const property of properties){
-            if(property.status == PropertyStatus.Accepted && property.typeOperation == PropertyTypeOperation.Selling){
+            if(property.status == EnumStatus.Accepted && property.typeOperation == PropertyTypeOperation.Selling){
                 availableProperties++;
                 sale++;
             }
-            else if(property.status == PropertyStatus.Accepted && property.typeOperation == PropertyTypeOperation.Renting){
+            else if(property.status == EnumStatus.Accepted && property.typeOperation == PropertyTypeOperation.Renting){
                 availableProperties++;
                 rent++;
             }
