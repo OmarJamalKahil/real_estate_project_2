@@ -2,8 +2,13 @@ import { IsEmail, IsNotEmpty, IsNumber, IsPhoneNumber, IsString } from "class-va
 
 export class CreateOrUpdateOfficeRatingDto {
 
+    @IsString()
+    @IsNotEmpty()
+    officeId: string;
+
     @IsNumber()
-    rating: number;
+    @IsNotEmpty()
+    numberOfStars: number;
 
 
 }

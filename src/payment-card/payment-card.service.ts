@@ -24,7 +24,7 @@ export class PaymentCardService {
     searchPaymentCardDto: SearchPaymentCardDto,
     amount: number,
     manager: EntityManager 
-  ) {
+  ) { 
 
     // const queryRunner = manager;
 
@@ -61,7 +61,7 @@ export class PaymentCardService {
       });
 
       if (!systemCard) {
-        throw new InternalServerErrorException('System card not found');
+        throw new InternalServerErrorException('System card not found check env file');
       }
 
       // Transfer money

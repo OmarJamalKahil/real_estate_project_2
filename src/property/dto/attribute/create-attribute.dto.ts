@@ -1,9 +1,17 @@
-import { IsString, IsBoolean } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsString, IsBoolean, IsNotEmpty, IsNumber, IsUUID } from 'class-validator';
 
 export class CreateAttributeDto {
+
   @IsString()
+  @IsNotEmpty()
   name: string;
 
-  @IsBoolean()
-  isUnique: boolean;
+  @Type(() => Number)
+  @IsNumber()
+  value: number;
+
+  @IsUUID()
+  @IsNotEmpty()
+  propertyId: string;
 }

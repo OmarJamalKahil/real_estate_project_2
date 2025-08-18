@@ -107,7 +107,7 @@ export class OfficeSubscriptionService {
   // }
 
 
-  async create(officeId: string, createDto: CreateOfficeSubscriptionDto) {
+  async create(officeManagerId: string, createDto: CreateOfficeSubscriptionDto) {
   const queryRunner = this.dataSource.createQueryRunner();
   await queryRunner.connect();
   await queryRunner.startTransaction();
@@ -120,20 +120,8 @@ export class OfficeSubscriptionService {
 
     // Find the office by manager ID and load properties
     const office = await queryRunner.manager.findOne(Office, {
-      where: { 
-
-        //omar comment this
-        //user: { id: officeManagerId }, 
-        id: officeId
-      },
-      relations: [
-        
-        'properties', 
-
-        //omar comment this 
-        /*'user'*/ 
-      
-      ],
+      where: { user: { id: officeManagerId } },
+      relations: ['properties', 'user'],
     });
 
     if (!subscription || !office) {
@@ -208,23 +196,13 @@ export class OfficeSubscriptionService {
   //   return await this.officeSubscriptionRepository.save(sub);
   // }
 
-  async remove(
-    //omar comment this
-    /*userId: string*/ 
-    
-    officeId: string, id: string) {
+  async remove(userId: string, id: string) {
 
     const office = await this.officeRepository.findOne({
       where: {
-
-        //omar comment this
-        // user: {
-        //   id: userId
-        // },
-        id: officeId
-
-
-        //omar did'nt comment this
+        user: {
+          id: userId
+        },
         // officeSubscription:{
         //   id
         // }

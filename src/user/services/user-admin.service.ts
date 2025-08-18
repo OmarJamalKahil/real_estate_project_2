@@ -7,12 +7,11 @@ import {
     NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from '../entities/user.entity';
+import { Role, User } from '../entities/user.entity';
 import { DataSource, In, Repository } from 'typeorm';
 import { AuthService } from 'src/auth/auth.service';
 import { MailService } from 'src/mail/mail.service';
 import { ConfigService } from '@nestjs/config';
-import { Upload } from '../entities/upload.entity';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { USER_ERRORS } from '../user.constants';
 import { CreateAdminDto } from '../dto/create-admin.dto';
@@ -22,7 +21,7 @@ import { Banned } from '../entities/banned.entity';
 import { WarnUserDto } from '../dto/warn-user.dto';
 import { Warning } from '../entities/warning.entity';
 import { UserWarnings } from '../entities/user-warnings.entity';
-import { Role } from 'src/common/enums/role.enum';
+import { Photo } from 'src/common/entities/Photo.entity';
 
 @Injectable()
 export class UserAdminService {
@@ -32,8 +31,8 @@ export class UserAdminService {
         private readonly authService: AuthService,
         private readonly mailService: MailService,
         private readonly configService: ConfigService,
-        @InjectRepository(Upload)
-        private readonly uploadRepository: Repository<Upload>,
+        @InjectRepository(Photo)
+        private readonly uploadRepository: Repository<Photo>,
         @InjectRepository(Banned)
         private readonly bannedRepository: Repository<Banned>,
         private readonly cloudinaryService: CloudinaryService,
@@ -58,7 +57,7 @@ export class UserAdminService {
 
         try {
             const userRepository = queryRunner.manager.getRepository(User);
-            const uploadRepository = queryRunner.manager.getRepository(Upload);
+            const uploadRepository = queryRunner.manager.getRepository(Photo);
 
             const existingUser = await userRepository.findOne({
                 where: [

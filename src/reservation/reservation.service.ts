@@ -18,7 +18,7 @@ import { CreateReservationDto } from './dto/create-reservation.dto';
 import { CreateReservationParamDto } from './dto/create-reservation-param.dto';
 import { UpdateReservationDto } from './dto/update-reservation.dto';
 import { SearchPaymentCardDto } from 'src/payment-card/dto/create-payment-card.dto'; // Your DTO for payment card search
-import { PropertyStatus } from 'src/property/common/property-status.enum';
+import { EnumStatus } from 'src/property/common/property-status.enum';
 import { Notification } from 'src/notification/entities/notification.entity';
 import { NotificationService } from 'src/notification/notification.service';
 
@@ -61,7 +61,7 @@ export class ReservationService {
       // 2. Find Property
       // Using propertyService to get the property details
       const property = await this.propertyRepository.findOne({
-        where: { id: createReservationParamDto.id, status: PropertyStatus.Accepted },
+        where: { id: createReservationParamDto.id, status: EnumStatus.Accepted },
         relations: [
           'photos',
           'location',
@@ -69,7 +69,6 @@ export class ReservationService {
           'licenseDetails',
           'propertyAttributes',
           'propertyAttributes.attribute',
-          'owner',
           'office',
           'office.user'
         ],
@@ -126,15 +125,9 @@ export class ReservationService {
         created_at: new Date(),
       });
 
-      property.status = PropertyStatus.Reserved;
+      property.status = EnumStatus.Reserved;
 
-      this.notificationService.notifyUser(queryRunner, 
-
-        //omar comment this
-        /*property.office.user.id*/ property.office.id, 
-
-        
-        "New Reservation", `${user.first_name} ${user.last_name} has reserved a property from yours with this property number:${property.propertyNumber}.`)
+      this.notificationService.notifyUser(queryRunner,property.office.user.id, "New Reservation", `${user.first_name} ${user.last_name} has reserved a property from yours with this property number:${property.propertyNumber}.`)
 
 
 

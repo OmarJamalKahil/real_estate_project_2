@@ -10,7 +10,6 @@ import * as Joi from 'joi'
 import { MailService } from './mail/mail.service';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { User } from './user/entities/user.entity';
-import { Upload } from './user/entities/upload.entity';
 import { Warning } from './user/entities/warning.entity';
 import { Banned } from './user/entities/banned.entity';
 import { UserWarnings } from './user/entities/user-warnings.entity';
@@ -23,10 +22,9 @@ import { Blog } from './blog/entities/blog.entity';
 import { BlogMedia } from './blog/entities/blog_media.entity';
 import { LicensePhoto } from './office/entities/license_photo.entity';
 import { OfficeRating } from './office/entities/office_rating.entity';
-import { OfficePhoto } from './office/entities/office_photo.entity';
 import { PropertyModule } from './property/property.module';
 import { Location } from './property/entities/location.entity';
-import { LicenseType } from './property/entities/license_type.entity';
+import { LicenseType } from './license-type/entities/license_type.entity';
 import { LicenseDetails } from './property/entities/license_details.entity';
 import { PropertyTypeAttribute } from './property/entities/propertyType_attribute.entity';
 import { PropertyAttribute } from './property/entities/property_attribute.entity';
@@ -54,19 +52,20 @@ import { Reservation } from './reservation/entities/reservation.entity';
 import { NotificationModule } from './notification/notification.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { Notification } from './notification/entities/notification.entity';
-import { StatisticsModule } from './statistics/statistics.module';
-import { ArchiveModule } from './archive/archive.module';
-import { Archive } from './archive/entities/archive.entity';
-import { Owner } from './archive/entities/owner.entity';
-import { Client } from './archive/entities/client.entity';
-import { EarningStatistics } from './statistics/entities/earning_statistics.entity';
-import { GeneralStatistics } from './statistics/entities/general_statistics.entity';
-import { FinancialStatistics } from './statistics/entities/financial_statistics.entity';
+import { PropertyRequestModule } from './property-request/property-request.module';
+import { Photo } from './common/entities/Photo.entity';
+import { PropertyRequest } from './property-request/entities/property-request.entity';
+import { PropertyRequestPhoto } from './property-request/entities/property-request-photo.entity';
+import { RentalExpirationDate } from './property-request/entities/rental-expiration-date.entity';
+import { LicenseTypeModule } from './license-type/license-type.module';
+// import { CookieResolver, HeaderResolver, I18nModule, QueryResolver } from 'nestjs-i18n';
+import { I18nModule, QueryResolver, HeaderResolver, CookieResolver, AcceptLanguageResolver } from 'nestjs-i18n';
+import * as path from 'path';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
       User,
-      Upload,
+      Photo,
       Banned,
       Warning,
       UserWarnings,
@@ -81,9 +80,28 @@ import { FinancialStatistics } from './statistics/entities/financial_statistics.
       PropertyComment,
       FavoriteProperty,
       Reservation,
-      Notification 
+      Notification
 
     ]),
+
+    // I18nModule.forRoot({
+    //   fallbackLanguage: 'en',
+    //   loaderOptions: {
+    //     path: path.join(__dirname, '/i18n/'),
+    //     watch: true
+    //   },
+
+    //   resolvers: [
+    //     // { use: QueryResolver, options: ['lang'] },
+    //     // new HeaderResolver(['x-lang', 'accept-language']),
+    //     // new CookieResolver(['lang']),
+    //     // AcceptLanguageResolver
+    //     new QueryResolver(["lang", "l"]),
+    //     new HeaderResolver(["x-custom-lang"]),
+    //     new CookieResolver(),
+    //     AcceptLanguageResolver,
+    //   ]
+    // }),
     ScheduleModule.forRoot(),
     TypeOrmModule.forRoot({
       type: 'postgres',
@@ -99,7 +117,6 @@ import { FinancialStatistics } from './statistics/entities/financial_statistics.
       // process.env.DB_NAME,
       entities: [
         User,
-        Upload,
         Warning,
         UserWarnings,
         Banned,
@@ -109,7 +126,7 @@ import { FinancialStatistics } from './statistics/entities/financial_statistics.
         BlogMedia,
         Office,
         OfficeRating,
-        OfficePhoto,
+        Photo,
         OfficeSubscription,
         Property,
         PropertyPhotos,
@@ -127,13 +144,10 @@ import { FinancialStatistics } from './statistics/entities/financial_statistics.
         FavoriteProperty,
         Reservation,
         Notification,
+        PropertyRequest,
+        PropertyRequestPhoto,
+        RentalExpirationDate
 
-        Archive,
-        Owner,
-        Client,
-        EarningStatistics,
-        GeneralStatistics,
-        FinancialStatistics
       ],
       // autoLoadEntities: true, // Automatically loads entities registered through TypeOrmModule.forFeature()
       synchronize: true,      // ⚠️ use only in development
@@ -170,7 +184,13 @@ import { FinancialStatistics } from './statistics/entities/financial_statistics.
         CARD_EXPIRE_YEAR: Joi.number().required(),
         CARD_TYPE: Joi.string().required(),
 
-        
+        // Stripe 
+        STRIPE_SECRET_KEY: Joi.string().required(),
+        STRIPE_PUBLISHABLE_KEY: Joi.string().required(),
+        STRIPE_WEBHOOK_SECRET: Joi.string().required(),
+
+
+
       }),
     }),
     UserModule,
@@ -192,9 +212,8 @@ import { FinancialStatistics } from './statistics/entities/financial_statistics.
     ReservationModule,
     NotificationModule,
     CronModule,
-    // StripeModule
-    StatisticsModule,
-    ArchiveModule
+    PropertyRequestModule,
+    LicenseTypeModule,
   ],
   controllers: [AppController],
   providers: [AppService, MailService],
@@ -202,5 +221,3 @@ import { FinancialStatistics } from './statistics/entities/financial_statistics.
 export class AppModule {
 
 }
-
- 

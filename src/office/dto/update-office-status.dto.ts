@@ -1,14 +1,12 @@
 import { IsEnum, IsNotEmpty } from "class-validator";
-import { OfficeCreatingStatus } from "../entities/office.entity";
+import { EnumStatus } from "src/property/common/property-status.enum";
 
 
 
 export class UpdateOfficeStatusDto {
 
-
-    @IsEnum(OfficeCreatingStatus)
+    @IsEnum(EnumStatus)
     @IsNotEmpty()
-    status: OfficeCreatingStatus;
-
+    status: EnumStatus;
 
 }

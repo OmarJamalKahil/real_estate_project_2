@@ -1,5 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToOne } from 'typeorm';
-import { LicenseType } from './license_type.entity';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToOne, JoinColumn } from 'typeorm';
+import { LicenseType } from '../../license-type/entities/license_type.entity';
 import { Property } from './property.entity';
 
 @Entity()
@@ -8,6 +8,7 @@ export class LicenseDetails {
   id: string;
 
   @ManyToOne(() => LicenseType, (license) => license.licenseDetails,{eager:true})
+  @JoinColumn()
   license: LicenseType;
 
   // @ManyToOne(() => Property, (property) => property.licenseDetails)4
@@ -17,6 +18,6 @@ export class LicenseDetails {
   @Column()
   licenseNumber: string;
 
-  @Column({ type: 'timestamp' })
+  @Column()
   date: Date;
 }

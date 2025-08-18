@@ -9,16 +9,15 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
  constructor(
     private configService: ConfigService,
   ) {
-
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey: configService.get<string>('ACCESS_SECRET_KEY') // replace with env var in prod
+      secretOrKey:  configService.get<string>('ACCESS_SECRET_KEY'), // replace with env var in prod
     });
+    console.log(configService.get<string>('ACCESS_SECRET_KEY'));
     
   }
 
   async validate(payload: JwtPayload) {
-    
     return payload; 
   }
 }

@@ -1,25 +1,3 @@
-// import { Injectable } from '@nestjs/common';
-// import { cloudinary } from './cloudinary.provider';
-// import { UploadApiResponse } from 'cloudinary';
-
-// @Injectable()
-// export class CloudinaryService {
-// async uploadImage(file: Express.Multer.File): Promise<UploadApiResponse> {
-//   return new Promise((resolve, reject) => {
-//     cloudinary.uploader.upload_stream({ resource_type: 'image' }, (error, result) => {
-//       if (error || !result) return reject(error || new Error('Upload failed: no result returned'));
-//       resolve(result);
-//     }).end(file.buffer);
-//   });
-// }
-
-
-//   async deleteImage(publicId: string): Promise<any> {
-//     return cloudinary.uploader.destroy(publicId);
-//   }
-// }
-
-
 
 
 // src/cloudinary/cloudinary.service.ts
@@ -43,7 +21,7 @@ export class CloudinaryService {
   }
 
     async deleteImage(publicId: string): Promise<any> {
-    return cloudinary.uploader.destroy(publicId);
+    return cloudinary.uploader.destroy(publicId,{invalidate: true});
   }
 }
 

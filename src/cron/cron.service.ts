@@ -1,49 +1,3 @@
-// // src/cron/cron.service.ts (Example)
-// import { Injectable, OnModuleInit } from '@nestjs/common';
-// import { Cron, CronExpression } from '@nestjs/schedule'; // If using NestJS @nestjs/schedule
-// import { InjectRepository } from '@nestjs/typeorm';
-// import { Repository } from 'typeorm';
-// import { Reservation } from '../reservation/entities/reservation.entity';
-
-// @Injectable()
-// export class CronService implements OnModuleInit {
-//     constructor( 
-//         @InjectRepository(Reservation)
-//         private reservationRepository: Repository<Reservation>,
-//     ) {} 
-
-//     onModuleInit() {
-//         this.handleCron(); // Run once on app start
-//     }
-
-//     @Cron(CronExpression.EVERY_2_HOURS) // Runs every hour, for example
-//     // Or use '0 * * * *' for node-cron without @nestjs/schedule
-//     async handleCron() {
-//         console.log('Running reservation expiration check...');
-//         const now = new Date(); 
-
-//         // Find reservations that are expired but not yet marked as expired
-//         const expiredReservations = await this.reservationRepository
-//             .createQueryBuilder('reservation')
-//             .where('reservation.expires_at < :now', { now })
-//             .andWhere('reservation.is_expired = :isExpired', { isExpired: false })
-//             .getMany();
-
-//         if (expiredReservations.length > 0) {
-//             for (const reservation of expiredReservations) {
-//                 reservation.is_expired = true;
-//             }
-//             await this.reservationRepository.save(expiredReservations);
-//             console.log(`Marked ${expiredReservations.length} reservations as expired.`);
-//         } else {
-//             console.log('No new expired reservations found.');
-//         }
-//     }
-// }
-
-
-
-
 // src/cron/cron.service.ts
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -51,6 +5,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThan } from 'typeorm';
 import { Reservation } from '../reservation/entities/reservation.entity';
 import { Notification } from 'src/notification/entities/notification.entity';
+import { Office } from 'src/office/entities/office.entity';
+import { Property } from 'src/property/entities/property.entity';
+import { EnumStatus } from 'src/property/common/property-status.enum';
 
 @Injectable()
 export class CronService implements OnModuleInit {
@@ -62,7 +19,15 @@ export class CronService implements OnModuleInit {
 
     @InjectRepository(Notification)
     private readonly notificationRepository: Repository<Notification>,
-  ) {}
+
+    @InjectRepository(Office)
+    private readonly officeRepository: Repository<Office>,
+
+
+    @InjectRepository(Property)
+    private readonly propertyRepository: Repository<Property>,
+
+  ) { }
 
   // ✅ Run both cron jobs once on app startup
   onModuleInit() {
@@ -106,4 +71,33 @@ export class CronService implements OnModuleInit {
 
     this.logger.log(`Deleted ${result.affected} old notifications.`);
   }
+
+
+  // ✅ Cron to delete  rejected offices (runs every day at 2 AM)
+  @Cron(CronExpression.EVERY_10_SECONDS)
+  async deleteRejectedOffices(): Promise<void> {
+    this.logger.log('Checking for rejected offices to delete...');
+
+    const result = await this.officeRepository.delete({
+      status: EnumStatus.Rejected,
+    });
+
+    this.logger.log(`Deleted ${result.affected}  rejected offices.`);
+  }
+
+
+  // ✅ Cron to delete  rejected properties (runs every day at 2 AM)
+  @Cron(CronExpression.EVERY_10_SECONDS)
+  async deleteRejectedProperties(): Promise<void> {
+    this.logger.log('Checking for rejected properties to delete...');
+
+    const result = await this.propertyRepository.delete({
+      status: EnumStatus.Rejected,
+    });
+
+    this.logger.log(`Deleted ${result.affected}  rejected properties.`);
+  }
+
+
 }
+

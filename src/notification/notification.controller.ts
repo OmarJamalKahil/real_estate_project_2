@@ -21,7 +21,8 @@ export class NotificationController {
   // 🔔 Get my notifications
   @Get('/user/me')
   async getMyNotifications(@Request() req) {
-    return this.notificationService.getAllNotificationsByUserId(req.user.id);
+    const {userId} = req.user;
+    return this.notificationService.getAllNotificationsByUserId(userId);
   }
 
   // 🔔 Get all notifications for a specific user

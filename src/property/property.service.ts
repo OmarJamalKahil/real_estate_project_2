@@ -1,116 +1,4 @@
-// async create(
-//   officeManagerId: string,
-//   createPropertyDto: CreatePropertyDto,
-//   property_photos: Express.Multer.File[],
-// ) {
-//   const queryRunner = this.dataSource.createQueryRunner();
-//   await queryRunner.connect();
-//   await queryRunner.startTransaction();
 
-//   try {
-
-//     const office = await this.officeService.getCurrentUserOffice(officeManagerId);
-
-//     if (!office) {
-//       throw new ForbiddenException()
-//     }
-
-//     const owner = await this.userService.getUser(createPropertyDto.ownerId);
-
-//     if (!owner) {
-//       throw new BadRequestException()
-//     }
-//     // Find propertyType by ID
-//     const propertyType = await queryRunner.manager.findOne(PropertyType, {
-//       where: { name: createPropertyDto.propertyType },
-//     });
-//     if (!propertyType) throw new NotFoundException('PropertyType not found');
-
-//     const licenseType = await queryRunner.manager.findOne(LicenseType, {
-//       where: { name: createPropertyDto.licenseType },
-//     });
-//     if (!licenseType) throw new NotFoundException('LicenseType not found');
-
-//     // Save license_details
-//     const license_details = this.licenseDetailsRepository.create({
-//       licenseNumber: createPropertyDto.licenseNumber,
-//       date: new Date(),
-//       license: licenseType
-//     });
-//     await queryRunner.manager.save(license_details);
-
-
-//     // Save location
-//     const location = this.locationRepository.create(createPropertyDto.location);
-//     await queryRunner.manager.save(location);
-
-
-//     // Create base property
-//     const property = this.propertyRepository.create({
-//       ...createPropertyDto,
-//       location,
-//       owner,
-//       office: office,
-//       type: propertyType,
-//       publishDate: new Date(),
-//       softDelete: false,
-//       licenseDetails: license_details,
-//       propertyAttributes: [],
-//       photos: [],
-//     });
-
-
-//     // await queryRunner.manager.save(Property);
-
-//     const propertyAttributes: PropertyAttribute[] = [];
-//     // Save attributes
-//     for (const attrDto of createPropertyDto.attributes) {
-//       let attribute = await queryRunner.manager.findOne(Attribute, {
-//         where: { name: attrDto.name },
-//       });
-
-//       if (!attribute) {
-//         attribute = this.attributeRepository.create({ name: attrDto.name });
-//         await queryRunner.manager.save(attribute);
-//       }
-
-//       const propertyAttribute = this.propertyAttributeRepository.create({
-//         property: property,
-//         attribute,
-//         value: attrDto.value,
-//       });
-//       propertyAttributes.push(propertyAttribute)
-//       await queryRunner.manager.save(propertyAttribute);
-//     }
-//     property.propertyAttributes = propertyAttributes;
-
-
-//     const photos: PropertyPhotos[] = [];
-//     // Upload photos
-//     for (const file of property_photos) {
-//       const uploadRes = await this.cloudinaryService.uploadImage(file);
-//       const photo = this.photoRepository.create({
-//         property: property,
-//         url: uploadRes.secure_url,
-//         public_id: uploadRes.public_id,
-//       });
-//       photos.push(photo)
-//       await queryRunner.manager.save(photo);
-//     }
-//     property.photos = photos ;
-
-//     await queryRunner.manager.save(property)
-
-//     await queryRunner.commitTransaction();
-
-//     return property;
-//   } catch (error) {
-//     await queryRunner.rollbackTransaction();
-//     throw new InternalServerErrorException(error.message);
-//   } finally {
-//     await queryRunner.release();
-//   }
-// }
 
 import {
   BadRequestException,
@@ -122,6 +10,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import {
   DataSource,
+  QueryRunner,
   Repository,
 } from 'typeorm';
 import { Property } from './entities/property.entity';
@@ -135,15 +24,19 @@ import { LicenseDetails } from './entities/license_details.entity';
 import { Office } from 'src/office/entities/office.entity';
 import { OfficeService } from 'src/office/office.service';
 import { UserAuthService } from 'src/user/services/user-auth.service';
-import { LicenseType } from './entities/license_type.entity';
+import { LicenseType } from '../license-type/entities/license_type.entity';
 import { PropertyResponse } from './common/property-response.interface';
 import { PropertyType } from 'src/property-type/entities/property-type.entity';
 import { Attribute } from 'src/attribute/entities/attribute.entity';
 import { FilterPropertyDto } from './dto/filter-property.dto';
-import { PropertyStatus } from './common/property-status.enum';
+import { EnumStatus } from './common/property-status.enum';
 import { UpdatePropertyStatusDto } from './dto/update-property-status.dto';
 import { PaginationDto } from '../common/utils/pagination.dto';
 import { PaginatedResponse } from '../common/utils/paginated-response.interface';
+import { CreateAttributeDto } from './dto/attribute/create-attribute.dto';
+import { SearchPaymentCardDto } from 'src/payment-card/dto/create-payment-card.dto';
+import { PaymentCardService } from 'src/payment-card/payment-card.service';
+import { NotificationService } from 'src/notification/notification.service';
 
 @Injectable()
 export class PropertyService {
@@ -169,6 +62,8 @@ export class PropertyService {
     private readonly cloudinaryService: CloudinaryService,
     private readonly officeService: OfficeService,
     private readonly userService: UserAuthService,
+    private readonly paymentCardService: PaymentCardService,
+    private readonly notificationService: NotificationService,
     private readonly dataSource: DataSource,
   ) { }
 
@@ -189,10 +84,10 @@ export class PropertyService {
         throw new ForbiddenException('Office not found or access denied');
       }
 
-      const owner = await this.userService.getUser(createPropertyDto.ownerId);
-      if (!owner) {
-        throw new BadRequestException('Owner not found');
-      }
+      // const owner = await this.userService.getUser(createPropertyDto.ownerId);
+      // if (!owner) {
+      //   throw new BadRequestException('Owner not found');
+      // }
 
 
 
@@ -202,17 +97,17 @@ export class PropertyService {
 
 
       const propertyType = await queryRunner.manager.findOne(PropertyType, {
-        where: { name: createPropertyDto.propertyType },
+        where: { id: createPropertyDto.propertyType },
       });
       if (!propertyType) throw new NotFoundException('PropertyType not found');
 
       const licenseType = await queryRunner.manager.findOne(LicenseType, {
-        where: { name: createPropertyDto.licenseType },
+        where: { id: createPropertyDto.licenseType },
       });
       if (!licenseType) throw new NotFoundException('LicenseType not found');
 
       // Save license details
-      const license_details = this.licenseDetailsRepository.create({
+      const license_details = queryRunner.manager.create(LicenseDetails, {
         licenseNumber: createPropertyDto.licenseNumber,
         date: new Date(),
         license: licenseType,
@@ -227,7 +122,6 @@ export class PropertyService {
       const property = this.propertyRepository.create({
         ...createPropertyDto,
         location,
-        owner,
         office,
         type: propertyType,
         publishDate: new Date(),
@@ -237,7 +131,6 @@ export class PropertyService {
         photos: [],
       });
       await queryRunner.manager.save(property); // Must save before setting relations
-
       // Save attributes
       const propertyAttributes: PropertyAttribute[] = [];
       for (const attrDto of createPropertyDto.attributes) {
@@ -273,15 +166,18 @@ export class PropertyService {
         photos.push(photo);
       }
       property.photos = photos;
-
       // Final save to update relations (optional if not using eager)
       await queryRunner.manager.save(property);
 
       await queryRunner.commitTransaction();
-      const propertyResposnse: PropertyResponse = property;
-      // return propertyResposnse;
+
+      return {
+        message: 'We will review your property creation request shortly.',
+      }
 
     } catch (error) {
+      console.log("this is the error : ", error);
+
       await queryRunner.rollbackTransaction();
       throw error
       throw new InternalServerErrorException(error.message);
@@ -344,61 +240,50 @@ export class PropertyService {
     try {
       const existing = await queryRunner.manager.findOne(Property, {
         where: { id },
-        relations: ['office', 'office.user', 'type', 'propertyAttributes', 'location', 'propertyAttributes.attribute'],
+        // relations: ['office', 'office.user', 'type', 'propertyAttributes', 'location', 'propertyAttributes.attribute'],
+        relations: ['office', 'office.user', 'type'],
+
       });
 
       if (!existing) throw new NotFoundException('Property not found');
 
-      //omar comment this
-      // if (existing.office.user.id !== officeManagerId) {
-      //   throw new ForbiddenException("You can't update this property");
+      if (existing.office.user.id !== officeManagerId) {
+        throw new ForbiddenException("You can't update this property");
+      }
+
+
+
+      // // ✅ Update attributes
+      // if (updateDto.attributes) {
+      //   // Delete old propertyAttributes
+      //   await queryRunner.manager.delete(PropertyAttribute, { property: { id: existing.id } });
+
+      //   const newAttributes: PropertyAttribute[] = [];
+      //   for (const attrDto of updateDto.attributes) {
+      //     let attribute = await queryRunner.manager.findOne(Attribute, {
+      //       where: { name: attrDto.name },
+      //     });
+
+      //     if (!attribute) {
+      //       attribute = this.attributeRepository.create({ name: attrDto.name });
+      //       await queryRunner.manager.save(attribute);
+      //     }
+
+      //     const propertyAttribute = this.propertyAttributeRepository.create({
+      //       property: existing,
+      //       attribute,
+      //       value: attrDto.value,
+      //     });
+
+      //     await queryRunner.manager.save(propertyAttribute);
+      //     newAttributes.push(propertyAttribute);
+      //   }
+
+      //   existing.propertyAttributes = newAttributes;
       // }
 
-      // ❌ Prevent location update
-      if (updateDto.location) {
-        throw new BadRequestException('Updating location is not allowed');
-      }
-
-      // ✅ Update property type if provided
-      if (updateDto.propertyType) {
-        const type = await queryRunner.manager.findOne(PropertyType, {
-          where: { name: updateDto.propertyType },
-        });
-        if (!type) throw new NotFoundException('PropertyType not found');
-        existing.type = type;
-      }
-
-      // ✅ Update attributes
-      if (updateDto.attributes) {
-        // Delete old propertyAttributes
-        await queryRunner.manager.delete(PropertyAttribute, { property: { id: existing.id } });
-
-        const newAttributes: PropertyAttribute[] = [];
-        for (const attrDto of updateDto.attributes) {
-          let attribute = await queryRunner.manager.findOne(Attribute, {
-            where: { name: attrDto.name },
-          });
-
-          if (!attribute) {
-            attribute = this.attributeRepository.create({ name: attrDto.name });
-            await queryRunner.manager.save(attribute);
-          }
-
-          const propertyAttribute = this.propertyAttributeRepository.create({
-            property: existing,
-            attribute,
-            value: attrDto.value,
-          });
-
-          await queryRunner.manager.save(propertyAttribute);
-          newAttributes.push(propertyAttribute);
-        }
-
-        existing.propertyAttributes = newAttributes;
-      }
-
       // ✅ Update other simple fields (space, price, description, etc.)
-      const updatableFields = ['propertyNumber', 'space', 'price', 'description'];
+      const updatableFields = ['price', 'description'];
       for (const field of updatableFields) {
         if (updateDto[field] !== undefined) {
           existing[field] = updateDto[field];
@@ -409,12 +294,188 @@ export class PropertyService {
       await queryRunner.commitTransaction();
 
       return updated;
+
+
     } catch (err) {
       await queryRunner.rollbackTransaction();
       throw new InternalServerErrorException(err.message);
     } finally {
       await queryRunner.release();
     }
+  }
+
+
+  async addNewPhotoToPropertyPhotos(
+    propertyId: string,
+    property_photo: Express.Multer.File,
+  ) {
+    const queryRunner = this.dataSource.createQueryRunner()
+    await queryRunner.startTransaction()
+    try {
+      const property = await queryRunner.manager.findOne(Property, {
+        where: {
+          id: propertyId
+        }
+      })
+
+      if (!property) {
+        throw new NotFoundException(`property not found`)
+      }
+
+      const uploadRes = await this.cloudinaryService.uploadImage(property_photo);
+      const photo = this.photoRepository.create({
+        property,
+        url: uploadRes.secure_url,
+        public_id: uploadRes.public_id,
+      });
+
+
+      await queryRunner.manager.save(photo);
+
+      await queryRunner.commitTransaction();
+      return photo;
+    } catch (error) {
+      await queryRunner.rollbackTransaction()
+      throw error
+
+    } finally {
+      await queryRunner.release()
+    }
+
+
+  }
+
+  async removePhotoOfPropertyFromPropertyPhotos(
+    propertyPhotoId: string,
+  ) {
+    console.log("this is the propertyPhotoId : ", propertyPhotoId);
+
+    const queryRunner = this.dataSource.createQueryRunner()
+    await queryRunner.startTransaction()
+    try {
+      const photo = await queryRunner.manager.findOne(PropertyPhotos, {
+        where: {
+          id: propertyPhotoId
+        }
+      })
+
+      if (!photo) {
+        throw new NotFoundException(`Property photo not found`)
+      }
+
+      const deletedPhotoId = photo.id; // Store the ID before removal
+
+      await this.cloudinaryService.deleteImage(photo.public_id);
+      await queryRunner.manager.remove(photo);
+      await queryRunner.commitTransaction();
+
+      return { deletedPhotoId }; // Return the stored ID
+
+    } catch (error) {
+      await queryRunner.rollbackTransaction()
+      throw error
+
+    } finally {
+      await queryRunner.release()
+    }
+  }
+
+
+  async addNewAttributeToPropertyAttributes(
+    createAttributeDto: CreateAttributeDto
+  ) {
+    const queryRunner = this.dataSource.createQueryRunner()
+    await queryRunner.startTransaction()
+    try {
+      const property = await queryRunner.manager.findOne(Property, {
+        where: {
+          id: createAttributeDto.propertyId
+        }
+      })
+
+      if (!property) {
+        throw new NotFoundException(`property not found`)
+      }
+
+      // Save attributes
+      let attribute = await queryRunner.manager.findOne(Attribute, {
+        where: { name: createAttributeDto.name },
+      });
+
+      if (!attribute) {
+        throw new NotFoundException(`attribute not found`)
+      }
+
+      let propertyAttribute = await queryRunner.manager.findOne(PropertyAttribute, {
+        where: { property, attribute },
+      });
+
+      if (!propertyAttribute) {
+        propertyAttribute = queryRunner.manager.create(PropertyAttribute, {
+          property,
+          attribute,
+          value: createAttributeDto.value,
+        });
+      } else {
+        propertyAttribute.value = createAttributeDto.value;
+        propertyAttribute.property = property;
+        propertyAttribute.attribute = attribute;
+      }
+
+
+      await queryRunner.manager.save(propertyAttribute);
+
+      await queryRunner.commitTransaction();
+
+      return propertyAttribute;
+    } catch (error) {
+      await queryRunner.rollbackTransaction()
+      throw error
+
+    } finally {
+      await queryRunner.release()
+    }
+
+
+
+
+
+  }
+
+  async removeAttributeOfPropertyFromPropertyAttributes(
+    propertyAttributeId: string,
+  ) {
+    const queryRunner = this.dataSource.createQueryRunner()
+    await queryRunner.startTransaction()
+    try {
+      const attribute = await queryRunner.manager.findOne(PropertyAttribute, {
+        where: {
+          id: propertyAttributeId
+        }
+      })
+
+      if (!attribute) {
+        throw new NotFoundException(`attribute not found`)
+      }
+      const deletedAttributeId = attribute.id; // Store the ID before removal
+
+      await queryRunner.manager.remove(attribute);
+      await queryRunner.commitTransaction();
+
+      return { deletedAttributeId };
+
+    } catch (error) {
+      await queryRunner.rollbackTransaction()
+      throw error
+
+    } finally {
+      await queryRunner.release()
+    }
+
+
+
+
+
   }
 
 
@@ -445,7 +506,7 @@ export class PropertyService {
       skip: (page - 1) * limit,
       take: limit,
       where: {
-        status: PropertyStatus.Accepted, // <-- Add this line to filter by status
+        status: EnumStatus.Accepted, // <-- Add this line to filter by status
         softDelete: false, // <-- Assuming you also want to exclude soft-deleted properties
       },
       relations: [
@@ -456,7 +517,6 @@ export class PropertyService {
         'licenseDetails.license', // Include nested relation for license name
         'propertyAttributes',
         'propertyAttributes.attribute', // Include nested relation for attribute name
-        // 'owner', // You might want to include the owner as well for general listings
       ],
       order: {
         publishDate: 'DESC', // Typically, newer accepted properties are shown first
@@ -482,11 +542,11 @@ export class PropertyService {
       skip: (page - 1) * limit,
       take: limit,
       where: {
-        status: PropertyStatus.Reserved, // <-- Add this line to filter by status
+        status: EnumStatus.Reserved, // <-- Add this line to filter by status
         softDelete: false, // <-- Assuming you also want to exclude soft-deleted properties
-        owner: {
-          id: userId
-        }
+        // owner: {
+        //   id: userId
+        // }
       },
       relations: [
         'photos',
@@ -497,7 +557,6 @@ export class PropertyService {
         'propertyAttributes',
         'propertyAttributes.attribute', // Include nested relation for attribute name
         'office'
-        // 'owner', // You might want to include the owner as well for general listings
       ],
       order: {
         publishDate: 'DESC', // Typically, newer accepted properties are shown first
@@ -531,7 +590,7 @@ export class PropertyService {
       skip: (page - 1) * limit,
       take: limit,
       where: {
-        status: PropertyStatus.Pending, // Filter by pending status
+        status: EnumStatus.Pending, // Filter by pending status
         softDelete: false, // Ensure it's not soft-deleted
       },
       relations: [
@@ -542,7 +601,6 @@ export class PropertyService {
         'licenseDetails.license', // Load the actual license type within licenseDetails
         'propertyAttributes', // Load custom attributes (e.g., "Rooms", "Bathrooms")
         'propertyAttributes.attribute', // Load attribute names
-        'owner',         // Load the property owner (User entity)
       ],
       order: {
         publishDate: 'ASC', // Order by oldest first for review queue
@@ -577,174 +635,380 @@ export class PropertyService {
      * @param status The new status (e.g., 'accepted', 'rejected').
      * @returns A promise that resolves to the updated Property entity.
      */
-  async updatePropertyStatus(id: string, updatePropertyStatusDto: UpdatePropertyStatusDto): Promise<Property> {
+  async updatePropertyStatus(id: string, updatePropertyStatusDto: UpdatePropertyStatusDto): Promise<void> {
+    const queryRunner = this.dataSource.createQueryRunner()
+    await queryRunner.startTransaction()
+    try {
+
+
+
+
+      // 1. Find the property first
+      const property = await queryRunner.manager.findOne(Property, { where: { id }, relations: ['office', 'office.user'] });
+
+      if (!property) {
+        throw new NotFoundException(`Property with ID "${id}" not found.`);
+      }
+
+      // 2. Update its status
+      property.status = updatePropertyStatusDto.status;
+
+      // 3. Save the updated property
+      const updatedProperty = await queryRunner.manager.save(property);
+
+      // 4. Return the updated property (which already has the relations if needed by the controller)
+      // If you need all relations for the response, you can re-fetch or use save's return value carefully.
+      // The `save` method often returns the entity with its current state, but might not re-load all relations automatically.
+      // To ensure all relations are loaded for the response, the previous `findOne` call or a new `findOne` is good.
+      // Let's re-fetch with relations to be absolutely sure the returned object is complete for the client.
+
+      const message = property.status === EnumStatus.Accepted ?
+        `We have accepeted you request for adding new Property with This Property Number ${property.propertyNumber}`
+        : `We have rejected you request for adding new Property with This Property Number ${property.propertyNumber} because it doesn't verfiy all requiremnts.`;
+      await this.notificationService.notifyUser(queryRunner, updatedProperty.office.user.id, message, 'Property Adding Status.')
+
+      await queryRunner.commitTransaction()
+
+    } catch (error) {
+      await queryRunner.rollbackTransaction()
+      throw error;
+    } finally {
+
+      await queryRunner.release()
+    }
+  }
+
+
+  async removePropertySoft(queryRunner: QueryRunner, id: string) {
+
     // 1. Find the property first
-    const property = await this.propertyRepository.findOne({ where: { id } });
+    const property = await queryRunner.manager.findOne(Property, {
+      where: { id }
+    })
 
     if (!property) {
       throw new NotFoundException(`Property with ID "${id}" not found.`);
     }
 
-    // 2. Update its status
-    property.status = updatePropertyStatusDto.status;
+    // 2. Update its softDelete
+    property.softDelete = true;
 
     // 3. Save the updated property
-    const updatedProperty = await this.propertyRepository.save(property);
+    await queryRunner.manager.save(property);
 
-    // 4. Return the updated property (which already has the relations if needed by the controller)
-    // If you need all relations for the response, you can re-fetch or use save's return value carefully.
-    // The `save` method often returns the entity with its current state, but might not re-load all relations automatically.
-    // To ensure all relations are loaded for the response, the previous `findOne` call or a new `findOne` is good.
-    // Let's re-fetch with relations to be absolutely sure the returned object is complete for the client.
+  }
 
-    const finalProperty = await this.propertyRepository.findOne({
-      where: { id: updatedProperty.id }, // Use the ID from the saved property
+
+  async findOneByPropertyNumber(propertyNumber: string) {
+    const property = await this.propertyRepository.findOne({
+      where: { propertyNumber, status: EnumStatus.Accepted },
       relations: [
         'photos',
         'location',
         'type',
         'licenseDetails',
-        'licenseDetails.license',
         'propertyAttributes',
         'propertyAttributes.attribute',
-        'owner',
       ],
+      order: {
+        createdAt: 'DESC'
+      }
+    });
+    if (!property) throw new NotFoundException('Property not found');
+    return property;
+  }
+
+
+  // async findPropertiesByFiltering(
+  //   filterDto: FilterPropertyDto,
+  //   paginationDto: PaginationDto,
+  //   userId?: string
+  // ) {
+  //   const { page = 1, limit = 10 } = paginationDto;
+
+  //   const query = this.propertyRepository.createQueryBuilder('property')
+  //     .leftJoinAndSelect('property.photos', 'photos')
+  //     .leftJoinAndSelect('property.location', 'location')
+  //     .leftJoinAndSelect('property.type', 'type')
+  //     .leftJoinAndSelect('property.licenseDetails', 'licenseDetails')
+  //     .leftJoinAndSelect('licenseDetails.license', 'license')
+  //     .leftJoinAndSelect('property.propertyAttributes', 'propertyAttributes')
+  //     .leftJoinAndSelect('propertyAttributes.attribute', 'attribute')
+  //     .leftJoin("property.office", "office")
+  //     .leftJoin("office.user", "user")
+  //     .where('property.softDelete = :softDelete', { softDelete: false })
+  //     // .andWhere('user.id != :userId', { userId })
+  //     .andWhere('property.status = :status', { status: EnumStatus.Accepted });
+
+
+  //   const {
+  //     type,
+  //     purpose,
+  //     price,
+  //     space,
+  //     licenseType,
+  //     attributeFilters,
+  //     location,
+  //   } = filterDto;
+
+  //   console.log("this is the type : ",filterDto);
+    
+
+  //   // Type
+  //   if (type) {
+  //     query.andWhere('type.name = :type', { type });
+  //   }
+
+
+  //   // Purpose (Selling or Renting via typeOperation column)
+  //   if (purpose?.selling && !purpose?.renting) {
+  //     query.andWhere('property.typeOperation = :typeOp', { typeOp: 'selling' });
+  //   } else if (!purpose?.selling && purpose?.renting) {      
+  //     query.andWhere('property.typeOperation = :typeOp', { typeOp: 'renting' });
+  //   }
+  //   // If both are selected, show both (do nothing — already default)
+
+
+  //   // // Purpose (selling / renting)
+  //   // if (purpose?.selling && !purpose?.renting) {
+  //   //   query.andWhere('property.typeOperation = :typeOp', { typeOp: 'selling' });
+  //   // } else if (!purpose?.selling && purpose?.renting) {
+  //   //   query.andWhere('property.typeOperation = :typeOp', { typeOp: 'renting' });
+  //   // } else if (purpose?.selling && purpose?.renting) {
+  //   //   // Show both: selling OR renting
+  //   //   query.andWhere('(property.typeOperation = :selling OR property.typeOperation = :renting)', {
+  //   //     selling: 'selling',
+  //   //     renting: 'renting',
+  //   //   });
+  //   // }
+
+
+
+  //   // Price range
+  //   if (price?.length === 2) {
+  //     query.andWhere('property.price BETWEEN :minPrice AND :maxPrice', {
+  //       minPrice: price[0],
+  //       maxPrice: price[1],
+  //     });
+  //   }
+
+  //   // Space range
+  //   if (space?.length === 2) {
+  //     query.andWhere('property.space BETWEEN :minSpace AND :maxSpace', {
+  //       minSpace: space[0],
+  //       maxSpace: space[1],
+  //     });
+  //   }
+
+  //   // License Type
+  //   if (licenseType) {
+  //     query.andWhere('license.name = :licenseType', {
+  //       licenseType,
+  //     });
+  //   }
+
+  //   // Location filters
+  //   if (location?.governorate) {
+  //     query.andWhere('location.governorate = :governorate', {
+  //       governorate: location.governorate,
+  //     });
+  //   }
+  //   if (location?.province) {
+  //     query.andWhere('location.province = :province', {
+  //       province: location.province,
+  //     });
+  //   }
+  //   if (location?.city) {
+  //     query.andWhere('location.city = :city', {
+  //       city: location.city,
+  //     });
+  //   }
+  //   if (location?.street) {
+  //     query.andWhere('location.street = :street', {
+  //       street: location.street,
+  //     });
+  //   }
+
+  //   // Dynamic attribute filters
+  //   if (attributeFilters?.length! > 0) {
+  //     attributeFilters?.forEach((attr, index) => {
+  //       const attrNameKey = `attrName${index}`;
+  //       const attrValueKey = `attrValue${index}`;
+  //       query.andWhere(
+  //         `(attribute.name = :${attrNameKey} AND propertyAttributes.value = :${attrValueKey})`,
+  //         {
+  //           [attrNameKey]: attr.attribute,
+  //           [attrValueKey]: attr.value,
+  //         },
+  //       );
+  //     });
+  //   }
+
+
+  //   // ✅ Apply pagination
+  //   query.skip((page - 1) * limit).take(limit);
+
+  //   // ✅ Execute query with total count
+  //   const [data, total] = await query.getManyAndCount();
+
+  //   console.log('this is the data', data);
+  //   console.log('this is the total',total);
+    
+
+  //   return {
+  //     data,
+  //     total,
+  //     page,
+  //     limit,
+  //     pageCount: Math.ceil(total / limit),
+  //   };
+
+  // }
+
+  async findPropertiesByFiltering(
+  filterDto: FilterPropertyDto,
+  paginationDto: PaginationDto,
+  userId?: string
+) {
+  const { page = 1, limit = 10 } = paginationDto;
+
+  console.log("this is the filterDto",filterDto);
+  
+
+  const query = this.propertyRepository.createQueryBuilder('property')
+    .leftJoinAndSelect('property.photos', 'photos')
+    .leftJoinAndSelect('property.location', 'location')
+    .leftJoinAndSelect('property.type', 'type')
+    .leftJoinAndSelect('property.licenseDetails', 'licenseDetails')
+    .leftJoinAndSelect('licenseDetails.license', 'license')
+    .leftJoinAndSelect('property.propertyAttributes', 'propertyAttributes')
+    .leftJoinAndSelect('propertyAttributes.attribute', 'attribute')
+    .leftJoin("property.office", "office")
+    .leftJoin("office.user", "user")
+    .where('property.softDelete = :softDelete', { softDelete: false })
+    .andWhere('user.id != :userId', { userId }) // Uncomment if needed
+    .andWhere('property.status = :status', { status: EnumStatus.Accepted });
+
+  const {
+    type,
+    purpose,
+    price,
+    space,
+    licenseType,
+    attributeFilters,
+    location,
+  } = filterDto;
+
+  console.log("this is the type : ", filterDto);
+
+  // Type filter
+  if (type && type !== '') {
+    query.andWhere('type.name = :type', { type });
+  }
+
+  // Purpose filter
+  if (purpose?.selling && !purpose?.renting) {
+    query.andWhere('property.typeOperation = :typeOp', { typeOp: 'selling' });
+  } else if (!purpose?.selling && purpose?.renting) {
+    query.andWhere('property.typeOperation = :typeOp', { typeOp: 'renting' });
+  }
+
+  // Price range filter
+  if (price?.length === 2) {
+    query.andWhere('property.price BETWEEN :minPrice AND :maxPrice', {
+      minPrice: price[0],
+      maxPrice: price[1],
+    });
+  }
+
+  // Space range filter
+  if (space?.length === 2) {
+    query.andWhere('property.space BETWEEN :minSpace AND :maxSpace', {
+      minSpace: space[0],
+      maxSpace: space[1],
+    });
+  }
+
+  // License Type filter
+  if (licenseType &&  licenseType !== '') {
+    query.andWhere('license.name = :licenseType', {
+      licenseType,
+    });
+  }
+
+  // Location filters
+  if (location?.governorate && location?.governorate !== '') {
+    query.andWhere('location.governorate = :governorate', {
+      governorate: location.governorate,
+    });
+  }
+  if (location?.province && location?.province !== '' ) {
+    query.andWhere('location.province = :province', {
+      province: location.province,
+    });
+  }
+  if (location?.city && location?.city !== '') {
+    query.andWhere('location.city = :city', {
+      city: location.city,
+    });
+  }
+  if (location?.street && location?.street !== '') {
+    query.andWhere('location.street = :street', {
+      street: location.street,
+    });
+  }
+  
+  // Dynamic attribute filters (The fix is here)
+  if (attributeFilters && attributeFilters.length > 0) {
+    const attributeSubQuery = this.propertyRepository.createQueryBuilder('sub_property')
+      .leftJoin('sub_property.propertyAttributes', 'sub_pa')
+      .leftJoin('sub_pa.attribute', 'sub_attr')
+      .select('sub_property.id')
+      .groupBy('sub_property.id')
+      .where('1=1');
+
+    attributeFilters?.forEach((attr, index) => {
+      const attrNameKey = `attrName${index}`;
+      const attrValueKey = `attrValue${index}`;
+      attributeSubQuery.andWhere(
+        `(sub_attr.name = :${attrNameKey} AND sub_pa.value = :${attrValueKey})`,
+        {
+          [attrNameKey]: attr.attribute,
+          [attrValueKey]: attr.value,
+        },
+      );
     });
 
-    if (!finalProperty) {
-      // This case should ideally not happen if `updatedProperty` was successfully saved
-      // but it's good for type safety.
-      throw new NotFoundException(`Property with ID "${updatedProperty.id}" not found after update.`);
-    }
+    attributeSubQuery.having('COUNT(sub_property.id) = :count', {
+      count: attributeFilters?.length,
+    });
 
-    return finalProperty;
-  }
+    query.andWhere(`property.id IN (${attributeSubQuery.getQuery()})`);
+    query.setParameters(attributeSubQuery.getParameters());
+  } 
 
+  // Apply pagination
+  query.skip((page - 1) * limit).take(limit);
 
+  // Execute query with total count
+  const [data, total] = await query.getManyAndCount();
 
+  console.log('this is the data', data);
+  console.log('this is the total', total);
 
-
-  async findPropertiesByFiltering(filterDto: FilterPropertyDto, paginationDto: PaginationDto) {
-    const { page = 1, limit = 10 } = paginationDto;
-
-    const query = this.propertyRepository.createQueryBuilder('property')
-      .leftJoinAndSelect('property.photos', 'photos')
-      .leftJoinAndSelect('property.location', 'location')
-      .leftJoinAndSelect('property.type', 'type')
-      .leftJoinAndSelect('property.licenseDetails', 'licenseDetails')
-      .leftJoinAndSelect('licenseDetails.license', 'license') // ✅ Fix
-      .leftJoinAndSelect('property.propertyAttributes', 'propertyAttributes')
-      .leftJoinAndSelect('propertyAttributes.attribute', 'attribute')
-      .where('property.softDelete = false')
-      .where('property.status = :status', { status: PropertyStatus.Accepted });
-
-    const {
-      type,
-      purpose,
-      price,
-      space,
-      licenseType,
-      attributeFilters,
-      location,
-    } = filterDto;
-
-    // Type
-    if (type) {
-      query.andWhere('type.name = :type', { type });
-    }
-
-    // Purpose (Selling or Renting via typeOperation column)
-    if (purpose?.selling && !purpose?.renting) {
-      query.andWhere('property.typeOperation = :typeOp', { typeOp: 'selling' });
-    } else if (!purpose?.selling && purpose?.renting) {
-      query.andWhere('property.typeOperation = :typeOp', { typeOp: 'renting' });
-    }
-    // If both are selected, show both (do nothing — already default)
-
-    // Price range
-    if (price?.length === 2) {
-      query.andWhere('property.price BETWEEN :minPrice AND :maxPrice', {
-        minPrice: price[0],
-        maxPrice: price[1],
-      });
-    }
-
-    // Space range
-    if (space?.length === 2) {
-      query.andWhere('property.space BETWEEN :minSpace AND :maxSpace', {
-        minSpace: space[0],
-        maxSpace: space[1],
-      });
-    }
-
-    // License Type
-    if (licenseType) {
-      query.andWhere('license.name = :licenseType', {
-        licenseType,
-      });
-    }
-
-    // Location filters
-    if (location?.governorate) {
-      query.andWhere('location.governorate = :governorate', {
-        governorate: location.governorate,
-      });
-    }
-    if (location?.province) {
-      query.andWhere('location.province = :province', {
-        province: location.province,
-      });
-    }
-    if (location?.city) {
-      query.andWhere('location.city = :city', {
-        city: location.city,
-      });
-    }
-    if (location?.street) {
-      query.andWhere('location.street = :street', {
-        street: location.street,
-      });
-    }
-
-    // Dynamic attribute filters
-    if (attributeFilters?.length! > 0) {
-      attributeFilters?.forEach((attr, index) => {
-        const attrNameKey = `attrName${index}`;
-        const attrValueKey = `attrValue${index}`;
-        query.andWhere(
-          `(attribute.name = :${attrNameKey} AND propertyAttributes.value = :${attrValueKey})`,
-          {
-            [attrNameKey]: attr.attribute,
-            [attrValueKey]: attr.value,
-          },
-        );
-      });
-    }
-
-
-    // ✅ Apply pagination
-    query.skip((page - 1) * limit).take(limit);
-
-    // ✅ Execute query with total count
-    const [data, total] = await query.getManyAndCount();
-
-    return {
-      data,
-      total,
-      page,
-      limit,
-      pageCount: Math.ceil(total / limit),
-    };
-
-  }
-
-
-
+  return {
+    data,
+    total,
+    page,
+    limit,
+    pageCount: Math.ceil(total / limit),
+  };
+}
 
 
   async findOne(id: string) {
     const property = await this.propertyRepository.findOne({
-      where: { id, status: PropertyStatus.Accepted },
+      where: { id, status: EnumStatus.Accepted },
       relations: [
         'photos',
         'location',
@@ -752,12 +1016,12 @@ export class PropertyService {
         'licenseDetails',
         'propertyAttributes',
         'propertyAttributes.attribute',
-        'owner',
-        
-
       ],
     });
+    console.log("this is the property", property);
+
     if (!property) throw new NotFoundException('Property not found');
+
     return property;
   }
 
@@ -772,7 +1036,7 @@ export class PropertyService {
         office: {
           id: officeId
         },
-        status: PropertyStatus.Accepted
+        status: EnumStatus.Accepted
       },
       relations: [
         'photos',
@@ -793,6 +1057,60 @@ export class PropertyService {
     };
   }
 
+  async payBeforeRemove(id: string, searchPaymentCardDto: SearchPaymentCardDto, userId: string) {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const property = await queryRunner.manager.findOne(Property, {
+        where: {
+          id, office: {
+            user: {
+              id: userId
+            }
+          }
+        },
+        relations: ['photos', 'propertyAttributes', 'licenseDetails', 'location'],
+      });
+      if (!property) throw new NotFoundException('Property not found');
+
+      await this.paymentCardService.searchAndWithdraw(searchPaymentCardDto, 50, queryRunner.manager)
+
+
+      // Delete photos from Cloudinary
+      for (const photo of property.photos) {
+        await this.cloudinaryService.deleteImage(photo.public_id);
+        await queryRunner.manager.remove(photo);
+      }
+
+      // Remove property attributes
+      for (const attr of property.propertyAttributes) {
+        await queryRunner.manager.remove(attr);
+      }
+
+      // Remove licenseDetails
+
+      // Remove property
+      await queryRunner.manager.remove(property);
+
+      if (property.licenseDetails) {
+        await queryRunner.manager.remove(property.licenseDetails);
+      }
+
+      // Remove location
+      await queryRunner.manager.remove(property.location);
+
+      await queryRunner.commitTransaction();
+
+      return property.id
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw new InternalServerErrorException(err.message);
+    } finally {
+      await queryRunner.release();
+    }
+  }
 
   async remove(id: string) {
     const queryRunner = this.dataSource.createQueryRunner();
@@ -839,197 +1157,8 @@ export class PropertyService {
       await queryRunner.release();
     }
   }
+
+
+
+
 }
-
-// async findPropertiesByFiltering(filterDto: FilterPropertyDto) {
-
-//   const query = this.propertyRepository.createQueryBuilder('property')
-//     .leftJoinAndSelect('property.photos', 'photos')
-//     .leftJoinAndSelect('property.location', 'location')
-//     .leftJoinAndSelect('property.type', 'type')
-//     .leftJoinAndSelect('property.licenseDetails', 'licenseDetails')
-//     .leftJoinAndSelect('property.propertyAttributes', 'propertyAttributes')
-//     .leftJoinAndSelect('propertyAttributes.attribute', 'attribute')
-//     .where('property.softDelete = false');
-
-//   const {
-//     type,
-//     purpose,
-//     price,
-//     space,
-//     licenseType,
-//     attributeFilters,
-//     location,
-//   } = filterDto;
-
-//   // Type
-//   if (type) {
-//     query.andWhere('type.name = :type', { type });
-//   }
-
-//   // Purpose (selling/renting)
-//   if (purpose?.selling && !purpose.renting) {
-//     query.andWhere('licenseDetails.forSelling = true');
-//   }
-//   if (!purpose?.selling && purpose?.renting) {
-//     query.andWhere('licenseDetails.forRenting = true');
-//   }
-
-//   // Price Range
-//   if (price?.length === 2) {
-//     query.andWhere('property.price BETWEEN :minPrice AND :maxPrice', {
-//       minPrice: price[0],
-//       maxPrice: price[1],
-//     });
-//   }
-
-//   // Space Range
-//   if (space?.length === 2) {
-//     query.andWhere('property.space BETWEEN :minSpace AND :maxSpace', {
-//       minSpace: space[0],
-//       maxSpace: space[1],
-//     });
-//   }
-
-//   // License Type
-//   if (licenseType) {
-//     query.andWhere('licenseDetails.licenseType = :licenseType', { licenseType });
-//   }
-
-//   // Location Filters
-//   if (location?.governorate) {
-//     query.andWhere('location.governorate = :governorate', {
-//       governorate: location.governorate,
-//     });
-//   }
-//   if (location?.province) {
-//     query.andWhere('location.province = :province', {
-//       province: location.province,
-//     });
-//   }
-//   if (location?.city) {
-//     query.andWhere('location.city = :city', {
-//       city: location.city,
-//     });
-//   }
-//   if (location?.street) {
-//     query.andWhere('location.street = :street', {
-//       street: location.street,
-//     });
-//   }
-
-//   // Attributes: filter by name and value
-//   if (attributeFilters?.length! > 0) {
-//     attributeFilters?.forEach((attr, index) => {
-//       const paramName = `attrValue${index}`;
-//       const paramAttr = `attrName${index}`;
-
-//       query.andWhere(
-//         `(attribute.name = :${paramAttr} AND propertyAttributes.value = :${paramName})`,
-//         {
-//           [paramAttr]: attr.attribute,
-//           [paramName]: attr.value,
-//         },
-//       );
-//     });
-//   }
-
-//   return await query.getMany();
-// }
-
-
-// async findPropertiesByFiltering(filterDto: FilterPropertyDto) {
-//   const query = this.propertyRepository.createQueryBuilder('property')
-//     .leftJoinAndSelect('property.photos', 'photos')
-//     .leftJoinAndSelect('property.location', 'location')
-//     .leftJoinAndSelect('property.type', 'type')
-//     .leftJoinAndSelect('property.licenseDetails', 'licenseDetails')
-//     .leftJoinAndSelect('property.propertyAttributes', 'propertyAttributes')
-//     .leftJoinAndSelect('propertyAttributes.attribute', 'attribute')
-//     .where('property.softDelete = false');
-
-//   const {
-//     type,
-//     purpose,
-//     price,
-//     space,
-//     licenseType,
-//     attributeFilters,
-//     location,
-//   } = filterDto;
-
-//   // Type
-//   if (type) {
-//     query.andWhere('type.name = :type', { type });
-//   }
-
-//   // Purpose (Selling or Renting via typeOperation column)
-//   if (purpose?.selling && !purpose?.renting) {
-//     query.andWhere('property.typeOperation = :typeOp', { typeOp: 'Selling' });
-//   } else if (!purpose?.selling && purpose?.renting) {
-//     query.andWhere('property.typeOperation = :typeOp', { typeOp: 'Renting' });
-//   }
-//   // If both are selected, show both (do nothing — already default)
-
-//   // Price range
-//   if (price?.length === 2) {
-//     query.andWhere('property.price BETWEEN :minPrice AND :maxPrice', {
-//       minPrice: price[0],
-//       maxPrice: price[1],
-//     });
-//   }
-
-//   // Space range
-//   if (space?.length === 2) {
-//     query.andWhere('property.space BETWEEN :minSpace AND :maxSpace', {
-//       minSpace: space[0],
-//       maxSpace: space[1],
-//     });
-//   }
-
-//   // License Type
-//   if (licenseType) {
-//     query.andWhere('licenseDetails.licenseType = :licenseType', {
-//       licenseType,
-//     });
-//   }
-
-//   // Location
-//   if (location?.governorate) {
-//     query.andWhere('location.governorate = :governorate', {
-//       governorate: location.governorate,
-//     });
-//   }
-//   if (location?.province) {
-//     query.andWhere('location.province = :province', {
-//       province: location.province,
-//     });
-//   }
-//   if (location?.city) {
-//     query.andWhere('location.city = :city', {
-//       city: location.city,
-//     });
-//   }
-//   if (location?.street) {
-//     query.andWhere('location.street = :street', {
-//       street: location.street,
-//     });
-//   }
-
-//   // Dynamic attribute filters
-//   if (attributeFilters?.length! > 0) {
-//     attributeFilters?.forEach((attr, index) => {
-//       const attrNameKey = `attrName${index}`;
-//       const attrValueKey = `attrValue${index}`;
-//       query.andWhere(
-//         `(attribute.name = :${attrNameKey} AND propertyAttributes.value = :${attrValueKey})`,
-//         {
-//           [attrNameKey]: attr.attribute,
-//           [attrValueKey]: attr.value,
-//         },
-//       );
-//     });
-//   }
-
-//   return query.getMany();
-// }

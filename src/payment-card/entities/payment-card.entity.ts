@@ -17,7 +17,7 @@ export class PaymentCard {
     id: string;
 
     @Column({
-        type: 'enum',
+        type: 'enum',  
         enum: PaymentCardType,
     })
     type: PaymentCardType;

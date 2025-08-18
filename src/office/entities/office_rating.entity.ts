@@ -19,8 +19,12 @@ export class OfficeRating {
     office: Office;
 
     @Column({
-        nullable: false
+        nullable: false,
+        type:'numeric',
+        precision: 2,
+        scale: 1,
+        default: '0'
     })
-    rating: number;
+    number_of_stars: number;
 
 }

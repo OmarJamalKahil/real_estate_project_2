@@ -10,8 +10,7 @@ import * as bcrypt from 'bcrypt';
 
 import { ConfigService } from "@nestjs/config";
 
-import {  User } from "./entities/user.entity";
-import { Upload } from "./entities/upload.entity";
+import { Role, User } from "./entities/user.entity";
 
 import { CreateUserDto } from "./dto/create-user.dto";
 import { VerifyUserDto } from "./dto/verify-user.dto";
@@ -23,7 +22,7 @@ import { CloudinaryService } from "src/cloudinary/cloudinary.service";
 import { LoginUserDto } from "./dto/login-user.dto";
 import { UserResponseDto } from "./dto/user-response.dto";
 import { GetUserByNationalNumberDto } from "./dto/get-user-by-national-number.dto";
-import { Role } from "src/common/enums/role.enum";
+import { Photo } from "src/common/entities/Photo.entity";
 
 @Injectable()
 export class UserService {
@@ -31,8 +30,8 @@ export class UserService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
 
-    @InjectRepository(Upload)
-    private readonly uploadRepository: Repository<Upload>,
+    @InjectRepository(Photo)
+    private readonly uploadRepository: Repository<Photo>,
 
     private readonly authService: AuthService,
     private readonly mailService: MailService,
@@ -249,6 +248,27 @@ export class UserService {
 
     return UserResponse;
   }
+
+
+  async getUserById(id: string) {
+    const user = await this.userRepository.findOne({
+      where: { id },
+      relations: ['banned', 'userWarnings']
+
+    });
+
+    if (!user) {
+      throw new NotFoundException('User Not Found');
+    }
+
+    const UserResponse: UserResponseDto = {
+      ...user
+    }
+
+    return UserResponse;
+  }
+
+
 
   /**
    * Generate a 6-digit verification code

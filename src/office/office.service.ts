@@ -7,10 +7,8 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
-import { Office, OfficeCreatingStatus } from './entities/office.entity';
-import { LicensePhoto } from './entities/license_photo.entity';
-import { OfficePhoto } from './entities/office_photo.entity';
-import { User } from 'src/user/entities/user.entity';
+import { Office } from './entities/office.entity';
+import { Role, User } from 'src/user/entities/user.entity';
 import { OfficeRating } from './entities/office_rating.entity';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { CreateOfficeDto } from './dto/create-office.dto';
@@ -19,7 +17,10 @@ import { UpdateOfficeStatusDto } from './dto/update-office-status.dto';
 import { PaginationDto } from 'src/common/utils/pagination.dto';
 import { PaginatedResponse } from 'src/common/utils/paginated-response.interface';
 import { OfficeSubscription } from 'src/office-subscription/entities/office-subscription.entity';
-import { of } from 'rxjs';
+import { NotificationService } from 'src/notification/notification.service';
+import { EnumStatus } from 'src/property/common/property-status.enum';
+import { LicensePhoto } from './entities/license_photo.entity';
+import { Photo } from 'src/common/entities/Photo.entity';
 
 @Injectable()
 export class OfficeService {
@@ -28,22 +29,22 @@ export class OfficeService {
     private readonly officeRepository: Repository<Office>,
     @InjectRepository(LicensePhoto)
     private readonly licensePhotoRepository: Repository<LicensePhoto>,
-    @InjectRepository(OfficePhoto)
-    private readonly officePhotoRepository: Repository<OfficePhoto>,
+    @InjectRepository(Photo)
+    private readonly photoRepository: Repository<Photo>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     @InjectRepository(OfficeRating)
     private readonly officeRatingRepository: Repository<OfficeRating>,
     private readonly cloudinaryService: CloudinaryService,
+    private readonly notificationService: NotificationService,
     private readonly dataSource: DataSource,
   ) { }
 
-  /**
-   * Create an office request with license & office photos
-   */
+
+
   async create(
     createOfficeDto: CreateOfficeDto,
-    /*userId: string,*/ /**omar */officeId: string,
+    userId: string,
     license_photo?: Express.Multer.File,
     office_photo?: Express.Multer.File,
   ) {
@@ -52,85 +53,48 @@ export class OfficeService {
     await queryRunner.startTransaction();
 
     try {
-      // if (!license_photo || !office_photo) {
-      //   throw new BadRequestException(
-      //     'license_photo or office_photo is missed',
-      //   );
-      //}
+      if (!license_photo || !office_photo) {
+        throw new BadRequestException(
+          'license_photo or office_photo is missed',
+        );
+      }
 
-      //omar comment this
-      // const user = await this.userRepository.findOne({
-      //   where: { id: userId },
-      // });
-      //if (!user) throw new NotFoundException('User not found');
+      const user = await queryRunner.manager.findOne(User, {
+        where: { id: userId },
+      });
+      if (!user) throw new NotFoundException('User not found');
 
-      let office = await this.officeRepository.findOne({
-        where: {
-          //user,
-
-          //omar
-          id: officeId
-        },
+      const existingOffice = await queryRunner.manager.findOne(Office, {
+        where: { user: { id: user.id } },
       });
 
-      console.log(office?.office_email)
-      console.log(officeId)
-            console.log(office);
-
-
-      // if (office) {
-      //   throw new BadRequestException("you can't have multiple offices");
-      // }
-
-      var licensePhoto;
-      var officePhotoEntity;
-
-      if(license_photo){
-
-        const uploadedLicense =
-          await this.cloudinaryService.uploadImage(license_photo);
-
-        licensePhoto = this.licensePhotoRepository.create({
-          url: uploadedLicense.secure_url,
-          public_id: uploadedLicense.public_id,
-        });
-
-        await queryRunner.manager.save(licensePhoto);
-
+      if (existingOffice) {
+        throw new BadRequestException("You can't have multiple offices");
       }
 
-      if(office_photo){
+      const uploadedLicense = await this.cloudinaryService.uploadImage(license_photo);
+      const uploadedOffice = await this.cloudinaryService.uploadImage(office_photo);
 
-        const uploadedOffice =
-          await this.cloudinaryService.uploadImage(office_photo);
+      const licensePhoto = queryRunner.manager.create(LicensePhoto, {
+        url: uploadedLicense.secure_url,
+        public_id: uploadedLicense.public_id,
+      });
+      await queryRunner.manager.save(licensePhoto);
 
-        officePhotoEntity = this.officePhotoRepository.create({
-          url: uploadedOffice.secure_url,
-          public_id: uploadedOffice.public_id,
-        });
+      const officePhotoEntity = queryRunner.manager.create(Photo, {
+        url: uploadedOffice.secure_url,
+        public_id: uploadedOffice.public_id,
+      });
+      await queryRunner.manager.save(Photo, officePhotoEntity);
 
-        await queryRunner.manager.save(officePhotoEntity);
+      const newOffice = queryRunner.manager.create(Office, {
+        ...createOfficeDto,
+        user,
+        license_photo: licensePhoto,
+        office_photo: officePhotoEntity,
+      });
+      await queryRunner.manager.save(Office, newOffice);
 
-      }
-
-      if(office){
-        office.license_number = createOfficeDto.license_number ;
-        office.password = createOfficeDto.password;
-        office.name = createOfficeDto.name;
-        office.personal_identity_number = createOfficeDto.personal_identity_number;
-        office.receiver_identifier = createOfficeDto.receiver_identifier;
-
-        if(licensePhoto){
-          office.license_photo = licensePhoto;
-        }
-
-        if(officePhotoEntity){
-          office.office_photo = officePhotoEntity
-        }
-
-      }      
-
-      await queryRunner.manager.save(office);
       await queryRunner.commitTransaction();
 
       return {
@@ -144,48 +108,32 @@ export class OfficeService {
     }
   }
 
+
+
+
   /**
    * Get all offices with average ratings
    */
-
-  // async getAllOfficesWithAverageRating() {
-  //   const offices = await this.officeRepository
-  //     .createQueryBuilder('office')
-  //     .leftJoinAndSelect('office.office_photo', 'office_photo')
-  //     .leftJoinAndSelect('office.blogs', 'blogs')
-  //     .leftJoin('office.ratings', 'rating').andWhere('status == accepted')
-  //     .loadRelationCountAndMap('office.ratingsCount', 'office.ratings')
-  //     .select([
-  //       'office',
-  //       'office_photo',
-  //       // 'blogs',
-  //     ])
-  //     .getMany();
-
-  //   return offices.map((office) => ({
-  //     id: office.id,
-  //     name: office.name,
-  //     office_phone: office.office_phone,
-  //     office_photo: office.office_photo,
-  //     ratingsCount: office['ratingsCount'], // loadRelationCountAndMap
-  //     blogs: office.blogs, // full blogs entities
-  //   }));
-  // }
-
-
   async getAllOfficesWithAverageRating(
+    userId: string,
     paginationDto: PaginationDto,
   ): Promise<PaginatedResponse<any>> {
     const { page = 1, limit = 10 } = paginationDto;
     const skip = (page - 1) * limit;
 
+    // Use a subquery to get the total count correctly
+    const countQuery = this.officeRepository
+      .createQueryBuilder('office')
+      .where('office.status = :status', { status: 'accepted' })
+      .andWhere('office.user.id != :userId', { userId });
+
+    const total = await countQuery.getCount();
+
     const query = this.officeRepository
       .createQueryBuilder('office')
       .leftJoinAndSelect('office.office_photo', 'office_photo')
       .leftJoinAndSelect('office.blogs', 'blogs')
-      .leftJoin('office.ratings', 'rating')
-      .loadRelationCountAndMap('office.ratingsCount', 'office.ratings')
-      .where('office.status = :status', { status: 'accepted' })
+      .leftJoin('office.ratings', 'ratings')
       .select([
         'office.id',
         'office.name',
@@ -195,21 +143,41 @@ export class OfficeService {
         'office_photo',
         'blogs',
       ])
+      .addSelect('AVG(ratings.number_of_stars)', 'office_avg_rating')
+      .addSelect('COUNT(ratings.id)', 'ratingsCount') // To get the count of ratings for each office
+      .where('office.status = :status', { status: 'accepted' })
+      .andWhere('office.user.id != :userId', { userId })
+      .groupBy('office.id')
+      .addGroupBy('office_photo.id')
+      .addGroupBy('blogs.id')
       .skip(skip)
       .take(limit);
 
-    // Get paginated data
-    const [data, total] = await query.getManyAndCount();
+    // Get raw data and format the result
+    const data = await query.getRawMany();
 
-    const offices = data.map((office) => ({
-      id: office.id,
-      name: office.name,
-      office_phone: office.office_phone,
-      office_email: office.office_email,
-      status: office.status,
-      office_photo: office.office_photo,
-      ratingsCount: office['ratingsCount'],
-      blogs: office.blogs,
+    const offices = data.map((office: any) => ({
+      id: office.office_id, // raw query data uses table alias + column name
+      name: office.office_name,
+      office_phone: office.office_office_phone,
+      office_email: office.office_office_email,
+      status: office.office_status,
+      // Manually reconstruct nested objects from raw data
+      office_photo: {
+        id: office.office_photo_id,
+        url: office.office_photo_url,
+        // ...other photo properties
+      },
+      // The `blogs` relation is also a raw join, so you'd need to handle this manually.
+      // A better approach is to load the `blogs` relation in a second query or handle them carefully.
+      // For this example, we'll simplify.
+      blogs: office.blogs_id ? [{
+        id: office.blogs_id,
+        title: office.blogs_title,
+        // ...other blog properties
+      }] : [],
+      averageRating: parseFloat(office.office_avg_rating) || 0,
+      ratingsCount: parseInt(office.ratingsCount) || 0,
     }));
 
     return {
@@ -221,33 +189,103 @@ export class OfficeService {
     };
   }
 
+
   /**
    * Get single office by id with ratings
    */
   async findOne(officeId: string) {
+    // First query to get office data
     const office = await this.officeRepository
       .createQueryBuilder('office')
       .leftJoinAndSelect('office.office_photo', 'office_photo')
       .leftJoinAndSelect('office.blogs', 'blogs')
-      .leftJoin('office.ratings', 'rating')
-      .loadRelationCountAndMap('office.ratingsCount', 'office.ratings')
       .where('office.id = :officeId', { officeId })
-      .select(['office', 'office_photo', 'blogs'])
       .getOne();
 
     if (!office) {
       throw new NotFoundException('Office not found');
     }
 
+    // Second query to get average rating
+    const avgResult = await this.officeRepository
+      .createQueryBuilder('office')
+      .leftJoin('office.ratings', 'ratings')
+      .select('AVG(ratings.number_of_stars)', 'avg_rating')
+      .where('office.id = :officeId', { officeId })
+      .getRawOne();
+
     return {
       id: office.id,
       name: office.name,
       office_phone: office.office_phone,
       office_photo: office.office_photo,
-      ratingsCount: office['ratingsCount'],
+      ratingsCount: Number(avgResult?.avg_rating) || 0,
       blogs: office.blogs,
     };
   }
+
+  // Alternative single-query approach for findOne:
+  async findOneAlternative(officeId: string) {
+    const result = await this.officeRepository
+      .createQueryBuilder('office')
+      .leftJoinAndSelect('office.office_photo', 'office_photo')
+      .leftJoinAndSelect('office.blogs', 'blogs')
+      .leftJoin('office.ratings', 'ratings')
+      .addSelect('AVG(ratings.number_of_stars)', 'office_avg_rating')
+      .where('office.id = :officeId', { officeId })
+      .groupBy('office.id')
+      .addGroupBy('office_photo.id')
+      .addGroupBy('blogs.id')
+      .getRawAndEntities();
+
+    if (!result.entities.length) {
+      throw new NotFoundException('Office not found');
+    }
+
+    const office = result.entities[0];
+    const rawData = result.raw[0];
+
+    return {
+      id: office.id,
+      name: office.name,
+      office_phone: office.office_phone,
+      office_photo: office.office_photo,
+      ratingsCount: Number(rawData.office_avg_rating) || 0,
+      blogs: office.blogs,
+    };
+  }
+
+
+
+
+
+  // /**
+  //  * Get single office by id with ratings
+  //  */
+  // async findOne(officeId: string) {
+  //   const office = await this.officeRepository
+  //     .createQueryBuilder('office')
+  //     .leftJoinAndSelect('office.office_photo', 'office_photo')
+  //     .leftJoinAndSelect('office.blogs', 'blogs')
+  //     .leftJoin('office.ratings', 'rating')
+  //     .loadRelationCountAndMap('office.ratingsCount', 'office.ratings')
+  //     .where('office.id = :officeId', { officeId })
+  //     .select(['office', 'office_photo', 'blogs'])
+  //     .getOne();
+
+  //   if (!office) {
+  //     throw new NotFoundException('Office not found');
+  //   }
+
+  //   return {
+  //     id: office.id,
+  //     name: office.name,
+  //     office_phone: office.office_phone,
+  //     office_photo: office.office_photo,
+  //     ratingsCount: office['ratingsCount'],
+  //     blogs: office.blogs,
+  //   };
+  // }
 
   /**
    * Get the current user's office with ratings and blogs
@@ -267,23 +305,23 @@ export class OfficeService {
       query.leftJoinAndSelect('office.officeSubscription', 'OfficeSubscription')
         .leftJoinAndSelect('OfficeSubscription.subscription', 'Subscription'); // if you also want the Subscription info
     }
-    
+
     const office = await query.getOne();
     return office;
   }
 
 
 
-  async getAllOfficesWhoAreStillNotAccepted(paginationDto: PaginationDto) {
+  async getAllOfficesWhichAreStillNotAccepted(paginationDto: PaginationDto) {
 
     const { page = 1, limit = 10 } = paginationDto;
     const [data, total] = await this.officeRepository.findAndCount({
       skip: (page - 1) * limit, // ✅ apply offset
       take: limit,
       where: {
-        status: OfficeCreatingStatus.pending
+        status: EnumStatus.Pending
       },
-      relations: ['user', 'license_photo']
+      relations: ['user', 'license_photo', 'office_photo']
 
     })
 
@@ -361,10 +399,7 @@ export class OfficeService {
   async update(
     officeId: string,
     updateOfficeDto: UpdateOfficeDto,
-
-    //omar comment this
-    /*userId: string,*/ 
-
+    userId: string,
     office_photo?: Express.Multer.File,
   ) {
     const queryRunner = this.dataSource.createQueryRunner();
@@ -390,10 +425,9 @@ export class OfficeService {
 
       if (!office) throw new NotFoundException('Office not found');
 
-      //omar comment this
-      // if (office.user.id !== userId) {
-      //   throw new ForbiddenException("it's forbidden to do this!");
-      // }
+      if (office.user.id !== userId) {
+        throw new ForbiddenException("it's forbidden to do this!");
+      }
 
       if (office_photo) {
         if (office.office_photo?.public_id) {
@@ -413,7 +447,7 @@ export class OfficeService {
       await queryRunner.manager.save(office);
 
       await queryRunner.commitTransaction();
-      return office;
+      return { message: 'We will review your new office information nearly.' };
     } catch (err) {
       await queryRunner.rollbackTransaction();
       throw err;
@@ -436,13 +470,28 @@ export class OfficeService {
     try {
       const office = await this.officeRepository.findOne({
         where: { id },
+        relations: ['user']
       });
       if (!office) throw new NotFoundException('Office not found');
 
+      const user = await queryRunner.manager.findOne(User, {
+        where: { id: office?.user?.id },
+      });
+      if (!user) throw new NotFoundException('User not found');
+
       Object.assign(office, updateOfficeStatusDto);
       await queryRunner.manager.save(office);
+      if (updateOfficeStatusDto.status === EnumStatus.Accepted) {
+        await this.notificationService.notifyUser(queryRunner, office?.user?.id, "We have accepted your office request.", "Office Creation")
+        user.role = Role.OFFICEMANAGER;
+        await queryRunner.manager.save(User, user);
+      } else {
+        await this.notificationService.notifyUser(queryRunner, office?.user?.id, "We have rejected your office request because there are some fake information.", "Office Creation")
+      }
 
       await queryRunner.commitTransaction();
+
+
       return office;
     } catch (err) {
       await queryRunner.rollbackTransaction();
@@ -479,10 +528,9 @@ export class OfficeService {
 
       if (!office) throw new NotFoundException('Office not found');
 
-      //omar comment this
-      // if (office.user.id !== userId) {
-      //   throw new ForbiddenException("it's forbidden to do this!");
-      // }
+      if (office.user.id !== userId) {
+        throw new ForbiddenException("it's forbidden to do this!");
+      }
 
       if (office.license_photo?.public_id) {
         await this.cloudinaryService.deleteImage(

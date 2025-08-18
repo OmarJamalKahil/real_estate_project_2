@@ -5,14 +5,14 @@ import { UpdateOfficeDto } from './dto/update-office.dto';
 import { FileFieldsInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import { FileValidationPipe } from 'src/common/pipes/file-validation.pipe';
 import { UpdateOfficeStatusDto } from './dto/update-office-status.dto';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { Roles } from 'src/common/decorators/roles.decorator';
+import { Role } from 'src/user/entities/user.entity';
 import { OfficeRatingService } from './office_rating.service';
 import { CreateOrUpdateOfficeRatingDto } from './dto/create-or-update-office-rating.dto';
 import { MultiFileValidationPipe } from 'src/common/pipes/multi-files-validation.pipe';
 import { PaginationDto } from 'src/common/utils/pagination.dto';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
-import { Role } from 'src/common/enums/role.enum';
 
 @Controller('office')
 export class OfficeController {
@@ -35,7 +35,7 @@ export class OfficeController {
 
   @Post('/create-office')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.OFFICEMANAGER)
+  // @Roles(Role.OFFICEMANAGER)
   @UseInterceptors(FileFieldsInterceptor([
     { name: 'license_photo', maxCount: 1 },
     { name: 'office_photo', maxCount: 1 },
@@ -59,10 +59,13 @@ export class OfficeController {
   }
 
   @Get()
+  @UseGuards(JwtAuthGuard)
   findAll(
-    @Query() paginationDto:PaginationDto
+    @Query() paginationDto:PaginationDto,
+    @Req() req,
   ) {
-    return this.officeService.getAllOfficesWithAverageRating(paginationDto);
+    const {userId} = req.user;
+    return this.officeService.getAllOfficesWithAverageRating(userId,paginationDto);
   }
 
 
@@ -71,7 +74,7 @@ export class OfficeController {
     @Query() paginationDto:PaginationDto
 
   ) {
-    return this.officeService.getAllOfficesWhoAreStillNotAccepted(paginationDto);
+    return this.officeService.getAllOfficesWhichAreStillNotAccepted(paginationDto);
   }
 
 
@@ -102,19 +105,18 @@ export class OfficeController {
     @UploadedFile() office_photo?: Express.Multer.File,
   ) {
     const { userId } = req.user
-    return this.officeService.update(id, updateOfficeDto, /*omar comment this*/ /*userId,*/  office_photo);
+    return this.officeService.update(id, updateOfficeDto, userId, office_photo);
   }
 
 
-  @Post(':officeId/rate')
+  @Post('/rate')
   @UseGuards(JwtAuthGuard, RolesGuard)
   async rateOffice(
-    @Param('officeId') officeId: string,
-    @Body() body: CreateOrUpdateOfficeRatingDto,
+    @Body() createOrUpdateOfficeRatingDto: CreateOrUpdateOfficeRatingDto,
     @Req() req,
   ) {
     const { userId } = req.user;
-    return this.officeRatingService.rateOffice(officeId, userId, body.rating);
+    return this.officeRatingService.rateOffice( userId,createOrUpdateOfficeRatingDto );
   }
  
 

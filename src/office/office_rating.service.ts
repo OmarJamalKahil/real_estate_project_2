@@ -4,6 +4,7 @@ import { Repository, DataSource } from 'typeorm';
 import { Office } from './entities/office.entity';
 import { OfficeRating } from './entities/office_rating.entity';
 import { User } from 'src/user/entities/user.entity';
+import { CreateOrUpdateOfficeRatingDto } from './dto/create-or-update-office-rating.dto';
 
 @Injectable()
 export class OfficeRatingService {
@@ -23,7 +24,7 @@ export class OfficeRatingService {
    * - create if it does not exist
    * Uses a transaction with query runner.
    */
-  async rateOffice(officeId: string, userId: string, rating: number) {
+  async rateOffice( userId: string, createOrUpdateOfficeRatingDto: CreateOrUpdateOfficeRatingDto,) {
     const queryRunner = this.dataSource.createQueryRunner();
 
     await queryRunner.connect();
@@ -31,7 +32,7 @@ export class OfficeRatingService {
 
     try {
       const office = await queryRunner.manager.findOne(Office, {
-        where: { id: officeId },
+        where: { id: createOrUpdateOfficeRatingDto.officeId },
         relations: ['ratings'],
       });
 
@@ -45,7 +46,7 @@ export class OfficeRatingService {
 
       let officeRating = await queryRunner.manager.findOne(OfficeRating, {
         where: {
-          office: { id: officeId },
+          office: { id: createOrUpdateOfficeRatingDto.officeId },
           user: { id: userId },
         },
         relations: ['user', 'office'],
@@ -53,20 +54,22 @@ export class OfficeRatingService {
 
       if (officeRating) {
         // update
-        officeRating.rating = rating;
+        officeRating.number_of_stars = createOrUpdateOfficeRatingDto.numberOfStars;
+        officeRating.user = user;
+        officeRating.office = office;
       } else {
         // create
         officeRating = queryRunner.manager.create(OfficeRating, {
           user,
           office,
-          rating,
+          number_of_stars: createOrUpdateOfficeRatingDto.numberOfStars,
         });
       }
 
       await queryRunner.manager.save(officeRating);
 
       await queryRunner.commitTransaction();
-      return officeRating;
+      // return officeRating;
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw new InternalServerErrorException(error.message);
@@ -83,7 +86,7 @@ export class OfficeRatingService {
     const averages = await this.officeRatingRepository
       .createQueryBuilder('rating')
       .select('rating.officeId', 'officeId')
-      .addSelect('AVG(rating.rating)', 'averageRating')
+      .addSelect('AVG(rating.number_of_stars)', 'averageRating')
       .groupBy('rating.officeId')
       .getRawMany();
 

@@ -68,7 +68,7 @@ export class FavoritePropertyService {
 
     return this.favoritePropertyRepository.find({
       where: { user: { id: user.id } },
-      relations: ['property'],
+      relations: ['property','property.photos'],
     });
   }
 

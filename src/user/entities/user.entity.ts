@@ -6,7 +6,6 @@ import {
     OneToMany,
     JoinColumn,
 } from 'typeorm';
-import { Upload } from './upload.entity';
 import { Banned } from './banned.entity';
 import { Warning } from './warning.entity';
 import { UserWarnings } from './user-warnings.entity';
@@ -18,20 +17,23 @@ import { FavoriteOffice } from 'src/favorite-office/entities/favorite-office.ent
 import { FavoriteProperty } from 'src/favorite-property/entities/favorite-property.entity';
 import { Reservation } from 'src/reservation/entities/reservation.entity';
 import { Notification } from 'src/notification/entities/notification.entity';
-import { Role } from 'src/common/enums/role.enum';
+import { Photo } from 'src/common/entities/Photo.entity';
 
-
+export enum Role {
+    USER = 'user',
+    OFFICEMANAGER = 'officeManager',
+    ADMIN = 'admin',
+    SUPERADMIN = 'superAdmin',
+}
 
 @Entity()
 export class User {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
-    @Column(
-        {
+    @Column({
             nullable: true
-        }
-    )
+        })
     first_name: string;
 
     @Column({
@@ -48,12 +50,9 @@ export class User {
     @Column({ nullable: true })
     password: string;
 
-    @Column({ nullable: true })
-    receiver_identifier: string;
-
-    @Column(
-        { nullable: true }
-    )
+    @Column({
+         nullable: true 
+            })
     verify_code: string;
 
     @Column({
@@ -72,9 +71,9 @@ export class User {
     @Column({ nullable: true })
     national_number: string;
 
-    @OneToOne(() => Upload, { cascade: true, eager: true, nullable: true, onDelete: 'SET NULL' })
+    @OneToOne(() => Photo, { cascade: true, eager: true, nullable: true, onDelete: 'SET NULL' })
     @JoinColumn()
-    profile_photo?: Upload;
+    profile_photo?: Photo;
 
     @OneToOne(() => Banned, { cascade: true, eager: true, nullable: true })
     @JoinColumn()
@@ -85,8 +84,8 @@ export class User {
     @JoinColumn()
     userWarnings?: UserWarnings;
 
-    @OneToMany(() => Property, (property) => property.owner)
-    properties: Property[];
+    // @OneToMany(() => Property, (property) => property.owner)
+    // properties: Property[];
 
 
     @OneToMany(() => OfficeComment, (officeComment) => officeComment.user)
@@ -96,12 +95,12 @@ export class User {
     favoriteOffices?: FavoriteOffice[];
 
     @OneToMany(() => Notification, (notification) => notification.user)
-    notifications?:Notification[];
+    notifications?: Notification[];
 
 
     @OneToMany(() => FavoriteProperty, (favoriteProperty) => favoriteProperty.user)
     favoriteProperties?: FavoriteProperty[];
 
     @OneToMany(() => Reservation, (reservation) => reservation.user)
-    reservations:Reservation[];
+    reservations: Reservation[];
 }  

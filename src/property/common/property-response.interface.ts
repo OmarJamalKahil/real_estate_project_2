@@ -1,5 +1,4 @@
 import { Blog } from "src/blog/entities/blog.entity";
-import { Upload } from "src/user/entities/upload.entity";
 import { User } from "src/user/entities/user.entity";
 
 export interface PropertyResponse {
@@ -33,15 +32,8 @@ export interface PropertyResponse {
     publishDate: Date; // ISO string
     status: string;
     softDelete: boolean;
-    // owner: {
-    //     id: string;
-    //     first_name: string;
-    //     last_name: string;
-    //     email: string;
-    //     phone: string;
-    //     receiver_identifier: string;
-    //     profile_photo?: Upload;
-    // };
+    // owner: string
+
     photos: {
         id: string;
         public_id: string;

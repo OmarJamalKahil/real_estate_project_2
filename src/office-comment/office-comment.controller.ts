@@ -1,8 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, Put, Query } from '@nestjs/common';
 import { OfficeCommentService } from './office-comment.service';
 import { CreateOfficeCommentDto } from './dto/create-office-comment.dto';
 import { UpdateOfficeCommentDto } from './dto/update-office-comment.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { PaginationDto } from 'src/common/utils/pagination.dto';
 
 @Controller('office-comment')
 export class OfficeCommentController {
@@ -19,13 +20,20 @@ export class OfficeCommentController {
   }
 
   @Get()
-  findAll() {
-    return this.officeCommentService.findAll();
+  findAll(
+    @Query() paginationDto: PaginationDto,
+  ) {
+    return this.officeCommentService.findAll(
+      paginationDto
+    );
   }
 
   @Get('office/:id')
-  findAllByOfficeId(@Param('id') id: string) {
-    return this.officeCommentService.findAllByOfficeId(id);
+  findAllByOfficeId(
+    @Param('id') id: string,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    return this.officeCommentService.findAllByOfficeId(id, paginationDto);
   }
 
   @Get(':id')

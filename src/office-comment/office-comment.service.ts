@@ -10,6 +10,7 @@ import { UserAuthService } from 'src/user/services/user-auth.service';
 import { CreateOfficeCommentDto } from './dto/create-office-comment.dto';
 import { UpdateOfficeCommentDto } from './dto/update-office-comment.dto';
 import { InjectRepository } from '@nestjs/typeorm';
+import { PaginationDto } from 'src/common/utils/pagination.dto';
 
 @Injectable()
 export class OfficeCommentService {
@@ -56,22 +57,52 @@ export class OfficeCommentService {
     }
   }
 
-  async findAll() {
-    return this.officeCommentRepository.find({
+  async findAll(
+    paginationDto: PaginationDto
+  ) {
+    const { page = 1, limit = 10 } = paginationDto;
+
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await this.officeCommentRepository.findAndCount({
       relations: ['user', 'office'],
       order: { id: 'DESC' },
+      skip: skip,
+      take: limit,
     });
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      pageCount: Math.ceil(total / limit),
+    };
   }
 
-  async findAllByOfficeId(officeId: string) {
-    const office = await this.officeRepository.findOne({ where: { id: officeId } });
-    if (!office) throw new NotFoundException('Office not found');
+  async findAllByOfficeId(officeId: string,
+    paginationDto: PaginationDto
+  ) {
+    const { page = 1, limit = 10 } = paginationDto;
+    const skip = (page - 1) * limit;
 
-    return this.officeCommentRepository.find({
+    // No need to check if the office exists separately.
+    // The query will simply return an empty array if the office has no comments.
+    const [data, total] = await this.officeCommentRepository.findAndCount({
       where: { office: { id: officeId } },
       relations: ['user'],
       order: { id: 'DESC' },
+      skip: skip,
+      take: limit,
     });
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      pageCount: Math.ceil(total / limit),
+    };
   }
 
   async findOne(id: string) {

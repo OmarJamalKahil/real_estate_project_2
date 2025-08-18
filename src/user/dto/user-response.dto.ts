@@ -1,12 +1,12 @@
 import { Office } from "src/office/entities/office.entity";
-import { Upload } from "../entities/upload.entity";
+import { Role } from "../entities/user.entity";
 import { Banned } from "../entities/banned.entity";
 import { Warning } from "../entities/warning.entity";
 import { UserWarnings } from "../entities/user-warnings.entity";
-import { Role } from "src/common/enums/role.enum";
+import { Photo } from "src/common/entities/Photo.entity";
 
 
-export class UserResponseDto {
+export interface UserResponseDto {
 
     id: string;
 
@@ -16,14 +16,11 @@ export class UserResponseDto {
 
     national_number: string;
 
-    profile_photo?: Upload;
+    profile_photo?: Photo;
 
     role: Role;
 
-    // office?: Office ;
-
     phone: string;
-
 
     email: string;
 

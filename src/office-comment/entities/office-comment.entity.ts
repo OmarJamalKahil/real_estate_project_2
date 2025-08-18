@@ -27,4 +27,10 @@ export class OfficeComment {
     @ManyToOne(() => User,(user)=> user.comments,{onDelete:'CASCADE'})
     user: User;
 
+    @Column({
+        type: 'timestamp',
+        default: () => 'CURRENT_TIMESTAMP',
+    })
+    createAt: Date;
+
 }
