@@ -10,9 +10,9 @@ export class CreateAttributeDto {
   @IsNotEmpty()
   attributeId: string;
 
-  @Type(() => Number)
-  @IsNumber()
-  value: number;
+
+  @IsString()
+  value: string;
 }
 
 class CreateLocationDto {
@@ -43,7 +43,6 @@ export class CreatePropertyDto {
 
 
   
-  @IsUUID()
   @IsNotEmpty()
   propertyNumber: string;
 
@@ -96,6 +95,7 @@ export class CreatePropertyDto {
 
   @Transform(({ value }) => {
     try {
+      console.log("fldjals");
       const parsed = typeof value === 'string' ? JSON.parse(value) : value;
       return parsed.map((item) => Object.assign(new CreateAttributeDto(), item));
     } catch {

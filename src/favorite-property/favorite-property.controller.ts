@@ -28,6 +28,17 @@ export class FavoritePropertyController {
     return this.favoritePropertyService.findAllFavoritePropertyByUserId(userId);
   }
 
+    // omar added this
+    @Get(':propertyId')
+    @UseGuards(JwtAuthGuard)
+    checkIfOfficeIsFavorite(
+      @Param('propertyId') propertyId: string,
+      @Req() req,
+    ) {
+      const { userId } = req.user;
+      return this.favoritePropertyService.checkIfPropertyIsFavorite(userId, propertyId);
+    }
+
   @Delete('allProperties')
   @UseGuards(JwtAuthGuard)
   remove(

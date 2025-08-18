@@ -50,7 +50,7 @@ class LocationDto {
 export class FilterPropertyDto {
   @IsOptional()
   @IsString()
-  type?: string;
+  propertyType?: string;
 
   @IsOptional()
   @ValidateNested()

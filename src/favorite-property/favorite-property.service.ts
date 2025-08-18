@@ -66,10 +66,21 @@ export class FavoritePropertyService {
     const user = await this.userService.getUser(userId);
     if (!user) throw new NotFoundException('User not found');
 
-    return this.favoritePropertyRepository.find({
-      where: { user: { id: user.id } },
-      relations: ['property'],
-    });
+    const favoriteProperty = await this.favoritePropertyRepository.find({
+  where: { user: { id: user.id } },
+  relations: [
+    'property',
+    'property.office',
+    'property.propertyType',
+    'property.licenseDetails',
+    'property.photos',
+    'property.location',
+  ],
+});
+
+    
+
+    return favoriteProperty;
   }
 
   async removeByUserId(userId: string, propertyId: string) {
@@ -134,7 +145,19 @@ export class FavoritePropertyService {
   }
 
 
+/**
+ * this func check if the office is in your favorite list
+ * @param userId the id of the user requesting the func
+ * @param officeId the id of the office 
+ * @returns a boolean value, if (true) then the office is in favorite list
+ */
+ async checkIfPropertyIsFavorite(userId: string, propertyId: string){
+  const thisPropertyIsFavorite = await this.favoritePropertyRepository.exists({
+    where: {property: {id: propertyId}, user: {id: userId}}
+  });
 
+  return thisPropertyIsFavorite;
+ }
 
 }
 

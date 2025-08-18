@@ -72,6 +72,7 @@ export class PropertyService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
+    console.log("djf");
     try {
       const office = await this.officeService.getCurrentUserOffice(officeManagerId, true);
       if (!office) {
@@ -236,7 +237,7 @@ export class PropertyService {
     try {
       const existing = await queryRunner.manager.findOne(Property, {
         where: { id },
-        relations: ['office', 'office.user', 'type', 'propertyAttributes', 'location', 'propertyAttributes.attribute'],
+        relations: ['office', 'office.user', 'propertyType', 'propertyAttributes', 'location', 'propertyAttributes.attribute'],
       });
 
       if (!existing) throw new NotFoundException('Property not found');
@@ -334,39 +335,49 @@ export class PropertyService {
    * Includes related entities for detailed display.
    * @returns A promise that resolves to an array of Property entities.
    */
-  async findAllAcceptedProperties(paginationDto: PaginationDto): Promise<PaginatedResponse<Property>> { // Renamed for clarity
+  async findAllAcceptedProperties(paginationDto: PaginationDto): Promise<PaginatedResponse<Property>> {
+  const { page = 1, limit = 10 } = paginationDto;
 
-    const { page = 1, limit = 10 } = paginationDto;
-    const [data, total] = await this.propertyRepository.findAndCount({
-      skip: (page - 1) * limit,
-      take: limit,
-      where: {
-        status: EnumStatus.Accepted, // <-- Add this line to filter by status
-        softDelete: false, // <-- Assuming you also want to exclude soft-deleted properties
-      },
-      relations: [
-        'photos',
-        'location',
-        'type',
-        'licenseDetails',
-        'licenseDetails.license', // Include nested relation for license name
-        'propertyAttributes',
-        'propertyAttributes.attribute', // Include nested relation for attribute name
-      ],
-      order: {
-        publishDate: 'DESC', // Typically, newer accepted properties are shown first
-      },
-    });
+  const [data, total] = await this.propertyRepository
+    .createQueryBuilder('property')
+    .leftJoin('property.office', 'office')
+    .leftJoinAndSelect('property.photos', 'photos')
+    .leftJoinAndSelect('property.location', 'location')
+    .leftJoinAndSelect('property.propertyType', 'propertyType')
+    .leftJoinAndSelect('property.licenseDetails', 'licenseDetails')
+    .leftJoinAndSelect('licenseDetails.license', 'license')
+    .leftJoinAndSelect('property.propertyAttributes', 'propertyAttributes')
+    .leftJoinAndSelect('propertyAttributes.attribute', 'attribute')
+    .where('property.status = :status', { status: EnumStatus.Accepted })
+    .andWhere('property.softDelete = :softDelete', { softDelete: false })
+    .orderBy('property.publishDate', 'DESC')
+    .skip((page - 1) * limit)
+    .take(limit)
+    .select([
+      'property',        // يجيب كل أعمدة الـ property
+      'office.id', // فقط id من الـ office
+      'office.office_photo',      
+      'office.name',    
+      'office.office_email',       
+      'photos',
+      'location',
+      'propertyType',
+      'licenseDetails',
+      'license',
+      'propertyAttributes',
+      'attribute',
+    ])
+    .getManyAndCount();
 
-    return {
-      data,
-      total,
-      page,
-      limit,
-      pageCount: Math.ceil(total / limit),
-    };
+  return {
+    data,
+    total,
+    page,
+    limit,
+    pageCount: Math.ceil(total / limit),
+  };
+}
 
-  }
 
 
   async findAllReservedPropertiesForUser(userId: string, paginationDto: PaginationDto) {
@@ -386,7 +397,7 @@ export class PropertyService {
       relations: [
         'photos',
         'location',
-        'type',
+        'propertyType',
         'licenseDetails',
         'licenseDetails.license', // Include nested relation for license name
         'propertyAttributes',
@@ -431,7 +442,7 @@ export class PropertyService {
       relations: [
         'photos',        // Load property photos
         'location',      // Load location details
-        'type',          // Load property type (e.g., "Office", "Apartment")
+        'propertyType',          // Load property type (e.g., "Office", "Apartment")
         'licenseDetails', // Load license details
         'licenseDetails.license', // Load the actual license type within licenseDetails
         'propertyAttributes', // Load custom attributes (e.g., "Rooms", "Bathrooms")
@@ -495,7 +506,7 @@ export class PropertyService {
       relations: [
         'photos',
         'location',
-        'type',
+        'propertyType',
         'licenseDetails',
         'licenseDetails.license',
         'propertyAttributes',
@@ -539,7 +550,7 @@ export class PropertyService {
       relations: [
         'photos',
         'location',
-        'type',
+        'propertyType',
         'licenseDetails',
         'propertyAttributes',
         'propertyAttributes.attribute',
@@ -563,7 +574,7 @@ export class PropertyService {
     const query = this.propertyRepository.createQueryBuilder('property')
       .leftJoinAndSelect('property.photos', 'photos')
       .leftJoinAndSelect('property.location', 'location')
-      .leftJoinAndSelect('property.type', 'type')
+      .leftJoinAndSelect('property.propertyType', 'propertyType')
       .leftJoinAndSelect('property.licenseDetails', 'licenseDetails')
       .leftJoinAndSelect('licenseDetails.license', 'license')
       .leftJoinAndSelect('property.propertyAttributes', 'propertyAttributes')
@@ -576,7 +587,7 @@ export class PropertyService {
 
 
     const {
-      type,
+      propertyType,
       purpose,
       price,
       space,
@@ -586,8 +597,8 @@ export class PropertyService {
     } = filterDto;
 
     // Type
-    if (type) {
-      query.andWhere('type.name = :type', { type });
+    if (propertyType) {
+      query.andWhere('propertyType.name = :propertyType', { propertyType });
     }
 
     // Purpose (Selling or Renting via typeOperation column)
@@ -682,7 +693,7 @@ export class PropertyService {
       relations: [
         'photos',
         'location',
-        'type',
+        'propertyType',
         'licenseDetails',
         'propertyAttributes',
         'propertyAttributes.attribute',
@@ -709,7 +720,7 @@ export class PropertyService {
       relations: [
         'photos',
         'location',
-        'type',
+        'propertyType',
         'licenseDetails',
         'propertyAttributes',
         'propertyAttributes.attribute',

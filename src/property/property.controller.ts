@@ -33,6 +33,7 @@ export class PropertyController {
     @Body() createPropertyDtoRaw: CreatePropertyDto,
     @Req() req,
   ) {
+    console.log("hello");
     const { userId } = req.user;
     return this.propertyService.create(userId, createPropertyDtoRaw, files.property_photos)
   }
