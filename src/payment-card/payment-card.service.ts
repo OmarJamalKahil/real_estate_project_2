@@ -50,15 +50,9 @@ export class PaymentCardService {
         throw new BadRequestException('Not enough funds to subscribe');
       }
 
-      console.log(parseInt(this.configService.get<string>('CARD_CCV')!).toString());
-      console.log(this.configService.get<string>('CARD_NUMBER'));
-      console.log(Number(this.configService.get<number>('CARD_EXPIRY_MONTH')))
-      console.log(Number(this.configService.get<number>('CARD_EXPIRE_YEAR')))
-      console.log(this.configService.get<PaymentCardType>('CARD_TYPE'))
-
       const systemCard = await manager.findOne(PaymentCard, {
         where: {
-          cvv: this.configService.get<number>('CARD_CCV'),
+          cvv: this.configService.get<string>('CARD_CVV'),
           cardNumber: this.configService.get<string>('CARD_NUMBER'),
           expiryMonth: Number(this.configService.get<number>('CARD_EXPIRY_MONTH')),
           expiryYear: Number(this.configService.get<number>('CARD_EXPIRE_YEAR')),
