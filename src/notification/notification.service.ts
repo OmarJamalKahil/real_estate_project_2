@@ -24,6 +24,45 @@ export class NotificationService {
     private readonly dataSource: DataSource,
   ) { }
 
+
+    async notifyUserWithoutQueryRunner( userId: string, message: string, title: string): Promise<void> {
+    const queryRunner = this.dataSource.createQueryRunner();
+
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const user = await queryRunner.manager.findOne(User, {
+        where: { id: userId },
+      });
+
+      if (!user) throw new NotFoundException('User not found');
+
+      const notification = queryRunner.manager.create(Notification, {
+        user,
+        title,
+        message,
+        isRead: false,
+        notified: false,
+        createdAt: new Date(),
+      });
+
+      await queryRunner.manager.save(Notification, notification);
+
+      this.gateway.notifyUser(userId, title, message);
+
+      await queryRunner.commitTransaction()
+    } catch (err) {
+      console.log("this is the error : ",err)
+     await queryRunner.rollbackTransaction()
+      throw new InternalServerErrorException('Failed to send notification');
+    }finally{
+     await queryRunner.release()
+    }
+
+  }
+
+
   async notifyUser(queryRunner: QueryRunner, userId: string, message: string, title: string): Promise<void> {
     // const queryRunner = this.dataSource.createQueryRunner();
 

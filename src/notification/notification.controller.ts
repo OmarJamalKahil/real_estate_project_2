@@ -8,6 +8,8 @@ import {
   Delete,
   UseGuards,
   Request,
+  Body,
+  Post,
 } from '@nestjs/common';
 import { NotificationService } from './notification.service';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
@@ -40,9 +42,13 @@ export class NotificationController {
   }
 
   // ✅ Mark a single notification as read
-  @Patch('read/:notificationId')
+  @Patch('read/:notificationId') 
   async markAsRead(@Param('notificationId') notificationId: string) {
     return this.notificationService.updateNotificationAsRead(notificationId);
+  } 
+    @Post('notify-user')
+  async notifyUser(@Body() data: any) {
+    return this.notificationService.notifyUserWithoutQueryRunner(data?.userId,data?.message,data?.title);
   }
 
   // ✅ Mark all notifications as read for a user

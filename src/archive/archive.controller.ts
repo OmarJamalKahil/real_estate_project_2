@@ -12,20 +12,20 @@ export class ArchiveController{
         private readonly archiveService: ArchiveService
     ){}
 
-    @Post()
-    public async addPropertyToArchive(
-        createArchiveDto: CreateArchiveDto,
-        ownerDto: OwnerDto,
-        clientDto: ClientDto
-    ){
-        return this.archiveService.addPropertyToArchive(
-            createArchiveDto,
-            ownerDto,
-            clientDto
-        )
-    }
+    // @Post()
+    // public async addPropertyToArchive(
+    //     createArchiveDto: CreateArchiveDto,
+    //     ownerDto: OwnerDto,
+    //     clientDto: ClientDto
+    // ){
+    //     return this.archiveService.addPropertyToArchive(
+    //         createArchiveDto,
+    //         ownerDto,
+    //         clientDto
+    //     )
+    // }
 
 
-    @Get()
-    public getOneArchive(){}
+    // @Get()
+    // public getOneArchive(){}
 }

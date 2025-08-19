@@ -21,6 +21,7 @@ import { SearchPaymentCardDto } from 'src/payment-card/dto/create-payment-card.d
 import { EnumStatus } from 'src/property/common/property-status.enum';
 import { Notification } from 'src/notification/entities/notification.entity';
 import { NotificationService } from 'src/notification/notification.service';
+import { OperationTypeStatistics, PropertyStatistics } from 'src/statistics/entities/property-statistics.entity';
 
 @Injectable()
 export class ReservationService {
@@ -125,6 +126,14 @@ export class ReservationService {
         created_at: new Date(),
       });
 
+      
+
+     const propertyStatistics =  queryRunner.manager.create(PropertyStatistics, {
+        property: property,
+        amount: createReservationDto.amount,
+        operationType: OperationTypeStatistics.reservation
+      });
+
       property.status = EnumStatus.Reserved;
 
       this.notificationService.notifyUser(queryRunner,property.office.user.id, "New Reservation", `${user.first_name} ${user.last_name} has reserved a property from yours with this property number:${property.propertyNumber}.`)
@@ -132,8 +141,7 @@ export class ReservationService {
 
 
       await queryRunner.manager.save(property);
-
-
+      await queryRunner.manager.save(propertyStatistics);
       await queryRunner.manager.save(newReservation);
 
       await queryRunner.commitTransaction();

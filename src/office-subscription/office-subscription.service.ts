@@ -12,6 +12,7 @@ import { OfficeSubscription } from './entities/office-subscription.entity';
 import { Office } from 'src/office/entities/office.entity';
 import { Subscription } from 'src/subscription/entities/subscription.entity';
 import { PaymentCardService } from 'src/payment-card/payment-card.service';
+import { SubscriptionStatistics } from 'src/statistics/entities/subscription-statistics.entity';
 
 @Injectable()
 export class OfficeSubscriptionService {
@@ -108,69 +109,80 @@ export class OfficeSubscriptionService {
 
 
   async create(officeManagerId: string, createDto: CreateOfficeSubscriptionDto) {
-  const queryRunner = this.dataSource.createQueryRunner();
-  await queryRunner.connect();
-  await queryRunner.startTransaction();
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
-  try {
-    // Find the subscription by ID
-    const subscription = await queryRunner.manager.findOne(Subscription, {
-      where: { id: createDto.subscriptionId },
-    });
+    try {
+      // Find the subscription by ID
+      const subscription = await queryRunner.manager.findOne(Subscription, {
+        where: { id: createDto.subscriptionId },
+      });
 
-    // Find the office by manager ID and load properties
-    const office = await queryRunner.manager.findOne(Office, {
-      where: { user: { id: officeManagerId } },
-      relations: ['properties', 'user'],
-    });
+      // Find the office by manager ID and load properties
+      const office = await queryRunner.manager.findOne(Office, {
+        where: { user: { id: officeManagerId } },
+        relations: ['properties', 'user'],
+      });
 
-    if (!subscription || !office) {
-      throw new NotFoundException('Office or Subscription not found');
+      if (!subscription || !office) {
+        throw new NotFoundException('Office or Subscription not found');
+      }
+
+      // Check if the office already has a subscription
+      const existingSubscription = await queryRunner.manager.findOne(OfficeSubscription, {
+        where: {
+          office: { id: office.id },
+        },
+        relations: ['office', 'subscription'],
+      });
+
+      // Delete existing subscription if it exists
+      if (existingSubscription) {
+        await queryRunner.manager.delete(OfficeSubscription, { id: existingSubscription.id });
+      }
+
+      // Attempt to withdraw payment
+      await this.paymentCardService.searchAndWithdraw(
+        { ...createDto },
+        subscription.price!,
+        queryRunner.manager
+      );
+
+      // Create and save new office subscription
+      const newOfficeSubscription = queryRunner.manager.create(OfficeSubscription, {
+        start_date: new Date(),
+        end_date: this.returnTheEndDate(subscription.duration),
+        current_number_promotions: 0,
+        current_number_property: office.properties.length,
+        remaining_properties: subscription.propertyNumber - office.properties.length,
+        remaining_promotions: subscription.numberOfPromotion,
+        office,
+        subscription,
+      });
+
+
+      const subscriptionStatistics = queryRunner.manager.create(SubscriptionStatistics, {
+        amount: subscription.price,
+        subscription
+      });
+
+
+
+      const saved = await queryRunner.manager.save(OfficeSubscription, newOfficeSubscription);
+      await queryRunner.manager.save(subscriptionStatistics);
+
+
+      await queryRunner.commitTransaction();
+      return saved;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      console.error('Subscription creation failed:', error);
+      throw new InternalServerErrorException('Failed to create subscription');
+    } finally {
+      await queryRunner.release();
     }
-
-    // Check if the office already has a subscription
-    const existingSubscription = await queryRunner.manager.findOne(OfficeSubscription, {
-      where: {
-        office: { id: office.id },
-      },
-      relations: ['office', 'subscription'],
-    });
-
-    // Delete existing subscription if it exists
-    if (existingSubscription) {
-      await queryRunner.manager.delete(OfficeSubscription, { id: existingSubscription.id });
-    }
-
-    // Attempt to withdraw payment
-    await this.paymentCardService.searchAndWithdraw(
-      { ...createDto },
-      subscription.price!,
-      queryRunner.manager
-    );
-
-    // Create and save new office subscription
-    const newOfficeSubscription = queryRunner.manager.create(OfficeSubscription, {
-      start_date: new Date(),
-      end_date: this.returnTheEndDate(subscription.duration),
-      current_number_promotions: 0,
-      current_number_property: office.properties.length,
-      remaining_properties: subscription.propertyNumber - office.properties.length,
-      remaining_promotions: subscription.numberOfPromotion,
-      office,
-      subscription,
-    });
-
-    const saved = await queryRunner.manager.save(OfficeSubscription, newOfficeSubscription);
-    await queryRunner.commitTransaction();
-    return saved;
-  } catch (error) {
-    await queryRunner.rollbackTransaction();
-    console.error('Subscription creation failed:', error);
-    throw new InternalServerErrorException('Failed to create subscription');
-  } finally {
-    await queryRunner.release();
   }
-}
 
 
   async findAll() {

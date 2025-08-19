@@ -37,6 +37,8 @@ import { CreateAttributeDto } from './dto/attribute/create-attribute.dto';
 import { SearchPaymentCardDto } from 'src/payment-card/dto/create-payment-card.dto';
 import { PaymentCardService } from 'src/payment-card/payment-card.service';
 import { NotificationService } from 'src/notification/notification.service';
+import { OperationTypeStatistics, PropertyStatistics } from 'src/statistics/entities/property-statistics.entity';
+import { PropertyTypeOperation } from './common/property-type-operation.enum';
 
 @Injectable()
 export class PropertyService {
@@ -649,6 +651,22 @@ export class PropertyService {
       if (!property) {
         throw new NotFoundException(`Property with ID "${id}" not found.`);
       }
+      
+      if(property.status === EnumStatus.Accepted){
+      const propertyStatistics = await queryRunner.manager.findOne(PropertyStatistics, {
+        where: {
+          property,
+        },
+        order: {
+          createdAt: "ASC", // "ASC" stands for ascending, which gets the earliest date.
+        },
+      })
+      if(propertyStatistics){
+        propertyStatistics.operationType = property.typeOperation === PropertyTypeOperation.Selling ? OperationTypeStatistics.selling : OperationTypeStatistics.renting;
+        await queryRunner.manager.save(propertyStatistics);
+      }
+      }
+
 
       // 2. Update its status
       property.status = updatePropertyStatusDto.status;
@@ -752,7 +770,7 @@ export class PropertyService {
   //   } = filterDto;
 
   //   console.log("this is the type : ",filterDto);
-    
+
 
   //   // Type
   //   if (type) {
@@ -853,7 +871,7 @@ export class PropertyService {
 
   //   console.log('this is the data', data);
   //   console.log('this is the total',total);
-    
+
 
   //   return {
   //     data,
@@ -866,144 +884,144 @@ export class PropertyService {
   // }
 
   async findPropertiesByFiltering(
-  filterDto: FilterPropertyDto,
-  paginationDto: PaginationDto,
-  userId?: string
-) {
-  const { page = 1, limit = 10 } = paginationDto;
+    filterDto: FilterPropertyDto,
+    paginationDto: PaginationDto,
+    userId?: string
+  ) {
+    const { page = 1, limit = 10 } = paginationDto;
 
-  console.log("this is the filterDto",filterDto);
-  
+    console.log("this is the filterDto", filterDto);
 
-  const query = this.propertyRepository.createQueryBuilder('property')
-    .leftJoinAndSelect('property.photos', 'photos')
-    .leftJoinAndSelect('property.location', 'location')
-    .leftJoinAndSelect('property.type', 'type')
-    .leftJoinAndSelect('property.licenseDetails', 'licenseDetails')
-    .leftJoinAndSelect('licenseDetails.license', 'license')
-    .leftJoinAndSelect('property.propertyAttributes', 'propertyAttributes')
-    .leftJoinAndSelect('propertyAttributes.attribute', 'attribute')
-    .leftJoin("property.office", "office")
-    .leftJoin("office.user", "user")
-    .where('property.softDelete = :softDelete', { softDelete: false })
-    .andWhere('user.id != :userId', { userId }) // Uncomment if needed
-    .andWhere('property.status = :status', { status: EnumStatus.Accepted });
 
-  const {
-    type,
-    purpose,
-    price,
-    space,
-    licenseType,
-    attributeFilters,
-    location,
-  } = filterDto;
+    const query = this.propertyRepository.createQueryBuilder('property')
+      .leftJoinAndSelect('property.photos', 'photos')
+      .leftJoinAndSelect('property.location', 'location')
+      .leftJoinAndSelect('property.type', 'type')
+      .leftJoinAndSelect('property.licenseDetails', 'licenseDetails')
+      .leftJoinAndSelect('licenseDetails.license', 'license')
+      .leftJoinAndSelect('property.propertyAttributes', 'propertyAttributes')
+      .leftJoinAndSelect('propertyAttributes.attribute', 'attribute')
+      .leftJoin("property.office", "office")
+      .leftJoin("office.user", "user")
+      .where('property.softDelete = :softDelete', { softDelete: false })
+      .andWhere('user.id != :userId', { userId }) // Uncomment if needed
+      .andWhere('property.status = :status', { status: EnumStatus.Accepted });
 
-  console.log("this is the type : ", filterDto);
-
-  // Type filter
-  if (type && type !== '') {
-    query.andWhere('type.name = :type', { type });
-  }
-
-  // Purpose filter
-  if (purpose?.selling && !purpose?.renting) {
-    query.andWhere('property.typeOperation = :typeOp', { typeOp: 'selling' });
-  } else if (!purpose?.selling && purpose?.renting) {
-    query.andWhere('property.typeOperation = :typeOp', { typeOp: 'renting' });
-  }
-
-  // Price range filter
-  if (price?.length === 2) {
-    query.andWhere('property.price BETWEEN :minPrice AND :maxPrice', {
-      minPrice: price[0],
-      maxPrice: price[1],
-    });
-  }
-
-  // Space range filter
-  if (space?.length === 2) {
-    query.andWhere('property.space BETWEEN :minSpace AND :maxSpace', {
-      minSpace: space[0],
-      maxSpace: space[1],
-    });
-  }
-
-  // License Type filter
-  if (licenseType &&  licenseType !== '') {
-    query.andWhere('license.name = :licenseType', {
+    const {
+      type,
+      purpose,
+      price,
+      space,
       licenseType,
-    });
+      attributeFilters,
+      location,
+    } = filterDto;
+
+    console.log("this is the type : ", filterDto);
+
+    // Type filter
+    if (type && type !== '') {
+      query.andWhere('type.name = :type', { type });
+    }
+
+    // Purpose filter
+    if (purpose?.selling && !purpose?.renting) {
+      query.andWhere('property.typeOperation = :typeOp', { typeOp: 'selling' });
+    } else if (!purpose?.selling && purpose?.renting) {
+      query.andWhere('property.typeOperation = :typeOp', { typeOp: 'renting' });
+    }
+
+    // Price range filter
+    if (price?.length === 2) {
+      query.andWhere('property.price BETWEEN :minPrice AND :maxPrice', {
+        minPrice: price[0],
+        maxPrice: price[1],
+      });
+    }
+
+    // Space range filter
+    if (space?.length === 2) {
+      query.andWhere('property.space BETWEEN :minSpace AND :maxSpace', {
+        minSpace: space[0],
+        maxSpace: space[1],
+      });
+    }
+
+    // License Type filter
+    if (licenseType && licenseType !== '') {
+      query.andWhere('license.name = :licenseType', {
+        licenseType,
+      });
+    }
+
+    // Location filters
+    if (location?.governorate && location?.governorate !== '') {
+      query.andWhere('location.governorate = :governorate', {
+        governorate: location.governorate,
+      });
+    }
+    if (location?.province && location?.province !== '') {
+      query.andWhere('location.province = :province', {
+        province: location.province,
+      });
+    }
+    if (location?.city && location?.city !== '') {
+      query.andWhere('location.city = :city', {
+        city: location.city,
+      });
+    }
+    if (location?.street && location?.street !== '') {
+      query.andWhere('location.street = :street', {
+        street: location.street,
+      });
+    }
+
+    // Dynamic attribute filters (The fix is here)
+    if (attributeFilters && attributeFilters.length > 0) {
+      const attributeSubQuery = this.propertyRepository.createQueryBuilder('sub_property')
+        .leftJoin('sub_property.propertyAttributes', 'sub_pa')
+        .leftJoin('sub_pa.attribute', 'sub_attr')
+        .select('sub_property.id')
+        .groupBy('sub_property.id')
+        .where('1=1');
+
+      attributeFilters?.forEach((attr, index) => {
+        const attrNameKey = `attrName${index}`;
+        const attrValueKey = `attrValue${index}`;
+        attributeSubQuery.andWhere(
+          `(sub_attr.name = :${attrNameKey} AND sub_pa.value = :${attrValueKey})`,
+          {
+            [attrNameKey]: attr.attribute,
+            [attrValueKey]: attr.value,
+          },
+        );
+      });
+
+      attributeSubQuery.having('COUNT(sub_property.id) = :count', {
+        count: attributeFilters?.length,
+      });
+
+      query.andWhere(`property.id IN (${attributeSubQuery.getQuery()})`);
+      query.setParameters(attributeSubQuery.getParameters());
+    }
+
+    // Apply pagination
+    query.skip((page - 1) * limit).take(limit);
+
+    // Execute query with total count
+    const [data, total] = await query.getManyAndCount();
+
+    console.log('this is the data', data);
+    console.log('this is the total', total);
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      pageCount: Math.ceil(total / limit),
+    };
   }
-
-  // Location filters
-  if (location?.governorate && location?.governorate !== '') {
-    query.andWhere('location.governorate = :governorate', {
-      governorate: location.governorate,
-    });
-  }
-  if (location?.province && location?.province !== '' ) {
-    query.andWhere('location.province = :province', {
-      province: location.province,
-    });
-  }
-  if (location?.city && location?.city !== '') {
-    query.andWhere('location.city = :city', {
-      city: location.city,
-    });
-  }
-  if (location?.street && location?.street !== '') {
-    query.andWhere('location.street = :street', {
-      street: location.street,
-    });
-  }
-  
-  // Dynamic attribute filters (The fix is here)
-  if (attributeFilters && attributeFilters.length > 0) {
-    const attributeSubQuery = this.propertyRepository.createQueryBuilder('sub_property')
-      .leftJoin('sub_property.propertyAttributes', 'sub_pa')
-      .leftJoin('sub_pa.attribute', 'sub_attr')
-      .select('sub_property.id')
-      .groupBy('sub_property.id')
-      .where('1=1');
-
-    attributeFilters?.forEach((attr, index) => {
-      const attrNameKey = `attrName${index}`;
-      const attrValueKey = `attrValue${index}`;
-      attributeSubQuery.andWhere(
-        `(sub_attr.name = :${attrNameKey} AND sub_pa.value = :${attrValueKey})`,
-        {
-          [attrNameKey]: attr.attribute,
-          [attrValueKey]: attr.value,
-        },
-      );
-    });
-
-    attributeSubQuery.having('COUNT(sub_property.id) = :count', {
-      count: attributeFilters?.length,
-    });
-
-    query.andWhere(`property.id IN (${attributeSubQuery.getQuery()})`);
-    query.setParameters(attributeSubQuery.getParameters());
-  } 
-
-  // Apply pagination
-  query.skip((page - 1) * limit).take(limit);
-
-  // Execute query with total count
-  const [data, total] = await query.getManyAndCount();
-
-  console.log('this is the data', data);
-  console.log('this is the total', total);
-
-  return {
-    data,
-    total,
-    page,
-    limit,
-    pageCount: Math.ceil(total / limit),
-  };
-}
 
 
   async findOne(id: string) {
@@ -1062,6 +1080,8 @@ export class PropertyService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
+    const amountIsPayed = 50;
+
     try {
       const property = await queryRunner.manager.findOne(Property, {
         where: {
@@ -1075,8 +1095,12 @@ export class PropertyService {
       });
       if (!property) throw new NotFoundException('Property not found');
 
-      await this.paymentCardService.searchAndWithdraw(searchPaymentCardDto, 50, queryRunner.manager)
+      await this.paymentCardService.searchAndWithdraw(searchPaymentCardDto, amountIsPayed, queryRunner.manager)
 
+      const propertyStatistics = await queryRunner.manager.create(PropertyStatistics, {
+        amount: amountIsPayed,
+        operationType: OperationTypeStatistics.deleting,
+      })
 
       // Delete photos from Cloudinary
       for (const photo of property.photos) {
@@ -1090,6 +1114,9 @@ export class PropertyService {
       }
 
       // Remove licenseDetails
+
+      // save  PropertyStatistics
+      await queryRunner.manager.save(propertyStatistics);
 
       // Remove property
       await queryRunner.manager.remove(property);
