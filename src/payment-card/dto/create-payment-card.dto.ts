@@ -23,8 +23,8 @@ export class SearchPaymentCardDto {
   @Max(new Date().getFullYear() + 20)
   expiryYear: number;
 
-  @IsString()
-  @Matches(/^\d{3,4}$/, { message: 'cvv must be 3 or 4 digits' })
-  cvv: string;
+  @IsNumber()
+  //@Matches(/^\d{3,4}$/, { message: 'cvv must be 3 or 4 digits' })
+  cvv: number;
 
 }

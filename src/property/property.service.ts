@@ -1,5 +1,3 @@
-
-
 import {
   BadRequestException,
   ForbiddenException,
@@ -8,11 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import {
-  DataSource,
-  QueryRunner,
-  Repository,
-} from 'typeorm';
+import { DataSource, QueryRunner, Repository } from 'typeorm';
 import { Property } from './entities/property.entity';
 import { CreatePropertyDto } from './dto/create-property.dto';
 import { UpdatePropertyDto } from './dto/update-property.dto';
@@ -59,9 +53,7 @@ export class PropertyService {
     private readonly officeService: OfficeService,
     private readonly userService: UserAuthService,
     private readonly dataSource: DataSource,
-  ) { }
-
-
+  ) {}
 
   async create(
     officeManagerId: string,
@@ -72,9 +64,12 @@ export class PropertyService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
-    console.log("djf");
+    console.log('djf');
     try {
-      const office = await this.officeService.getCurrentUserOffice(officeManagerId, true);
+      const office = await this.officeService.getCurrentUserOffice(
+        officeManagerId,
+        true,
+      );
       if (!office) {
         throw new ForbiddenException('Office not found or access denied');
       }
@@ -84,12 +79,14 @@ export class PropertyService {
       //   throw new BadRequestException('Owner not found');
       // }
 
-
-
-      if ((office.officeSubscription?.remaining_properties! < 0) || (office.properties.length > 5)) {
-        throw new BadRequestException("You have reached the limit of adding properties, if you wanna add more you can subcripe in the app to increase the number of properties these you can add.");
+      if (
+        office.officeSubscription?.remaining_properties! < 0 ||
+        office.properties.length > 5
+      ) {
+        throw new BadRequestException(
+          'You have reached the limit of adding properties, if you wanna add more you can subcripe in the app to increase the number of properties these you can add.',
+        );
       }
-
 
       const propertyType = await queryRunner.manager.findOne(PropertyType, {
         where: { id: createPropertyDto.propertyTypeId },
@@ -110,7 +107,9 @@ export class PropertyService {
       await queryRunner.manager.save(license_details);
 
       // Save location
-      const location = this.locationRepository.create(createPropertyDto.location);
+      const location = this.locationRepository.create(
+        createPropertyDto.location,
+      );
       await queryRunner.manager.save(location);
 
       // Create and save property
@@ -162,7 +161,7 @@ export class PropertyService {
         photos.push(photo);
       }
       property.photos = photos;
-      console.log("333333333333")
+      console.log('333333333333');
       // Final save to update relations (optional if not using eager)
       await queryRunner.manager.save(property);
 
@@ -170,13 +169,12 @@ export class PropertyService {
 
       return {
         message: 'We will review your property creation request shortly.',
-      }
-
+      };
     } catch (error) {
-      console.log("this is the error : ", error);
+      console.log('this is the error : ', error);
 
       await queryRunner.rollbackTransaction();
-      throw error
+      throw error;
       throw new InternalServerErrorException(error.message);
     } finally {
       await queryRunner.release();
@@ -200,7 +198,6 @@ export class PropertyService {
   //    if(existing.office.user.id != officeManagerId){
   //     throw new ForbiddenException("You can't do this!")
   //    }
-
 
   //     if (updateDto.location) {
   //       Object.assign(existing.location, updateDto.location);
@@ -228,8 +225,11 @@ export class PropertyService {
   //   }
   // }
 
-
-  async update(id: string, officeManagerId: string, updateDto: UpdatePropertyDto) {
+  async update(
+    id: string,
+    officeManagerId: string,
+    updateDto: UpdatePropertyDto,
+  ) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -237,7 +237,14 @@ export class PropertyService {
     try {
       const existing = await queryRunner.manager.findOne(Property, {
         where: { id },
-        relations: ['office', 'office.user', 'propertyType', 'propertyAttributes', 'location', 'propertyAttributes.attribute'],
+        relations: [
+          'office',
+          'office.user',
+          'propertyType',
+          'propertyAttributes',
+          'location',
+          'propertyAttributes.attribute',
+        ],
       });
 
       if (!existing) throw new NotFoundException('Property not found');
@@ -263,7 +270,9 @@ export class PropertyService {
       // ✅ Update attributes
       if (updateDto.attributes) {
         // Delete old propertyAttributes
-        await queryRunner.manager.delete(PropertyAttribute, { property: { id: existing.id } });
+        await queryRunner.manager.delete(PropertyAttribute, {
+          property: { id: existing.id },
+        });
 
         const newAttributes: PropertyAttribute[] = [];
         for (const attrDto of updateDto.attributes) {
@@ -291,21 +300,25 @@ export class PropertyService {
       }
 
       // ✅ Update other simple fields (space, price, description, etc.)
-      const updatableFields = ['propertyNumber', 'space', 'price', 'description'];
+      const updatableFields = [
+        'propertyNumber',
+        'space',
+        'price',
+        'description',
+      ];
       for (const field of updatableFields) {
         if (updateDto[field] !== undefined) {
           existing[field] = updateDto[field];
         }
       }
 
-      const updated: PropertyResponse = await queryRunner.manager.save(existing);
+      const updated: PropertyResponse =
+        await queryRunner.manager.save(existing);
       await queryRunner.commitTransaction();
 
       return {
         message: 'We will review your property update request shortly.',
-      }
-
-
+      };
     } catch (err) {
       await queryRunner.rollbackTransaction();
       throw new InternalServerErrorException(err.message);
@@ -313,7 +326,6 @@ export class PropertyService {
       await queryRunner.release();
     }
   }
-
 
   // async findAll() {
   //   return this.propertyRepository.find({
@@ -328,61 +340,60 @@ export class PropertyService {
   //   });
   // }
 
-
-
   /**
    * Retrieves all properties that are currently in 'accepted' status.
    * Includes related entities for detailed display.
    * @returns A promise that resolves to an array of Property entities.
    */
-  async findAllAcceptedProperties(paginationDto: PaginationDto): Promise<PaginatedResponse<Property>> {
-  const { page = 1, limit = 10 } = paginationDto;
+  async findAllAcceptedProperties(
+    paginationDto: PaginationDto,
+  ): Promise<PaginatedResponse<Property>> {
+    const { page = 1, limit = 10 } = paginationDto;
 
-  const [data, total] = await this.propertyRepository
-    .createQueryBuilder('property')
-    .leftJoin('property.office', 'office')
-    .leftJoinAndSelect('property.photos', 'photos')
-    .leftJoinAndSelect('property.location', 'location')
-    .leftJoinAndSelect('property.propertyType', 'propertyType')
-    .leftJoinAndSelect('property.licenseDetails', 'licenseDetails')
-    .leftJoinAndSelect('licenseDetails.license', 'license')
-    .leftJoinAndSelect('property.propertyAttributes', 'propertyAttributes')
-    .leftJoinAndSelect('propertyAttributes.attribute', 'attribute')
-    .where('property.status = :status', { status: EnumStatus.Accepted })
-    .andWhere('property.softDelete = :softDelete', { softDelete: false })
-    .orderBy('property.publishDate', 'DESC')
-    .skip((page - 1) * limit)
-    .take(limit)
-    .select([
-      'property',        // يجيب كل أعمدة الـ property
-      'office.id', // فقط id من الـ office
-      'office.office_photo',      
-      'office.name',    
-      'office.office_email',       
-      'photos',
-      'location',
-      'propertyType',
-      'licenseDetails',
-      'license',
-      'propertyAttributes',
-      'attribute',
-    ])
-    .getManyAndCount();
+    const [data, total] = await this.propertyRepository
+      .createQueryBuilder('property')
+      .leftJoin('property.office', 'office')
+      .leftJoinAndSelect('property.photos', 'photos')
+      .leftJoinAndSelect('property.location', 'location')
+      .leftJoinAndSelect('property.propertyType', 'propertyType')
+      .leftJoinAndSelect('property.licenseDetails', 'licenseDetails')
+      .leftJoinAndSelect('licenseDetails.license', 'license')
+      .leftJoinAndSelect('property.propertyAttributes', 'propertyAttributes')
+      .leftJoinAndSelect('propertyAttributes.attribute', 'attribute')
+      .where('property.status = :status', { status: EnumStatus.Accepted })
+      .andWhere('property.softDelete = :softDelete', { softDelete: false })
+      .orderBy('property.publishDate', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit)
+      .select([
+        'property', // يجيب كل أعمدة الـ property
+        'office.id', // فقط id من الـ office
+        'office.office_photo',
+        'office.name',
+        'office.office_email',
+        'photos',
+        'location',
+        'propertyType',
+        'licenseDetails',
+        'license',
+        'propertyAttributes',
+        'attribute',
+      ])
+      .getManyAndCount();
 
-  return {
-    data,
-    total,
-    page,
-    limit,
-    pageCount: Math.ceil(total / limit),
-  };
-}
+    return {
+      data,
+      total,
+      page,
+      limit,
+      pageCount: Math.ceil(total / limit),
+    };
+  }
 
-
-
-  async findAllReservedPropertiesForUser(userId: string, paginationDto: PaginationDto) {
-
-
+  async findAllReservedPropertiesForUser(
+    userId: string,
+    paginationDto: PaginationDto,
+  ) {
     const { page = 1, limit = 10 } = paginationDto;
     const [data, total] = await this.propertyRepository.findAndCount({
       skip: (page - 1) * limit,
@@ -402,7 +413,7 @@ export class PropertyService {
         'licenseDetails.license', // Include nested relation for license name
         'propertyAttributes',
         'propertyAttributes.attribute', // Include nested relation for attribute name
-        'office'
+        'office',
       ],
       order: {
         publishDate: 'DESC', // Typically, newer accepted properties are shown first
@@ -416,20 +427,17 @@ export class PropertyService {
       limit,
       pageCount: Math.ceil(total / limit),
     };
-
-
-
-
   }
 
-
   /**
-     * Retrieves all properties that are currently in 'pending' status.
-     * Includes related entities like photos, location, type, licenseDetails,
-     * propertyAttributes, and owner for detailed display.
-     * @returns A promise that resolves to an array of Property entities.
-     */
-  async getAllPropertiesWhoAreStillNotAccepted(paginationDto: PaginationDto): Promise<PaginatedResponse<Property>> {
+   * Retrieves all properties that are currently in 'pending' status.
+   * Includes related entities like photos, location, type, licenseDetails,
+   * propertyAttributes, and owner for detailed display.
+   * @returns A promise that resolves to an array of Property entities.
+   */
+  async getAllPropertiesWhoAreStillNotAccepted(
+    paginationDto: PaginationDto,
+  ): Promise<PaginatedResponse<Property>> {
     const { page = 1, limit = 10 } = paginationDto;
 
     const [data, total] = await this.propertyRepository.findAndCount({
@@ -440,9 +448,9 @@ export class PropertyService {
         softDelete: false, // Ensure it's not soft-deleted
       },
       relations: [
-        'photos',        // Load property photos
-        'location',      // Load location details
-        'propertyType',          // Load property type (e.g., "Office", "Apartment")
+        'photos', // Load property photos
+        'location', // Load location details
+        'propertyType', // Load property type (e.g., "Office", "Apartment")
         'licenseDetails', // Load license details
         'licenseDetails.license', // Load the actual license type within licenseDetails
         'propertyAttributes', // Load custom attributes (e.g., "Rooms", "Bathrooms")
@@ -473,15 +481,17 @@ export class PropertyService {
       limit,
       pageCount: Math.ceil(total / limit),
     };
-
   }
   /**
-     * Updates the status of a specific property.
-     * @param id The ID of the property to update.
-     * @param status The new status (e.g., 'accepted', 'rejected').
-     * @returns A promise that resolves to the updated Property entity.
-     */
-  async updatePropertyStatus(id: string, updatePropertyStatusDto: UpdatePropertyStatusDto): Promise<Property> {
+   * Updates the status of a specific property.
+   * @param id The ID of the property to update.
+   * @param status The new status (e.g., 'accepted', 'rejected').
+   * @returns A promise that resolves to the updated Property entity.
+   */
+  async updatePropertyStatus(
+    id: string,
+    updatePropertyStatusDto: UpdatePropertyStatusDto,
+  ): Promise<Property> {
     // 1. Find the property first
     const property = await this.propertyRepository.findOne({ where: { id } });
 
@@ -517,19 +527,19 @@ export class PropertyService {
     if (!finalProperty) {
       // This case should ideally not happen if `updatedProperty` was successfully saved
       // but it's good for type safety.
-      throw new NotFoundException(`Property with ID "${updatedProperty.id}" not found after update.`);
+      throw new NotFoundException(
+        `Property with ID "${updatedProperty.id}" not found after update.`,
+      );
     }
 
     return finalProperty;
   }
 
-
   async removePropertySoft(queryRunner: QueryRunner, id: string) {
-
     // 1. Find the property first
     const property = await queryRunner.manager.findOne(Property, {
-      where: { id }
-    })
+      where: { id },
+    });
 
     if (!property) {
       throw new NotFoundException(`Property with ID "${id}" not found.`);
@@ -540,9 +550,7 @@ export class PropertyService {
 
     // 3. Save the updated property
     await queryRunner.manager.save(property);
-
   }
-
 
   async findOneByPropertyNumber(propertyNumber: string) {
     const property = await this.propertyRepository.findOne({
@@ -556,22 +564,143 @@ export class PropertyService {
         'propertyAttributes.attribute',
       ],
       order: {
-        createdAt: 'DESC'
-      }
+        createdAt: 'DESC',
+      },
     });
     if (!property) throw new NotFoundException('Property not found');
     return property;
   }
 
+  // async findPropertiesByFiltering(
+  //   filterDto: FilterPropertyDto,
+  //   paginationDto: PaginationDto,
+  //   userId?: string
+  // ) {
+  //   const { page = 1, limit = 10 } = paginationDto;
 
+  //   const query = this.propertyRepository.createQueryBuilder('property')
+  //     .leftJoinAndSelect('property.photos', 'photos')
+  //     .leftJoinAndSelect('property.location', 'location')
+  //     .leftJoinAndSelect('property.propertyType', 'propertyType')
+  //     .leftJoinAndSelect('property.licenseDetails', 'licenseDetails')
+  //     .leftJoinAndSelect('licenseDetails.license', 'license')
+  //     .leftJoinAndSelect('property.propertyAttributes', 'propertyAttributes')
+  //     .leftJoinAndSelect('propertyAttributes.attribute', 'attribute')
+  //     // Use .where() for the first condition
+  //     .where('property.softDelete = :softDelete', { softDelete: false })
+  //     // Use .andWhere() for subsequent conditions
+  //     .andWhere('property.office.user.id != :id', { id: userId })
+  //     .andWhere('property.status = :status', { status: EnumStatus.Accepted });
+
+  //   const {
+  //     propertyType,
+  //     purpose,
+  //     price,
+  //     space,
+  //     licenseType,
+  //     attributeFilters,
+  //     location,
+  //   } = filterDto;
+
+  //   // Type
+  //   if (propertyType) {
+  //     query.andWhere('propertyType.name = :propertyType', { propertyType });
+  //   }
+
+  //   // Purpose (Selling or Renting via typeOperation column)
+  //   if (purpose?.selling && !purpose?.renting) {
+  //     query.andWhere('property.typeOperation = :typeOp', { typeOp: 'selling' });
+  //   } else if (!purpose?.selling && purpose?.renting) {
+  //     query.andWhere('property.typeOperation = :typeOp', { typeOp: 'renting' });
+  //   }
+  //   // If both are selected, show both (do nothing — already default)
+
+  //   // Price range
+  //   if (price?.length === 2) {
+  //     query.andWhere('property.price BETWEEN :minPrice AND :maxPrice', {
+  //       minPrice: price[0],
+  //       maxPrice: price[1],
+  //     });
+  //   }
+
+  //   // Space range
+  //   if (space?.length === 2) {
+  //     query.andWhere('property.space BETWEEN :minSpace AND :maxSpace', {
+  //       minSpace: space[0],
+  //       maxSpace: space[1],
+  //     });
+  //   }
+
+  //   // License Type
+  //   if (licenseType) {
+  //     query.andWhere('license.name = :licenseType', {
+  //       licenseType,
+  //     });
+  //   }
+
+  //   // Location filters
+  //   if (location?.governorate) {
+  //     query.andWhere('location.governorate = :governorate', {
+  //       governorate: location.governorate,
+  //     });
+  //   }
+  //   if (location?.province) {
+  //     query.andWhere('location.province = :province', {
+  //       province: location.province,
+  //     });
+  //   }
+  //   if (location?.city) {
+  //     query.andWhere('location.city = :city', {
+  //       city: location.city,
+  //     });
+  //   }
+  //   if (location?.street) {
+  //     query.andWhere('location.street = :street', {
+  //       street: location.street,
+  //     });
+  //   }
+
+  //   // Dynamic attribute filters
+  //   if (attributeFilters?.length! > 0) {
+  //     attributeFilters?.forEach((attr, index) => {
+  //       const attrNameKey = `attrName${index}`;
+  //       const attrValueKey = `attrValue${index}`;
+  //       query.andWhere(
+  //         `(attribute.name = :${attrNameKey} AND propertyAttributes.value = :${attrValueKey})`,
+  //         {
+  //           [attrNameKey]: attr.attribute,
+  //           [attrValueKey]: attr.value,
+  //         },
+  //       );
+  //     });
+  //   }
+
+  //   // ✅ Apply pagination
+  //   query.skip((page - 1) * limit).take(limit);
+
+  //   // ✅ Execute query with total count
+  //   const [data, total] = await query.getManyAndCount();
+
+  //   return {
+  //     data,
+  //     total,
+  //     page,
+  //     limit,
+  //     pageCount: Math.ceil(total / limit),
+  //   };
+
+  // }
+
+  // omar
   async findPropertiesByFiltering(
     filterDto: FilterPropertyDto,
     paginationDto: PaginationDto,
-    userId?: string
+    //userId?: string
   ) {
     const { page = 1, limit = 10 } = paginationDto;
 
-    const query = this.propertyRepository.createQueryBuilder('property')
+    const query = this.propertyRepository
+      .createQueryBuilder('property')
       .leftJoinAndSelect('property.photos', 'photos')
       .leftJoinAndSelect('property.location', 'location')
       .leftJoinAndSelect('property.propertyType', 'propertyType')
@@ -582,23 +711,24 @@ export class PropertyService {
       // Use .where() for the first condition
       .where('property.softDelete = :softDelete', { softDelete: false })
       // Use .andWhere() for subsequent conditions
-      .andWhere('property.office.user.id != :id', { id: userId })
+      //.andWhere('property.office.user.id != :id', { id: userId })
       .andWhere('property.status = :status', { status: EnumStatus.Accepted });
 
-
     const {
-      propertyType,
+      propertyTypeId,
+      typeOfPropertyType,
       purpose,
       price,
       space,
-      licenseType,
+      //licenseType,
       attributeFilters,
       location,
     } = filterDto;
 
     // Type
-    if (propertyType) {
-      query.andWhere('propertyType.name = :propertyType', { propertyType });
+    if (propertyTypeId) {
+      console.log(propertyTypeId)
+      query.andWhere('propertyType.id = :propertyTypeId', { propertyTypeId });
     }
 
     // Purpose (Selling or Renting via typeOperation column)
@@ -625,12 +755,6 @@ export class PropertyService {
       });
     }
 
-    // License Type
-    if (licenseType) {
-      query.andWhere('license.name = :licenseType', {
-        licenseType,
-      });
-    }
 
     // Location filters
     if (location?.governorate) {
@@ -654,20 +778,37 @@ export class PropertyService {
       });
     }
 
-    // Dynamic attribute filters
+    if(typeOfPropertyType){
+      query.andWhere('propertyType.type = :typeOfPropertyType' , { typeOfPropertyType});
+      console.log("ff");
+    }
+
+
+    // فلترة حسب attributes
     if (attributeFilters?.length! > 0) {
       attributeFilters?.forEach((attr, index) => {
-        const attrNameKey = `attrName${index}`;
+        const attrIdKey = `attrId${index}`;
         const attrValueKey = `attrValue${index}`;
+
         query.andWhere(
-          `(attribute.name = :${attrNameKey} AND propertyAttributes.value = :${attrValueKey})`,
+          `EXISTS (
+        SELECT 1
+        FROM property_attribute pa
+        JOIN attribute a ON a.id = pa."attributeId"
+        WHERE pa."propertyId" = property.id
+          AND a.id = :${attrIdKey}
+          AND pa.value = :${attrValueKey}
+      )`,
           {
-            [attrNameKey]: attr.attribute,
+            [attrIdKey]: attr.attributeId,
             [attrValueKey]: attr.value,
           },
         );
       });
     }
+
+
+
 
 
     // ✅ Apply pagination
@@ -683,9 +824,7 @@ export class PropertyService {
       limit,
       pageCount: Math.ceil(total / limit),
     };
-
   }
-
 
   async findOne(id: string) {
     const property = await this.propertyRepository.findOne({
@@ -704,8 +843,6 @@ export class PropertyService {
     return property;
   }
 
-
-
   async findByOfficeId(officeId: string, paginationDto: PaginationDto) {
     const { page = 1, limit = 10 } = paginationDto;
     const [data, total] = await this.propertyRepository.findAndCount({
@@ -713,9 +850,9 @@ export class PropertyService {
       take: limit,
       where: {
         office: {
-          id: officeId
+          id: officeId,
         },
-        status: EnumStatus.Accepted
+        status: EnumStatus.Accepted,
       },
       relations: [
         'photos',
@@ -736,7 +873,6 @@ export class PropertyService {
     };
   }
 
-
   async remove(id: string) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -745,7 +881,12 @@ export class PropertyService {
     try {
       const property = await queryRunner.manager.findOne(Property, {
         where: { id },
-        relations: ['photos', 'propertyAttributes', 'licenseDetails', 'location'],
+        relations: [
+          'photos',
+          'propertyAttributes',
+          'licenseDetails',
+          'location',
+        ],
       });
       if (!property) throw new NotFoundException('Property not found');
 
@@ -774,7 +915,7 @@ export class PropertyService {
 
       await queryRunner.commitTransaction();
 
-      return property
+      return property;
     } catch (err) {
       await queryRunner.rollbackTransaction();
       throw new InternalServerErrorException(err.message);
@@ -782,8 +923,4 @@ export class PropertyService {
       await queryRunner.release();
     }
   }
-
-
-
-
 }

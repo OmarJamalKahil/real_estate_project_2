@@ -32,7 +32,7 @@ export class PaymentCard {
     expiryYear: number;
 
     @Column({ nullable: true })
-    cvv: string;
+    cvv: number;
 
     // @Column({ nullable: false, default: 0, type: 'numeric' })
     // money: number ;
