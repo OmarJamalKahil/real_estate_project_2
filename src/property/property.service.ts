@@ -64,7 +64,6 @@ export class PropertyService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
-    console.log('djf');
     try {
       const office = await this.officeService.getCurrentUserOffice(
         officeManagerId,
@@ -94,7 +93,7 @@ export class PropertyService {
       if (!propertyType) throw new NotFoundException('PropertyType not found');
 
       const licenseType = await queryRunner.manager.findOne(LicenseType, {
-        where: { id: createPropertyDto.licenseType },
+        where: { name: createPropertyDto.licenseType },
       });
       if (!licenseType) throw new NotFoundException('LicenseType not found');
 
@@ -161,7 +160,6 @@ export class PropertyService {
         photos.push(photo);
       }
       property.photos = photos;
-      console.log('333333333333');
       // Final save to update relations (optional if not using eager)
       await queryRunner.manager.save(property);
 
@@ -708,6 +706,8 @@ export class PropertyService {
       .leftJoinAndSelect('licenseDetails.license', 'license')
       .leftJoinAndSelect('property.propertyAttributes', 'propertyAttributes')
       .leftJoinAndSelect('propertyAttributes.attribute', 'attribute')
+      .leftJoinAndSelect('property.office', 'office')
+
       // Use .where() for the first condition
       .where('property.softDelete = :softDelete', { softDelete: false })
       // Use .andWhere() for subsequent conditions
