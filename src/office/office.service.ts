@@ -532,9 +532,10 @@ async findOne(officeId: string) {
     } = rest;
 
     return {
-      reservation,
+      
       //user,
       property: {
+        reservation,
         ...basicFields,
         office,
         propertyType,

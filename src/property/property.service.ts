@@ -388,6 +388,45 @@ export class PropertyService {
     };
   }
 
+  // async findAllReservedPropertiesForUser(
+  //   userId: string,
+  //   paginationDto: PaginationDto,
+  // ) {
+  //   const { page = 1, limit = 10 } = paginationDto;
+  //   const [data, total] = await this.propertyRepository.findAndCount({
+  //     skip: (page - 1) * limit,
+  //     take: limit,
+  //     where: {
+  //       status: EnumStatus.Reserved, // <-- Add this line to filter by status
+  //       softDelete: false, // <-- Assuming you also want to exclude soft-deleted properties
+  //       // owner: {
+  //       //   id: userId
+  //       // }
+  //     },
+  //     relations: [
+  //       'photos',
+  //       'location',
+  //       'propertyType',
+  //       'licenseDetails',
+  //       'licenseDetails.license', // Include nested relation for license name
+  //       'propertyAttributes',
+  //       'propertyAttributes.attribute', // Include nested relation for attribute name
+  //       'office',
+  //     ],
+  //     order: {
+  //       publishDate: 'DESC', // Typically, newer accepted properties are shown first
+  //     },
+  //   });
+
+  //   return {
+  //     data,
+  //     total,
+  //     page,
+  //     limit,
+  //     pageCount: Math.ceil(total / limit),
+  //   };
+  // }
+
   async findAllReservedPropertiesForUser(
     userId: string,
     paginationDto: PaginationDto,
@@ -404,6 +443,7 @@ export class PropertyService {
         // }
       },
       relations: [
+        'reservation',
         'photos',
         'location',
         'propertyType',
