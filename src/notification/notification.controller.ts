@@ -8,6 +8,8 @@ import {
   Delete,
   UseGuards,
   Request,
+  Body,
+  Post,
 } from '@nestjs/common';
 import { NotificationService } from './notification.service';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
@@ -25,29 +27,67 @@ export class NotificationController {
     return this.notificationService.getAllNotificationsByUserId(userId);
   }
 
+  // // 🔔 Get all notifications for a specific user
+  // @Get('user/:userId')
+  // async getAllNotifications(@Param('userId') userId: string) {
+  //   return this.notificationService.getAllNotificationsByUserId(userId);
+  // }
+
   // 🔔 Get all notifications for a specific user
-  @Get('user/:userId')
-  async getAllNotifications(@Param('userId') userId: string) {
+  @Get('user')
+  async getAllNotifications(@Request() req) {
+    const {userId} = req.user;
     return this.notificationService.getAllNotificationsByUserId(userId);
   }
 
+
+  // // 🔴 Get unread count for badge
+  // @Get('unread-count/:userId')
+  // async getUnreadCount(@Param('userId') userId: string) {
+  //   const allNotifications = await this.notificationService.getAllNotificationsByUserId(userId);
+  //   const count = allNotifications.filter(n => !n.isRead).length;
+  //   return { count };
+  // }
+
   // 🔴 Get unread count for badge
-  @Get('unread-count/:userId')
-  async getUnreadCount(@Param('userId') userId: string) {
+  @Get('unread-count')
+  async getUnreadCount(@Request() req) {
+        const {userId} = req.user;
+
     const allNotifications = await this.notificationService.getAllNotificationsByUserId(userId);
     const count = allNotifications.filter(n => !n.isRead).length;
     return { count };
   }
 
   // ✅ Mark a single notification as read
-  @Patch('read/:notificationId')
+  @Patch('read/:notificationId') 
   async markAsRead(@Param('notificationId') notificationId: string) {
     return this.notificationService.updateNotificationAsRead(notificationId);
+  } 
+  
+  // @Post('notify-user')
+  // async notifyUser(@Body() data: any) {
+  //   return this.notificationService.notifyUserWithoutQueryRunner(data?.userId,data?.message,data?.title);
+  // }
+
+  @Post('notify-user')
+  async notifyUser(@Body() data: any,@Request() req) {
+        const {userId} = req.user;
+
+    return this.notificationService.notifyUserWithoutQueryRunner(userId,data?.message,data?.title);
   }
 
+  // // ✅ Mark all notifications as read for a user
+  // @Patch('read-all/:userId')
+  // async markAllAsRead(@Param('userId') userId: string) {
+  //   return this.notificationService.markAllAsRead(userId);
+  // }
+
   // ✅ Mark all notifications as read for a user
-  @Patch('read-all/:userId')
-  async markAllAsRead(@Param('userId') userId: string) {
+  @Patch('read-all')
+  async markAllAsRead(@Request() req) {
+        const {userId} = req.user;
+
     return this.notificationService.markAllAsRead(userId);
   }
 
@@ -60,6 +100,5 @@ export class NotificationController {
 
 
 }
-
 
 

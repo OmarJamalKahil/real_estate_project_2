@@ -128,4 +128,12 @@ export class OfficeController {
     const { userId } = req.user;
     return this.officeService.remove(id, userId);
   }
+
+  @Get('/get-reserved/properties')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.OFFICEMANAGER)
+  getReservedPropertiesForOffice(@Req() req,) {
+    const { userId } = req.user;
+    return this.officeService.getReservedPropertiesForOffice(userId);
+  }
 }
