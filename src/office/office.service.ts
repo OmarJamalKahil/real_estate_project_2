@@ -21,6 +21,7 @@ import { NotificationService } from 'src/notification/notification.service';
 import { EnumStatus } from 'src/property/common/property-status.enum';
 import { LicensePhoto } from './entities/license_photo.entity';
 import { Photo } from 'src/common/entities/Photo.entity';
+import { Property } from 'src/property/entities/property.entity';
 
 @Injectable()
 export class OfficeService {
@@ -35,6 +36,10 @@ export class OfficeService {
     private readonly userRepository: Repository<User>,
     @InjectRepository(OfficeRating)
     private readonly officeRatingRepository: Repository<OfficeRating>,
+
+    @InjectRepository(Property)
+    private readonly propertyRepository: Repository<Property>,
+
     private readonly cloudinaryService: CloudinaryService,
     private readonly notificationService: NotificationService,
     private readonly dataSource: DataSource,
@@ -487,4 +492,61 @@ async findOne(officeId: string) {
       await queryRunner.release();
     }
   }
+
+
+ async getReservedPropertiesForOffice(userId: string) {
+  const office = await this.officeRepository.findOne({
+    where: { user: { id: userId } },
+  });
+
+  if (!office) {
+    throw new NotFoundException('Office not found for this user');
+  }
+
+  const properties = await this.propertyRepository.find({
+    where: {
+      office: { id: office.id },
+      status: EnumStatus.Reserved,
+    },
+    relations: [
+      'reservation',
+      'reservation.user',
+      'propertyType',
+      'location',
+      'photos',
+      'licenseDetails',
+      'propertyAttributes.attribute',
+    ],
+  });
+
+  return properties.map((prop) => {
+    const { reservation, ...rest } = prop;
+
+    const {
+      propertyType,
+      location,
+      photos,
+      licenseDetails,
+      propertyAttributes,
+      ...basicFields
+    } = rest;
+
+    return {
+      reservation,
+      //user,
+      property: {
+        ...basicFields,
+        office,
+        propertyType,
+        location,
+        photos,
+        licenseDetails,
+        propertyAttributes,
+      },
+    };
+  });
+}
+
+  
+  
 }

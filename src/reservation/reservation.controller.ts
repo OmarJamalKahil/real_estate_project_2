@@ -24,4 +24,22 @@ export class ReservationController {
     return this.reservationService.create(userId,createReservationParamDto,createReservationDto);
   }
 
+@Delete(':id')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.USER)
+async cancelReservation(@Param('id') id: string, @Req() req) {
+  const { userId } = req.user;
+  return this.reservationService.remove(userId, id);
+}
+
+
+  @Get(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.USER)
+  getOneReservation(@Param('id') id: string, @Req() req){
+    const {userId} = req.user;
+    return this.reservationService.findOne(userId, id);
+  }
+
+
 }

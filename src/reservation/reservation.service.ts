@@ -147,40 +147,30 @@ export class ReservationService {
     }
   }
 
-  // --- Other Methods ---
 
-  async findAll(): Promise<Reservation[]> {
-    return this.reservationRepository.find({
-      relations: ['user', 'property'], // Load related user and property data
-    });
-  }
-
-  async findOne(id: string): Promise<Reservation> { // Changed id to string based on UUID
+  async findOne(userId: string, id: string): Promise<Reservation> {
     const reservation = await this.reservationRepository.findOne({
-      where: { id },
-      relations: ['user', 'property'],
+      where: {
+        id,
+        user: { id: userId },
+      },
+      relations: ['user', 'property'], // لو أردت جلب العلاقات
     });
+  
     if (!reservation) {
-      throw new NotFoundException(`Reservation with ID ${id} not found.`);
+      throw new NotFoundException(`Reservation with ID ${id} not found for this user.`);
     }
+  
     return reservation;
   }
 
-  async update(id: string, updateReservationDto: UpdateReservationDto): Promise<Reservation> {
-    const reservation = await this.reservationRepository.preload({
-      id: id,
-      ...updateReservationDto,
-    });
-    if (!reservation) {
-      throw new NotFoundException(`Reservation with ID ${id} not found.`);
-    }
-    return this.reservationRepository.save(reservation);
-  }
 
-  async remove(id: string): Promise<void> {
-    const result = await this.reservationRepository.delete(id);
-    if (result.affected === 0) {
-      throw new NotFoundException(`Reservation with ID ${id} not found.`);
-    }
+  async remove(userId: string, id: string): Promise<{ message: string }> {
+    await this.findOne(userId, id); // يتحقق من الملكية والحجز
+    await this.reservationRepository.delete(id);
+    return { message: "Reservation canceled successfully" };
   }
+  
+    
+   
 }
