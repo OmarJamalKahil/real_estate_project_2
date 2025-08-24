@@ -436,6 +436,7 @@ export class PropertyService {
       skip: (page - 1) * limit,
       take: limit,
       where: {
+        reservation:{user:{id: userId}},
         status: EnumStatus.Reserved, // <-- Add this line to filter by status
         softDelete: false, // <-- Assuming you also want to exclude soft-deleted properties
         // owner: {
