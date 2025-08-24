@@ -65,7 +65,7 @@ export class ReservationService {
         relations: [
           'photos',
           'location',
-          'type',
+          'propertyType',
           'licenseDetails',
           'propertyAttributes',
           'propertyAttributes.attribute',
