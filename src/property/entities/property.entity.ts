@@ -1,7 +1,14 @@
-
-
 // src/property/entities/property.entity.ts
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, OneToOne, JoinColumn, DeleteDateColumn } from 'typeorm'; // Import DeleteDateColumn
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  OneToMany,
+  OneToOne,
+  JoinColumn,
+  DeleteDateColumn,
+} from 'typeorm'; // Import DeleteDateColumn
 import { Location } from './location.entity';
 import { PropertyPhotos } from './property_photos.entity';
 import { LicenseDetails } from './license_details.entity';
@@ -14,6 +21,7 @@ import { PropertyType } from 'src/property-type/entities/property-type.entity';
 import { PropertyTypeOperation } from '../common/property-type-operation.enum';
 import { Reservation } from 'src/reservation/entities/reservation.entity';
 import { RentalExpirationDate } from 'src/property-request/entities/rental-expiration-date.entity';
+import { PropertyComplaint } from 'src/property-complaint/entities/property-complaint.entity';
 
 @Entity()
 export class Property {
@@ -25,14 +33,14 @@ export class Property {
 
   @Column({
     unique: true,
-    nullable: false
+    nullable: false,
   })
   propertyNumber: string;
 
   @Column({
     type: 'enum',
     enum: PropertyTypeOperation,
-    default: PropertyTypeOperation.Selling
+    default: PropertyTypeOperation.Selling,
   })
   typeOperation: PropertyTypeOperation;
 
@@ -58,13 +66,12 @@ export class Property {
   @Column({
     type: 'enum',
     enum: EnumStatus,
-    default: EnumStatus.Pending
+    default: EnumStatus.Pending,
   })
   status: EnumStatus;
 
   @Column({ default: false })
   softDelete: boolean;
-
 
   // omar commented this
   // @Column({
@@ -73,10 +80,12 @@ export class Property {
   // })
   // owner: string;
 
-  @OneToOne(() => RentalExpirationDate, (rentalExpirationDate) => rentalExpirationDate.property)
-  rentalExpirationDate: RentalExpirationDate
+  @OneToOne(
+    () => RentalExpirationDate,
+    (rentalExpirationDate) => rentalExpirationDate.property,
+  )
+  rentalExpirationDate: RentalExpirationDate;
 
-  
   // IMPORTANT: For one-to-one relations that should also be soft-deleted
   // or managed on deletion, you might need to handle them in your service.
   // cascade: true with onDelete: 'SET NULL' on PropertyAttribute is fine,
@@ -87,10 +96,12 @@ export class Property {
 
   // Consider { cascade: ['insert', 'update'] } for LicenseDetails if it's created/updated with property.
   // For deletion, if you soft-delete Property, LicenseDetails will remain. You'd need to soft-delete it separately if desired.
-  @OneToOne(() => LicenseDetails, (licenseDetails) => licenseDetails.property, { nullable: true, onDelete: 'CASCADE' }) // If property is hard-deleted, license details should also be deleted
+  @OneToOne(() => LicenseDetails, (licenseDetails) => licenseDetails.property, {
+    nullable: true,
+    onDelete: 'CASCADE',
+  }) // If property is hard-deleted, license details should also be deleted
   @JoinColumn()
   licenseDetails: LicenseDetails;
-
 
   @OneToOne(() => Reservation, (reservation) => reservation.property) // Or handle reservation soft-deletion if it applies
   reservation: Reservation;
@@ -99,16 +110,27 @@ export class Property {
   // the propertyId in PropertyAttribute will become NULL.
   // If you want PropertyAttribute to stay linked even after soft delete, don't use onDelete.
   // If you want PropertyAttribute to be soft-deleted too, you'd apply @DeleteDateColumn to PropertyAttribute.
-  @OneToMany(() => PropertyAttribute, (pa) => pa.property, { onDelete: 'CASCADE' }) // Usually, attributes belong to the property and should be removed/soft-deleted with it
+  @OneToMany(() => PropertyAttribute, (pa) => pa.property, {
+    onDelete: 'CASCADE',
+  }) // Usually, attributes belong to the property and should be removed/soft-deleted with it
   propertyAttributes: PropertyAttribute[];
 
-  @OneToMany(() => PropertyComment, (propertyComment) => propertyComment.property, { onDelete: 'SET NULL' }) // Comments might remain or be soft-deleted separately
+  @OneToMany(
+    () => PropertyComment,
+    (propertyComment) => propertyComment.property,
+    { onDelete: 'SET NULL' },
+  ) // Comments might remain or be soft-deleted separately
   comments?: PropertyComment[];
 
   @Column({
     type: 'date',
-    default: new Date()
+    default: new Date(),
   })
-  createdAt: Date
+  createdAt: Date;
 
+  @OneToMany(
+    () => PropertyComplaint,
+    (propertyComplaints) => propertyComplaints.property,
+  )
+  propertyComplaints: PropertyComplaint[];
 }

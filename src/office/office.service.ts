@@ -223,7 +223,7 @@ async findOne(officeId: string) {
       office_phone: office.office_phone,
       office_photo: office.office_photo,
       license_photo: office.license_photo,
-      license_Number : office.license_number,
+      license_number : office.license_number,
       personal_identity_number : office.personal_identity_number,
       ratings: avgRating/ratingValues.length > 0 ? avgRating/ratingValues.length : 0,
       blogs: office.blogs,

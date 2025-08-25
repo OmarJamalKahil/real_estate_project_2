@@ -6,7 +6,7 @@ import { AuthModule } from './auth/auth.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { MailModule } from './mail/mail.module';
-import * as Joi from 'joi'
+import * as Joi from 'joi';
 import { MailService } from './mail/mail.service';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { User } from './user/entities/user.entity';
@@ -58,6 +58,12 @@ import { PropertyRequest } from './property-request/entities/property-request.en
 import { PropertyRequestPhoto } from './property-request/entities/property-request-photo.entity';
 import { RentalExpirationDate } from './property-request/entities/rental-expiration-date.entity';
 import { LicenseTypeModule } from './license-type/license-type.module';
+import { OfficeComplaint } from './office-complaint/entities/office-complaint.entity';
+import { OfficeComplaintPhoto } from './office-complaint/entities/office-complaint-photo.entity';
+import { OfficeComplaintModule } from './office-complaint/office-complaint.module';
+import { PropertyComplaintModule } from './property-complaint/property-complaint.module';
+import { PropertyComplaint } from './property-complaint/entities/property-complaint.entity';
+import { PropertyComplaintPhoto } from './property-complaint/entities/property-complaint-photo.entity';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -77,8 +83,11 @@ import { LicenseTypeModule } from './license-type/license-type.module';
       PropertyComment,
       FavoriteProperty,
       Reservation,
-      Notification
-
+      Notification,
+      OfficeComplaint,
+      OfficeComplaintPhoto,
+      PropertyComplaint,
+      PropertyComplaintPhoto,
     ]),
     ScheduleModule.forRoot(),
     TypeOrmModule.forRoot({
@@ -89,8 +98,8 @@ import { LicenseTypeModule } from './license-type/license-type.module';
       // Number(process.env.DB_PORT),
       username: 'postgres',
       // process.env.DB_USER_NAME,
-      password: "12345678910",
-      //  process.env.DB_PASSWORD || 
+      password: '12345678910',
+      //  process.env.DB_PASSWORD ||
       database: 'Real_Estate_Project',
       // process.env.DB_NAME,
       entities: [
@@ -124,11 +133,15 @@ import { LicenseTypeModule } from './license-type/license-type.module';
         Notification,
         PropertyRequest,
         PropertyRequestPhoto,
-        RentalExpirationDate
+        RentalExpirationDate,
 
+        OfficeComplaint,
+        OfficeComplaintPhoto,
+        PropertyComplaint,
+        PropertyComplaintPhoto,
       ],
       // autoLoadEntities: true, // Automatically loads entities registered through TypeOrmModule.forFeature()
-      synchronize: true,      // ⚠️ use only in development
+      synchronize: true, // ⚠️ use only in development
     }),
     ConfigModule.forRoot({
       isGlobal: true,
@@ -146,7 +159,6 @@ import { LicenseTypeModule } from './license-type/license-type.module';
         REFRESH_SECRET_KEY: Joi.string().required(),
         REFRESH_EXPIRE_IN: Joi.string().required(),
 
-
         // DataBase
         DB_HOST: Joi.string().required(),
         DB_PORT: Joi.string().required(),
@@ -161,10 +173,6 @@ import { LicenseTypeModule } from './license-type/license-type.module';
         CARD_EXPIRY_MONTH: Joi.number().required(),
         CARD_EXPIRE_YEAR: Joi.number().required(),
         CARD_TYPE: Joi.string().required(),
-
-        
-
-
       }),
     }),
     UserModule,
@@ -188,10 +196,10 @@ import { LicenseTypeModule } from './license-type/license-type.module';
     CronModule,
     PropertyRequestModule,
     LicenseTypeModule,
+    OfficeComplaintModule,
+    PropertyComplaintModule,
   ],
   controllers: [AppController],
   providers: [AppService, MailService],
 })
-export class AppModule {
-
-}
+export class AppModule {}
