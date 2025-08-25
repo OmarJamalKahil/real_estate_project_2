@@ -6,6 +6,7 @@ import { Role } from 'src/user/entities/user.entity';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
+import { LinkAttributesToPropertyTypeDto } from './dto/link-Attributes-To-PropertyType.dto';
 
 @Controller('attribute')
 export class AttributeController {
@@ -16,6 +17,13 @@ export class AttributeController {
   @Roles(Role.SUPERADMIN, Role.ADMIN)
   create(@Body() createAttributeDto: CreateAttributeDto) {
     return this.attributeService.create(createAttributeDto);
+  }
+
+  @Post('/link-attributes-to-propertyType')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.SUPERADMIN, Role.ADMIN)
+  linkAttributesToPropertyType(@Body() linkAttributesToPropertyTypeDto: LinkAttributesToPropertyTypeDto) {
+    return this.attributeService.linkAttributesToPropertyType(linkAttributesToPropertyTypeDto);
   }
 
   @Get()

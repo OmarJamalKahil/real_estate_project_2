@@ -331,6 +331,9 @@ import { PropertyService } from 'src/property/property.service';
 import { EnumStatus } from 'src/property/common/property-status.enum';
 import { NotificationService } from 'src/notification/notification.service';
 import { UpdatePropertyRequestByAdminDto } from './dto/update-property-request-by-admin.dto';
+import { PropertyStatisticsService } from 'src/statistics/services/property-statistics.service';
+import { GeneralStatisticsService } from 'src/statistics/services/general-statistics.service';
+import { OperationTypeStatistics, PropertyStatistics } from 'src/statistics/entities/property-statistics.entity';
 
 @Injectable()
 export class PropertyRequestService {
@@ -339,6 +342,8 @@ export class PropertyRequestService {
     private readonly cloudinaryService: CloudinaryService,
     private readonly propertyService: PropertyService,
     private readonly notificationService: NotificationService,
+    private readonly propertyStatisticsService: PropertyStatisticsService,
+    private readonly generalStatisticsService: GeneralStatisticsService,
   ) { }
 
   async create(
@@ -523,14 +528,28 @@ export class PropertyRequestService {
 
       if (!property) throw new NotFoundException('Property not found');
 
+
+
       const propertyRequest = await queryRunner.manager.findOne(PropertyRequest, {
         where: { id },
       });
 
-      console.log("property request propertyRequest:",propertyRequest);
-      
+      console.log("property request propertyRequest:", propertyRequest);
+
 
       if (!propertyRequest) throw new NotFoundException('Property request not found');
+
+
+      const propertyStats = await queryRunner.manager.findOne(PropertyStatistics, {
+        where: {
+          property
+        }, order: {
+          createdAt: 'DESC'
+        }
+      })
+
+      if (!propertyStats) throw new NotFoundException('propertyStats not found');
+
 
       if (dto.status === EnumPropertyRequestStatus.Rejected) {
         propertyRequest.status = EnumPropertyRequestStatus.Rejected;
@@ -551,14 +570,32 @@ export class PropertyRequestService {
           propertyNumber: dto.propertyNumber,
           expireDate: dto.expireDate,
         });
-                console.log("propertyRequest 2", propertyRequest);
 
         propertyRequest.status = EnumPropertyRequestStatus.Accepted;
 
+        propertyStats.operationType = OperationTypeStatistics.renting;
+
+        await this.propertyService.removePropertySoft(queryRunner, property.id);
         await queryRunner.manager.save(propertyRequest);
+        await queryRunner.manager.save(propertyStats);
+
+
+        await this.notificationService.notifyUser(
+          queryRunner,
+          property.office.user.id,
+          'Your property request has been accepted.',
+          'Property Request Acceptance',
+        );
       } else {
         propertyRequest.status = EnumPropertyRequestStatus.Accepted;
+
+
+        propertyStats.operationType = OperationTypeStatistics.selling;
+
+
         await queryRunner.manager.save(propertyRequest);
+        await queryRunner.manager.save(propertyStats);
+
 
         await this.propertyService.removePropertySoft(queryRunner, property.id);
 
@@ -569,7 +606,7 @@ export class PropertyRequestService {
           'Property Request Acceptance',
         );
       }
-console.log("propertyRequest");
+      console.log("propertyRequest");
 
       await queryRunner.commitTransaction();
     } catch (error) {

@@ -13,6 +13,8 @@ import { Office } from 'src/office/entities/office.entity';
 import { Subscription } from 'src/subscription/entities/subscription.entity';
 import { PaymentCardService } from 'src/payment-card/payment-card.service';
 import { SubscriptionStatistics } from 'src/statistics/entities/subscription-statistics.entity';
+import { GeneralStatisticsService } from 'src/statistics/services/general-statistics.service';
+import { SubscriptionStatisticsService } from 'src/statistics/services/subscription-statistics.service';
 
 @Injectable()
 export class OfficeSubscriptionService {
@@ -27,6 +29,8 @@ export class OfficeSubscriptionService {
     private subscriptionRepository: Repository<Subscription>,
 
     private readonly paymentCardService: PaymentCardService,
+    private readonly generalStatisticsService: GeneralStatisticsService,
+    private readonly subscriptionStatisticsService: SubscriptionStatisticsService,
 
     private readonly dataSource: DataSource, // Inject DataSource for transactions
 
@@ -128,6 +132,9 @@ export class OfficeSubscriptionService {
       if (!subscription || !office) {
         throw new NotFoundException('Office or Subscription not found');
       }
+
+      await this.generalStatisticsService.createGeneralStats(queryRunner, subscription.price)
+      await this.subscriptionStatisticsService.createSubscriptionStats(queryRunner, subscription.price, subscription)
 
       // Check if the office already has a subscription
       const existingSubscription = await queryRunner.manager.findOne(OfficeSubscription, {

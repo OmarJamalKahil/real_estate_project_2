@@ -16,6 +16,7 @@ import { PropertyType } from 'src/property-type/entities/property-type.entity';
 import { Attribute } from 'src/attribute/entities/attribute.entity';
 import { PaymentCardModule } from 'src/payment-card/payment-card.module';
 import { NotificationModule } from 'src/notification/notification.module';
+import { StatisticsModule } from 'src/statistics/statistics.module';
 
 @Module({
   imports: [
@@ -33,7 +34,8 @@ import { NotificationModule } from 'src/notification/notification.module';
     NotificationModule,
     OfficeModule,
     UserModule,
-    PaymentCardModule
+    PaymentCardModule,
+    StatisticsModule,
 
   ],
   controllers: [PropertyController],

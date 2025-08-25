@@ -8,6 +8,7 @@ import { OfficeComment } from "src/office-comment/entities/office-comment.entity
 import { EnumStatus } from "src/property/common/property-status.enum";
 import { Photo } from "src/common/entities/Photo.entity";
 import { LicensePhoto } from "./license_photo.entity";
+import { OfficeComplaint } from "src/office-complaint/entities/office-complaint.entity";
 
 @Entity()
 export class Office {
@@ -54,11 +55,11 @@ export class Office {
 
     @OneToOne(() => User, { nullable: false })
     @JoinColumn()
-    user: User; 
+    user: User;
 
 
     // Office entity
-    @OneToOne(() => OfficeSubscription, (os) => os.office)  
+    @OneToOne(() => OfficeSubscription, (os) => os.office)
     officeSubscription: OfficeSubscription;
 
     @OneToOne(() => LicensePhoto)
@@ -83,6 +84,14 @@ export class Office {
 
     @OneToMany(() => Property, (property) => property.office)
     properties: Property[];
+
+
+
+    @OneToMany(
+        () => OfficeComplaint,
+        (officeComplaints) => officeComplaints.office,
+    )
+    officeComplaints: OfficeComplaint;
 
 
 }

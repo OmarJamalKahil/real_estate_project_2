@@ -18,6 +18,8 @@ import { FavoriteProperty } from 'src/favorite-property/entities/favorite-proper
 import { Reservation } from 'src/reservation/entities/reservation.entity';
 import { Notification } from 'src/notification/entities/notification.entity';
 import { Photo } from 'src/common/entities/Photo.entity';
+import { OfficeComplaint } from 'src/office-complaint/entities/office-complaint.entity';
+import { PropertyComplaint } from 'src/property-complaint/entities/property-complaint.entity';
 
 export enum Role {
     USER = 'user',
@@ -32,8 +34,8 @@ export class User {
     id: string;
 
     @Column({
-            nullable: true
-        })
+        nullable: true
+    })
     first_name: string;
 
     @Column({
@@ -51,8 +53,8 @@ export class User {
     password: string;
 
     @Column({
-         nullable: true 
-            })
+        nullable: true
+    })
     verify_code: string;
 
     @Column({
@@ -103,4 +105,11 @@ export class User {
 
     @OneToMany(() => Reservation, (reservation) => reservation.user)
     reservations: Reservation[];
+
+
+    @OneToMany(() => OfficeComplaint, (officeComplaints) => officeComplaints.user)
+    officeComplaints: OfficeComplaint[];
+
+    @OneToMany(() => PropertyComplaint, (propertyComplaints) => propertyComplaints.user)
+    propertyComplaints: PropertyComplaint
 }  

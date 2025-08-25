@@ -39,6 +39,8 @@ import { PaymentCardService } from 'src/payment-card/payment-card.service';
 import { NotificationService } from 'src/notification/notification.service';
 import { OperationTypeStatistics, PropertyStatistics } from 'src/statistics/entities/property-statistics.entity';
 import { PropertyTypeOperation } from './common/property-type-operation.enum';
+import { GeneralStatisticsService } from 'src/statistics/services/general-statistics.service';
+import { PropertyStatisticsService } from 'src/statistics/services/property-statistics.service';
 
 @Injectable()
 export class PropertyService {
@@ -66,6 +68,8 @@ export class PropertyService {
     private readonly userService: UserAuthService,
     private readonly paymentCardService: PaymentCardService,
     private readonly notificationService: NotificationService,
+    private readonly generalStatisticsService: GeneralStatisticsService,
+    private readonly propertyStatisticsService: PropertyStatisticsService,
     private readonly dataSource: DataSource,
   ) { }
 
@@ -651,20 +655,20 @@ export class PropertyService {
       if (!property) {
         throw new NotFoundException(`Property with ID "${id}" not found.`);
       }
-      
-      if(property.status === EnumStatus.Accepted){
-      const propertyStatistics = await queryRunner.manager.findOne(PropertyStatistics, {
-        where: {
-          property,
-        },
-        order: {
-          createdAt: "ASC", // "ASC" stands for ascending, which gets the earliest date.
-        },
-      })
-      if(propertyStatistics){
-        propertyStatistics.operationType = property.typeOperation === PropertyTypeOperation.Selling ? OperationTypeStatistics.selling : OperationTypeStatistics.renting;
-        await queryRunner.manager.save(propertyStatistics);
-      }
+
+      if (property.status === EnumStatus.Accepted) {
+        const propertyStatistics = await queryRunner.manager.findOne(PropertyStatistics, {
+          where: {
+            property,
+          },
+          order: {
+            createdAt: "ASC", // "ASC" stands for ascending, which gets the earliest date.
+          },
+        })
+        if (propertyStatistics) {
+          propertyStatistics.operationType = property.typeOperation === PropertyTypeOperation.Selling ? OperationTypeStatistics.selling : OperationTypeStatistics.renting;
+          await queryRunner.manager.save(propertyStatistics);
+        }
       }
 
 
@@ -1097,10 +1101,8 @@ export class PropertyService {
 
       await this.paymentCardService.searchAndWithdraw(searchPaymentCardDto, amountIsPayed, queryRunner.manager)
 
-      const propertyStatistics = await queryRunner.manager.create(PropertyStatistics, {
-        amount: amountIsPayed,
-        operationType: OperationTypeStatistics.deleting,
-      })
+      await this.generalStatisticsService.createGeneralStats(queryRunner, amountIsPayed);
+      await this.propertyStatisticsService.createPropertyStats(queryRunner, amountIsPayed, OperationTypeStatistics.deleting, property);
 
       // Delete photos from Cloudinary
       for (const photo of property.photos) {
@@ -1115,8 +1117,7 @@ export class PropertyService {
 
       // Remove licenseDetails
 
-      // save  PropertyStatistics
-      await queryRunner.manager.save(propertyStatistics);
+
 
       // Remove property
       await queryRunner.manager.remove(property);

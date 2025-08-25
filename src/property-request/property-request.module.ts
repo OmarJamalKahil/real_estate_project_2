@@ -9,6 +9,7 @@ import { CloudinaryModule } from 'src/cloudinary/cloudinary.module';
 import { Property } from 'src/property/entities/property.entity';
 import { PropertyModule } from 'src/property/property.module';
 import { NotificationModule } from 'src/notification/notification.module';
+import { StatisticsModule } from 'src/statistics/statistics.module';
 
 @Module({
   imports:[
@@ -17,7 +18,8 @@ import { NotificationModule } from 'src/notification/notification.module';
     ]),
     CloudinaryModule,
     PropertyModule,
-    NotificationModule
+    NotificationModule,
+    StatisticsModule,
   ],
   controllers: [PropertyRequestController],
   providers: [PropertyRequestService],

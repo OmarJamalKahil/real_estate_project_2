@@ -11,6 +11,7 @@ import { Property } from 'src/property/entities/property.entity';
 import { PropertyService } from 'src/property/property.service';
 import { PropertyModule } from 'src/property/property.module';
 import { NotificationModule } from 'src/notification/notification.module';
+import { StatisticsModule } from 'src/statistics/statistics.module';
 
 @Module({
     imports:[
@@ -20,7 +21,8 @@ import { NotificationModule } from 'src/notification/notification.module';
     PaymentCardModule,
     UserModule,
     PropertyModule,
-    NotificationModule
+    NotificationModule,
+    StatisticsModule
   ],
   controllers: [ReservationController],
   providers: [ReservationService],

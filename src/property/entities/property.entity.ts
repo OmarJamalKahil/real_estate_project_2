@@ -14,6 +14,7 @@ import { PropertyType } from 'src/property-type/entities/property-type.entity';
 import { PropertyTypeOperation } from '../common/property-type-operation.enum';
 import { Reservation } from 'src/reservation/entities/reservation.entity';
 import { RentalExpirationDate } from 'src/property-request/entities/rental-expiration-date.entity';
+import { PropertyComplaint } from 'src/property-complaint/entities/property-complaint.entity';
 
 @Entity()
 export class Property {
@@ -107,6 +108,14 @@ export class Property {
     type: 'date',
     default: new Date()
   })
-  createdAt: Date
+  createdAt: Date;
+
+
+
+  @OneToMany(
+    () => PropertyComplaint,
+    (propertyComplaints) => propertyComplaints.property,
+  )
+  propertyComplaints: PropertyComplaint
 
 }

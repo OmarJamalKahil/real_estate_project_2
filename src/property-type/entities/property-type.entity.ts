@@ -4,6 +4,17 @@ import { PropertyTypeAttribute } from 'src/property/entities/propertyType_attrib
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToMany } from 'typeorm';
 
 
+
+
+
+export enum TypeOfPropertyType {
+  RESIDENTIAL = 'residential',
+  COMMERCIAL = 'commercial',
+  AGRICULTURAL = 'agricultural',
+  INDUSTRIAL = 'industrial'
+}
+
+
 @Entity()
 export class PropertyType {
   @PrimaryGeneratedColumn('uuid')
@@ -11,6 +22,12 @@ export class PropertyType {
 
   @Column()
   name: string;
+
+  @Column({
+    type: "enum",
+    enum: TypeOfPropertyType
+  })
+  type: TypeOfPropertyType;
 
   @OneToMany(() => Property, (property) => property.type)
   properties: Property[];

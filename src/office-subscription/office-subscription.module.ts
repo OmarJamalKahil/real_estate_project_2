@@ -9,6 +9,7 @@ import { PaymentCard } from 'src/payment-card/entities/payment-card.entity';
 import { PaymentCardModule } from 'src/payment-card/payment-card.module';
 import { OfficeModule } from 'src/office/office.module';
 import { SubscriptionModule } from 'src/subscription/subscription.module';
+import { StatisticsModule } from 'src/statistics/statistics.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { SubscriptionModule } from 'src/subscription/subscription.module';
 
     forwardRef(() => SubscriptionModule),
     forwardRef(() => OfficeModule),
+    StatisticsModule,
   ],
   controllers: [OfficeSubscriptionController],
   providers: [OfficeSubscriptionService],

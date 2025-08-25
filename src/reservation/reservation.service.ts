@@ -22,6 +22,8 @@ import { EnumStatus } from 'src/property/common/property-status.enum';
 import { Notification } from 'src/notification/entities/notification.entity';
 import { NotificationService } from 'src/notification/notification.service';
 import { OperationTypeStatistics, PropertyStatistics } from 'src/statistics/entities/property-statistics.entity';
+import { GeneralStatisticsService } from 'src/statistics/services/general-statistics.service';
+import { PropertyStatisticsService } from 'src/statistics/services/property-statistics.service';
 
 @Injectable()
 export class ReservationService {
@@ -38,6 +40,8 @@ export class ReservationService {
     private readonly paymentCardService: PaymentCardService,
     private readonly userAuthService: UserAuthService, // You might not need this if you inject UserRepository directly
     private readonly propertyService: PropertyService,
+    private readonly generalStatisticsService: GeneralStatisticsService,
+    private readonly propertyStatisticsService: PropertyStatisticsService,
     private readonly dataSource: DataSource, // Inject DataSource for transactions
   ) {
   }
@@ -94,6 +98,10 @@ export class ReservationService {
         );
       }
 
+      await this.generalStatisticsService.createGeneralStats(queryRunner, createReservationDto.amount);
+      await this.propertyStatisticsService.createPropertyStats(queryRunner, createReservationDto.amount, OperationTypeStatistics.reservation, property);
+
+
       // 4. Process Payment
       // This step uses the transactional method from PaymentCardService
       // searchAndWithdraw is already designed to be transactional internally,
@@ -126,9 +134,9 @@ export class ReservationService {
         created_at: new Date(),
       });
 
-      
 
-     const propertyStatistics =  queryRunner.manager.create(PropertyStatistics, {
+
+      const propertyStatistics = queryRunner.manager.create(PropertyStatistics, {
         property: property,
         amount: createReservationDto.amount,
         operationType: OperationTypeStatistics.reservation
@@ -136,7 +144,7 @@ export class ReservationService {
 
       property.status = EnumStatus.Reserved;
 
-      this.notificationService.notifyUser(queryRunner,property.office.user.id, "New Reservation", `${user.first_name} ${user.last_name} has reserved a property from yours with this property number:${property.propertyNumber}.`)
+      this.notificationService.notifyUser(queryRunner, property.office.user.id, "New Reservation", `${user.first_name} ${user.last_name} has reserved a property from yours with this property number:${property.propertyNumber}.`)
 
 
 

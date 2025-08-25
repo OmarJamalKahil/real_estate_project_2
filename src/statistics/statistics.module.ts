@@ -9,16 +9,19 @@ import { SubscriptionModule } from "src/subscription/subscription.module";
 import { PropertyStatisticsService } from "./services/property-statistics.service";
 import { SubscriptionStatisticsService } from "./services/subscription-statistics.service";
 import { PropertyStatistics } from "./entities/property-statistics.entity";
+import { GeneralStatisticsService } from "./services/general-statistics.service";
+import { generalStatistics } from "./entities/general-statistics.entity";
 
 
 @Module({
-    imports: [TypeOrmModule.forFeature([
+    imports: [
+        TypeOrmModule.forFeature([
         SubscriptionStatistics,
         PropertyStatistics,
-    ]),
-
-    ],
+        generalStatistics,
+    ]),],
     controllers: [StatisticsController],
-    providers: [PropertyStatisticsService, SubscriptionStatisticsService]
+    providers: [PropertyStatisticsService, SubscriptionStatisticsService, GeneralStatisticsService],
+    exports: [PropertyStatisticsService, SubscriptionStatisticsService, GeneralStatisticsService],
 })
 export class StatisticsModule { }

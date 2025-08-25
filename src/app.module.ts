@@ -61,6 +61,15 @@ import { LicenseTypeModule } from './license-type/license-type.module';
 // import { CookieResolver, HeaderResolver, I18nModule, QueryResolver } from 'nestjs-i18n';
 import { I18nModule, QueryResolver, HeaderResolver, CookieResolver, AcceptLanguageResolver } from 'nestjs-i18n';
 import * as path from 'path';
+import { SubscriptionStatistics } from './statistics/entities/subscription-statistics.entity';
+import { PropertyStatistics } from './statistics/entities/property-statistics.entity';
+import { generalStatistics } from './statistics/entities/general-statistics.entity';
+import { OfficeComplaint } from './office-complaint/entities/office-complaint.entity';
+import { OfficeComplaintPhoto } from './office-complaint/entities/office-complaint-photo.entity';
+import { PropertyComplaint } from './property-complaint/entities/property-complaint.entity';
+import { PropertyComplaintPhoto } from './property-complaint/entities/property-complaint-photo.entity';
+import { OfficeComplaintModule } from './office-complaint/office-complaint.module';
+import { PropertyComplaintModule } from './property-complaint/property-complaint.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -80,7 +89,10 @@ import * as path from 'path';
       PropertyComment,
       FavoriteProperty,
       Reservation,
-      Notification
+      Notification,
+      SubscriptionStatistics,
+      PropertyStatistics,
+      generalStatistics,
 
     ]),
 
@@ -146,7 +158,14 @@ import * as path from 'path';
         Notification,
         PropertyRequest,
         PropertyRequestPhoto,
-        RentalExpirationDate
+        RentalExpirationDate,
+        SubscriptionStatistics,
+        PropertyStatistics,
+        generalStatistics,
+        OfficeComplaint,
+        OfficeComplaintPhoto,
+        PropertyComplaint,
+        PropertyComplaintPhoto,
 
       ],
       // autoLoadEntities: true, // Automatically loads entities registered through TypeOrmModule.forFeature()
@@ -214,6 +233,8 @@ import * as path from 'path';
     CronModule,
     PropertyRequestModule,
     LicenseTypeModule,
+    OfficeComplaintModule,
+    PropertyComplaintModule
   ],
   controllers: [AppController],
   providers: [AppService, MailService],
