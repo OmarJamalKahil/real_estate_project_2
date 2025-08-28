@@ -1,31 +1,26 @@
-import { Controller, Get, Inject, Post } from "@nestjs/common";
-import { CreateArchiveDto } from "./dto/create_Archive.dto";
-import { OwnerDto } from "./dto/owner.dto";
-import { ClientDto } from "./dto/client.dto";
-import { ArchiveService } from "./archive.service";
-
+import { Controller, Get, Inject, Param, Post, UseGuards } from '@nestjs/common';
+import { CreateArchiveDto } from './dto/create_Archive.dto';
+import { ArchiveService } from './archive.service';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { RolesGuard } from 'src/common/guards/roles.guard';
+import { Role } from 'src/user/entities/user.entity';
+import { Roles } from 'src/common/decorators/roles.decorator';
 
 @Controller('archive')
-export class ArchiveController{
+export class ArchiveController {
+  constructor(private readonly archiveService: ArchiveService) {}
 
-    constructor(
-        private readonly archiveService: ArchiveService
-    ){}
+  @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.SUPERADMIN, Role.ADMIN)
+  public getAllArchive() {
+    return this.archiveService.getAllArchive();
+  }
 
-    // @Post()
-    // public async addPropertyToArchive(
-    //     createArchiveDto: CreateArchiveDto,
-    //     ownerDto: OwnerDto,
-    //     clientDto: ClientDto
-    // ){
-    //     return this.archiveService.addPropertyToArchive(
-    //         createArchiveDto,
-    //         ownerDto,
-    //         clientDto
-    //     )
-    // }
-
-
-    // @Get()
-    // public getOneArchive(){}
+  @Get('/:archiveId')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.SUPERADMIN, Role.ADMIN)
+  public getOneArchiveWithRecords(@Param('archiveId') archiveId: string) {
+    return this.archiveService.getOneArchiveWithRecords(archiveId);
+  }
 }

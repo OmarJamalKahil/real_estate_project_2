@@ -1,9 +1,24 @@
-import { Location } from "src/property/entities/location.entity";
+import { IsNotEmpty, IsNumber, IsString, IsUUID } from 'class-validator';
+import { Location } from 'src/property/entities/location.entity';
 
+export class CreateArchiveDto {
+  @IsNumber()
+  @IsNotEmpty()
+  property_Number: number;
 
-export class CreateArchiveDto{
+  @IsNotEmpty()
+  @IsString()
+  propertyType: string;
 
-    property_Number: number;
+  @IsNotEmpty()
+  @IsString()
+  typeOfPropertyType: string;
 
-    location_Id: Location;
+  @IsNotEmpty()
+  @IsString()
+  space: string;
+
+  @IsNotEmpty()
+  @IsUUID()
+  location_Id: string;
 }
