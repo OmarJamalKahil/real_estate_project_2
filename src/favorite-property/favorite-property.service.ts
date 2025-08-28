@@ -1,4 +1,9 @@
-import { ConflictException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateFavoritePropertyDto } from './dto/create-favorite-property.dto';
 import { UpdateFavoritePropertyDto } from './dto/update-favorite-property.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -19,10 +24,7 @@ export class FavoritePropertyService {
     private readonly userService: UserAuthService,
 
     private readonly dataSource: DataSource,
-  ) { }
-
-
-
+  ) {}
 
   async create(userId: string, dto: CreateFavoritePropertyDto) {
     const queryRunner = this.dataSource.createQueryRunner();
@@ -48,14 +50,17 @@ export class FavoritePropertyService {
       if (existingFavorite)
         throw new ConflictException('Proprety already in favorites');
 
-      const favorite = this.favoritePropertyRepository.create({ user, property });
+      const favorite = this.favoritePropertyRepository.create({
+        user,
+        property,
+      });
       await queryRunner.manager.save(favorite);
 
       await queryRunner.commitTransaction();
       return favorite;
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      throw error
+      throw error;
       // throw new InternalServerErrorException(error.message);
     } finally {
       await queryRunner.release();
@@ -68,7 +73,14 @@ export class FavoritePropertyService {
 
     return this.favoritePropertyRepository.find({
       where: { user: { id: user.id } },
-      relations: ['property','property.photos'],
+      relations: [
+        'property',
+        'property.type',
+        'property.location',
+        'property.licenseDetails',
+        'property.photos',
+        'property.office',
+      ],
     });
   }
 
@@ -86,7 +98,7 @@ export class FavoritePropertyService {
           user: { id: user.id },
           property: { id: propertyId },
         },
-        relations:['user','property']
+        relations: ['user', 'property'],
       });
 
       if (!favorite) throw new NotFoundException('Favorite not found');
@@ -102,7 +114,6 @@ export class FavoritePropertyService {
       await queryRunner.release();
     }
   }
-
 
   async removeAllByUserId(userId: string) {
     const queryRunner = this.dataSource.createQueryRunner();
@@ -133,13 +144,19 @@ export class FavoritePropertyService {
     }
   }
 
+  /**
+   * this func check if the office is in your favorite list
+   * @param userId the id of the user requesting the func
+   * @param officeId the id of the office
+   * @returns a boolean value, if (true) then the office is in favorite list
+   */
+  async checkIfPropertyIsFavorite(userId: string, propertyId: string) {
+    const thisPropertyIsFavorite = await this.favoritePropertyRepository.exists(
+      {
+        where: { property: { id: propertyId }, user: { id: userId } },
+      },
+    );
 
-
-
+    return thisPropertyIsFavorite;
+  }
 }
-
-
-
-
-
-

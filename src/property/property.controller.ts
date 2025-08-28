@@ -35,6 +35,7 @@ export class PropertyController {
     @Body() createPropertyDtoRaw: CreatePropertyDto,
     @Req() req,
   ) {
+    console.log(createPropertyDtoRaw);
     const { userId } = req.user;
     return this.propertyService.create(userId, createPropertyDtoRaw, files.property_photos)
   }
@@ -114,15 +115,17 @@ export class PropertyController {
   }
 
   @Post('/filter')
-  @UseGuards(JwtAuthGuard)
+  //@UseGuards(JwtAuthGuard)
   getPropertiesByFiltering(
     @Body() filterPropertyDto: FilterPropertyDto,
     @Query() paginationDto: PaginationDto,
-    @Req() req,
+    //@Req() req,
 
   ) {
-    const { userId } = req.user
-    return this.propertyService.findPropertiesByFiltering(filterPropertyDto, paginationDto, userId)
+    //const { userId } = req.user
+    return this.propertyService.findPropertiesByFiltering(filterPropertyDto, paginationDto, 
+      //userId
+    )
   }
 
   @Get('/reserved')

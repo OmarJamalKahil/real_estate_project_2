@@ -171,14 +171,19 @@ export class ReservationService {
     });
   }
 
-  async findOne(id: string): Promise<Reservation> { // Changed id to string based on UUID
+ async findOne(userId: string, id: string): Promise<Reservation> {
     const reservation = await this.reservationRepository.findOne({
-      where: { id },
-      relations: ['user', 'property'],
+      where: {
+        id,
+        user: { id: userId },
+      },
+      relations: ['user', 'property'], // لو أردت جلب العلاقات
     });
+  
     if (!reservation) {
-      throw new NotFoundException(`Reservation with ID ${id} not found.`);
+      throw new NotFoundException(`Reservation with ID ${id} not found for this user.`);
     }
+  
     return reservation;
   }
 
@@ -193,10 +198,20 @@ export class ReservationService {
     return this.reservationRepository.save(reservation);
   }
 
-  async remove(id: string): Promise<void> {
-    const result = await this.reservationRepository.delete(id);
-    if (result.affected === 0) {
-      throw new NotFoundException(`Reservation with ID ${id} not found.`);
+  async remove(userId: string, id: string): Promise<{ message: string }> {
+    const reservation = await this.findOne(userId, id); // يتحقق من الملكية والحجز
+
+    const property = await this.propertyRepository.findOne({
+      where: {id : reservation.property.id}
+    });
+
+    if(property == null){
+      throw new NotFoundException("Property Not Found");
     }
+
+    property.status = EnumStatus.Accepted;
+    await this.propertyRepository.save(property);
+    await this.reservationRepository.delete(id);
+    return { message: "Reservation canceled successfully" };
   }
 }

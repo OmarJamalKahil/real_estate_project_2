@@ -7,9 +7,9 @@ export class CreateAttributeDto {
   @IsNotEmpty()
   name: string;
 
-  @Type(() => Number)
-  @IsNumber()
-  value: number;
+  @Type(() => String)
+  @IsString()
+  value: string;
 
   @IsUUID()
   @IsNotEmpty()

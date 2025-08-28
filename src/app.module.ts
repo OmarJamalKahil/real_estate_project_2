@@ -59,7 +59,6 @@ import { PropertyRequestPhoto } from './property-request/entities/property-reque
 import { RentalExpirationDate } from './property-request/entities/rental-expiration-date.entity';
 import { LicenseTypeModule } from './license-type/license-type.module';
 // import { CookieResolver, HeaderResolver, I18nModule, QueryResolver } from 'nestjs-i18n';
-import { I18nModule, QueryResolver, HeaderResolver, CookieResolver, AcceptLanguageResolver } from 'nestjs-i18n';
 import * as path from 'path';
 import { SubscriptionStatistics } from './statistics/entities/subscription-statistics.entity';
 import { PropertyStatistics } from './statistics/entities/property-statistics.entity';
@@ -123,9 +122,9 @@ import { PropertyComplaintModule } from './property-complaint/property-complaint
       // Number(process.env.DB_PORT),
       username: 'postgres',
       // process.env.DB_USER_NAME,
-      password: "0940468172mtn",
+      password: "12345678910",
       //  process.env.DB_PASSWORD || 
-      database: 'real-estate',
+      database: 'realEstateDb',
       // process.env.DB_NAME,
       entities: [
         User,
@@ -203,10 +202,10 @@ import { PropertyComplaintModule } from './property-complaint/property-complaint
         CARD_EXPIRE_YEAR: Joi.number().required(),
         CARD_TYPE: Joi.string().required(),
 
-        // Stripe 
-        STRIPE_SECRET_KEY: Joi.string().required(),
-        STRIPE_PUBLISHABLE_KEY: Joi.string().required(),
-        STRIPE_WEBHOOK_SECRET: Joi.string().required(),
+        // // Stripe 
+        // STRIPE_SECRET_KEY: Joi.string().required(),
+        // STRIPE_PUBLISHABLE_KEY: Joi.string().required(),
+        // STRIPE_WEBHOOK_SECRET: Joi.string().required(),
 
 
 
