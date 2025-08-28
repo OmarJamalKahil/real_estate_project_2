@@ -2,7 +2,7 @@ import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany, OneToOne,
 import { Archive } from "./archive.entity";
 import { PropertyTypeOperation } from "src/property/common/property-type-operation.enum";
 
-
+// this was modified
 @Entity()
 export class Record{
 
