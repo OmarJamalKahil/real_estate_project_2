@@ -17,5 +17,5 @@ export class PropertyAttribute {
   attribute: Attribute;
 
   @Column()
-  value: number;
+  value: string;
 }

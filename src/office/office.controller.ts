@@ -59,13 +59,15 @@ export class OfficeController {
   }
 
   @Get()
-  @UseGuards(JwtAuthGuard)
+  //@UseGuards(JwtAuthGuard)
   findAll(
     @Query() paginationDto:PaginationDto,
-    @Req() req,
+    //@Req() req,
   ) {
-    const {userId} = req.user;
-    return this.officeService.getAllOfficesWithAverageRating(userId,paginationDto);
+    //const {userId} = req.user;
+    return this.officeService.getAllOfficesWithAverageRating(
+     // userId,
+      paginationDto);
   }
 
 
@@ -78,6 +80,13 @@ export class OfficeController {
   }
 
 
+  @Get('/reserved-properties')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.OFFICEMANAGER)
+  getReservedPropertiesForOffice(@Req() req,) {
+    const { userId } = req.user;
+    return this.officeService.getReservedPropertiesForOffice(userId);
+  }
 
 
   @Get(':id')

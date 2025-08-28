@@ -1,5 +1,3 @@
-
-
 import {
   BadRequestException,
   ForbiddenException,
@@ -8,11 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import {
-  DataSource,
-  QueryRunner,
-  Repository,
-} from 'typeorm';
+import { DataSource, QueryRunner, Repository } from 'typeorm';
 import { Property } from './entities/property.entity';
 import { CreatePropertyDto } from './dto/create-property.dto';
 import { UpdatePropertyDto } from './dto/update-property.dto';
@@ -37,7 +31,10 @@ import { CreateAttributeDto } from './dto/attribute/create-attribute.dto';
 import { SearchPaymentCardDto } from 'src/payment-card/dto/create-payment-card.dto';
 import { PaymentCardService } from 'src/payment-card/payment-card.service';
 import { NotificationService } from 'src/notification/notification.service';
-import { OperationTypeStatistics, PropertyStatistics } from 'src/statistics/entities/property-statistics.entity';
+import {
+  OperationTypeStatistics,
+  PropertyStatistics,
+} from 'src/statistics/entities/property-statistics.entity';
 import { PropertyTypeOperation } from './common/property-type-operation.enum';
 import { GeneralStatisticsService } from 'src/statistics/services/general-statistics.service';
 import { PropertyStatisticsService } from 'src/statistics/services/property-statistics.service';
@@ -71,9 +68,7 @@ export class PropertyService {
     private readonly generalStatisticsService: GeneralStatisticsService,
     private readonly propertyStatisticsService: PropertyStatisticsService,
     private readonly dataSource: DataSource,
-  ) { }
-
-
+  ) {}
 
   async create(
     officeManagerId: string,
@@ -85,7 +80,10 @@ export class PropertyService {
     await queryRunner.startTransaction();
 
     try {
-      const office = await this.officeService.getCurrentUserOffice(officeManagerId, true);
+      const office = await this.officeService.getCurrentUserOffice(
+        officeManagerId,
+        true,
+      );
       if (!office) {
         throw new ForbiddenException('Office not found or access denied');
       }
@@ -95,12 +93,14 @@ export class PropertyService {
       //   throw new BadRequestException('Owner not found');
       // }
 
-
-
-      if ((office.officeSubscription?.remaining_properties! < 0) || (office.properties.length > 5)) {
-        throw new BadRequestException("You have reached the limit of adding properties, if you wanna add more you can subcripe in the app to increase the number of properties these you can add.");
+      if (
+        office.officeSubscription?.remaining_properties! < 0 ||
+        office.properties.length > 5
+      ) {
+        throw new BadRequestException(
+          'You have reached the limit of adding properties, if you wanna add more you can subcripe in the app to increase the number of properties these you can add.',
+        );
       }
-
 
       const propertyType = await queryRunner.manager.findOne(PropertyType, {
         where: { id: createPropertyDto.propertyType },
@@ -121,7 +121,9 @@ export class PropertyService {
       await queryRunner.manager.save(license_details);
 
       // Save location
-      const location = this.locationRepository.create(createPropertyDto.location);
+      const location = this.locationRepository.create(
+        createPropertyDto.location,
+      );
       await queryRunner.manager.save(location);
 
       // Create and save property
@@ -143,7 +145,7 @@ export class PropertyService {
         let attribute = await queryRunner.manager.findOne(Attribute, {
           where: { name: attrDto.name },
         });
-
+        console.log(attribute);
         if (!attribute) {
           attribute = this.attributeRepository.create({ name: attrDto.name });
           await queryRunner.manager.save(attribute);
@@ -179,13 +181,12 @@ export class PropertyService {
 
       return {
         message: 'We will review your property creation request shortly.',
-      }
-
+      };
     } catch (error) {
-      console.log("this is the error : ", error);
+      console.log('this is the error : ', error);
 
       await queryRunner.rollbackTransaction();
-      throw error
+      throw error;
       throw new InternalServerErrorException(error.message);
     } finally {
       await queryRunner.release();
@@ -209,7 +210,6 @@ export class PropertyService {
   //    if(existing.office.user.id != officeManagerId){
   //     throw new ForbiddenException("You can't do this!")
   //    }
-
 
   //     if (updateDto.location) {
   //       Object.assign(existing.location, updateDto.location);
@@ -237,8 +237,11 @@ export class PropertyService {
   //   }
   // }
 
-
-  async update(id: string, officeManagerId: string, updateDto: UpdatePropertyDto) {
+  async update(
+    id: string,
+    officeManagerId: string,
+    updateDto: UpdatePropertyDto,
+  ) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -248,7 +251,6 @@ export class PropertyService {
         where: { id },
         // relations: ['office', 'office.user', 'type', 'propertyAttributes', 'location', 'propertyAttributes.attribute'],
         relations: ['office', 'office.user', 'type'],
-
       });
 
       if (!existing) throw new NotFoundException('Property not found');
@@ -256,8 +258,6 @@ export class PropertyService {
       if (existing.office.user.id !== officeManagerId) {
         throw new ForbiddenException("You can't update this property");
       }
-
-
 
       // // ✅ Update attributes
       // if (updateDto.attributes) {
@@ -296,12 +296,11 @@ export class PropertyService {
         }
       }
 
-      const updated: PropertyResponse = await queryRunner.manager.save(existing);
+      const updated: PropertyResponse =
+        await queryRunner.manager.save(existing);
       await queryRunner.commitTransaction();
 
       return updated;
-
-
     } catch (err) {
       await queryRunner.rollbackTransaction();
       throw new InternalServerErrorException(err.message);
@@ -310,63 +309,57 @@ export class PropertyService {
     }
   }
 
-
   async addNewPhotoToPropertyPhotos(
     propertyId: string,
     property_photo: Express.Multer.File,
   ) {
-    const queryRunner = this.dataSource.createQueryRunner()
-    await queryRunner.startTransaction()
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.startTransaction();
     try {
       const property = await queryRunner.manager.findOne(Property, {
         where: {
-          id: propertyId
-        }
-      })
+          id: propertyId,
+        },
+      });
 
       if (!property) {
-        throw new NotFoundException(`property not found`)
+        throw new NotFoundException(`property not found`);
       }
 
-      const uploadRes = await this.cloudinaryService.uploadImage(property_photo);
+      const uploadRes =
+        await this.cloudinaryService.uploadImage(property_photo);
       const photo = this.photoRepository.create({
         property,
         url: uploadRes.secure_url,
         public_id: uploadRes.public_id,
       });
 
-
       await queryRunner.manager.save(photo);
 
       await queryRunner.commitTransaction();
       return photo;
     } catch (error) {
-      await queryRunner.rollbackTransaction()
-      throw error
-
+      await queryRunner.rollbackTransaction();
+      throw error;
     } finally {
-      await queryRunner.release()
+      await queryRunner.release();
     }
-
-
   }
 
-  async removePhotoOfPropertyFromPropertyPhotos(
-    propertyPhotoId: string,
-  ) {
-    console.log("this is the propertyPhotoId : ", propertyPhotoId);
+  async removePhotoOfPropertyFromPropertyPhotos(propertyPhotoId: string) {
+    console.log('this is the propertyPhotoId : ', propertyPhotoId);
 
-    const queryRunner = this.dataSource.createQueryRunner()
-    await queryRunner.startTransaction()
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.startTransaction();
     try {
       const photo = await queryRunner.manager.findOne(PropertyPhotos, {
         where: {
-          id: propertyPhotoId
-        }
-      })
+          id: propertyPhotoId,
+        },
+      });
 
       if (!photo) {
-        throw new NotFoundException(`Property photo not found`)
+        throw new NotFoundException(`Property photo not found`);
       }
 
       const deletedPhotoId = photo.id; // Store the ID before removal
@@ -376,31 +369,28 @@ export class PropertyService {
       await queryRunner.commitTransaction();
 
       return { deletedPhotoId }; // Return the stored ID
-
     } catch (error) {
-      await queryRunner.rollbackTransaction()
-      throw error
-
+      await queryRunner.rollbackTransaction();
+      throw error;
     } finally {
-      await queryRunner.release()
+      await queryRunner.release();
     }
   }
 
-
   async addNewAttributeToPropertyAttributes(
-    createAttributeDto: CreateAttributeDto
+    createAttributeDto: CreateAttributeDto,
   ) {
-    const queryRunner = this.dataSource.createQueryRunner()
-    await queryRunner.startTransaction()
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.startTransaction();
     try {
       const property = await queryRunner.manager.findOne(Property, {
         where: {
-          id: createAttributeDto.propertyId
-        }
-      })
+          id: createAttributeDto.propertyId,
+        },
+      });
 
       if (!property) {
-        throw new NotFoundException(`property not found`)
+        throw new NotFoundException(`property not found`);
       }
 
       // Save attributes
@@ -409,12 +399,15 @@ export class PropertyService {
       });
 
       if (!attribute) {
-        throw new NotFoundException(`attribute not found`)
+        throw new NotFoundException(`attribute not found`);
       }
 
-      let propertyAttribute = await queryRunner.manager.findOne(PropertyAttribute, {
-        where: { property, attribute },
-      });
+      let propertyAttribute = await queryRunner.manager.findOne(
+        PropertyAttribute,
+        {
+          where: { property, attribute },
+        },
+      );
 
       if (!propertyAttribute) {
         propertyAttribute = queryRunner.manager.create(PropertyAttribute, {
@@ -428,40 +421,33 @@ export class PropertyService {
         propertyAttribute.attribute = attribute;
       }
 
-
       await queryRunner.manager.save(propertyAttribute);
 
       await queryRunner.commitTransaction();
 
       return propertyAttribute;
     } catch (error) {
-      await queryRunner.rollbackTransaction()
-      throw error
-
+      await queryRunner.rollbackTransaction();
+      throw error;
     } finally {
-      await queryRunner.release()
+      await queryRunner.release();
     }
-
-
-
-
-
   }
 
   async removeAttributeOfPropertyFromPropertyAttributes(
     propertyAttributeId: string,
   ) {
-    const queryRunner = this.dataSource.createQueryRunner()
-    await queryRunner.startTransaction()
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.startTransaction();
     try {
       const attribute = await queryRunner.manager.findOne(PropertyAttribute, {
         where: {
-          id: propertyAttributeId
-        }
-      })
+          id: propertyAttributeId,
+        },
+      });
 
       if (!attribute) {
-        throw new NotFoundException(`attribute not found`)
+        throw new NotFoundException(`attribute not found`);
       }
       const deletedAttributeId = attribute.id; // Store the ID before removal
 
@@ -469,21 +455,13 @@ export class PropertyService {
       await queryRunner.commitTransaction();
 
       return { deletedAttributeId };
-
     } catch (error) {
-      await queryRunner.rollbackTransaction()
-      throw error
-
+      await queryRunner.rollbackTransaction();
+      throw error;
     } finally {
-      await queryRunner.release()
+      await queryRunner.release();
     }
-
-
-
-
-
   }
-
 
   // async findAll() {
   //   return this.propertyRepository.find({
@@ -498,14 +476,15 @@ export class PropertyService {
   //   });
   // }
 
-
-
   /**
    * Retrieves all properties that are currently in 'accepted' status.
    * Includes related entities for detailed display.
    * @returns A promise that resolves to an array of Property entities.
    */
-  async findAllAcceptedProperties(paginationDto: PaginationDto): Promise<PaginatedResponse<Property>> { // Renamed for clarity
+  async findAllAcceptedProperties(
+    paginationDto: PaginationDto,
+  ): Promise<PaginatedResponse<Property>> {
+    // Renamed for clarity
 
     const { page = 1, limit = 10 } = paginationDto;
     const [data, total] = await this.propertyRepository.findAndCount({
@@ -519,6 +498,10 @@ export class PropertyService {
         'photos',
         'location',
         'type',
+        // ----> from this
+        'office',
+        'office.office_photo',
+        // ---> to this is omar
         'licenseDetails',
         'licenseDetails.license', // Include nested relation for license name
         'propertyAttributes',
@@ -529,6 +512,7 @@ export class PropertyService {
       },
     });
 
+
     return {
       data,
       total,
@@ -536,18 +520,18 @@ export class PropertyService {
       limit,
       pageCount: Math.ceil(total / limit),
     };
-
   }
 
-
-  async findAllReservedPropertiesForUser(userId: string, paginationDto: PaginationDto) {
-
-
+  async findAllReservedPropertiesForUser(
+    userId: string,
+    paginationDto: PaginationDto,
+  ) {
     const { page = 1, limit = 10 } = paginationDto;
     const [data, total] = await this.propertyRepository.findAndCount({
       skip: (page - 1) * limit,
       take: limit,
       where: {
+        reservation: { user: { id: userId } },
         status: EnumStatus.Reserved, // <-- Add this line to filter by status
         softDelete: false, // <-- Assuming you also want to exclude soft-deleted properties
         // owner: {
@@ -555,6 +539,7 @@ export class PropertyService {
         // }
       },
       relations: [
+        'reservation',
         'photos',
         'location',
         'type',
@@ -562,7 +547,7 @@ export class PropertyService {
         'licenseDetails.license', // Include nested relation for license name
         'propertyAttributes',
         'propertyAttributes.attribute', // Include nested relation for attribute name
-        'office'
+        'office',
       ],
       order: {
         publishDate: 'DESC', // Typically, newer accepted properties are shown first
@@ -576,20 +561,17 @@ export class PropertyService {
       limit,
       pageCount: Math.ceil(total / limit),
     };
-
-
-
-
   }
 
-
   /**
-     * Retrieves all properties that are currently in 'pending' status.
-     * Includes related entities like photos, location, type, licenseDetails,
-     * propertyAttributes, and owner for detailed display.
-     * @returns A promise that resolves to an array of Property entities.
-     */
-  async getAllPropertiesWhoAreStillNotAccepted(paginationDto: PaginationDto): Promise<PaginatedResponse<Property>> {
+   * Retrieves all properties that are currently in 'pending' status.
+   * Includes related entities like photos, location, type, licenseDetails,
+   * propertyAttributes, and owner for detailed display.
+   * @returns A promise that resolves to an array of Property entities.
+   */
+  async getAllPropertiesWhoAreStillNotAccepted(
+    paginationDto: PaginationDto,
+  ): Promise<PaginatedResponse<Property>> {
     const { page = 1, limit = 10 } = paginationDto;
 
     const [data, total] = await this.propertyRepository.findAndCount({
@@ -600,9 +582,9 @@ export class PropertyService {
         softDelete: false, // Ensure it's not soft-deleted
       },
       relations: [
-        'photos',        // Load property photos
-        'location',      // Load location details
-        'type',          // Load property type (e.g., "Office", "Apartment")
+        'photos', // Load property photos
+        'location', // Load location details
+        'type', // Load property type (e.g., "Office", "Apartment")
         'licenseDetails', // Load license details
         'licenseDetails.license', // Load the actual license type within licenseDetails
         'propertyAttributes', // Load custom attributes (e.g., "Rooms", "Bathrooms")
@@ -633,44 +615,50 @@ export class PropertyService {
       limit,
       pageCount: Math.ceil(total / limit),
     };
-
   }
   /**
-     * Updates the status of a specific property.
-     * @param id The ID of the property to update.
-     * @param status The new status (e.g., 'accepted', 'rejected').
-     * @returns A promise that resolves to the updated Property entity.
-     */
-  async updatePropertyStatus(id: string, updatePropertyStatusDto: UpdatePropertyStatusDto): Promise<void> {
-    const queryRunner = this.dataSource.createQueryRunner()
-    await queryRunner.startTransaction()
+   * Updates the status of a specific property.
+   * @param id The ID of the property to update.
+   * @param status The new status (e.g., 'accepted', 'rejected').
+   * @returns A promise that resolves to the updated Property entity.
+   */
+  async updatePropertyStatus(
+    id: string,
+    updatePropertyStatusDto: UpdatePropertyStatusDto,
+  ): Promise<void> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.startTransaction();
     try {
-
-
-
-
       // 1. Find the property first
-      const property = await queryRunner.manager.findOne(Property, { where: { id }, relations: ['office', 'office.user'] });
+      const property = await queryRunner.manager.findOne(Property, {
+        where: { id },
+        relations: ['office', 'office.user'],
+      });
 
       if (!property) {
         throw new NotFoundException(`Property with ID "${id}" not found.`);
       }
 
       if (property.status === EnumStatus.Accepted) {
-        const propertyStatistics = await queryRunner.manager.findOne(PropertyStatistics, {
-          where: {
-            property,
+        const propertyStatistics = await queryRunner.manager.findOne(
+          PropertyStatistics,
+          {
+            where: {
+              property,
+            },
+            order: {
+              createdAt: 'ASC', // "ASC" stands for ascending, which gets the earliest date.
+            },
           },
-          order: {
-            createdAt: "ASC", // "ASC" stands for ascending, which gets the earliest date.
-          },
-        })
+        );
         if (propertyStatistics) {
-          propertyStatistics.operationType = property.typeOperation === PropertyTypeOperation.Selling ? OperationTypeStatistics.selling : OperationTypeStatistics.renting;
+          propertyStatistics.operationType =
+            property.typeOperation === PropertyTypeOperation.Selling
+              ? OperationTypeStatistics.selling
+              : OperationTypeStatistics.renting;
           await queryRunner.manager.save(propertyStatistics);
         }
       }
-
 
       // 2. Update its status
       property.status = updatePropertyStatusDto.status;
@@ -684,29 +672,31 @@ export class PropertyService {
       // To ensure all relations are loaded for the response, the previous `findOne` call or a new `findOne` is good.
       // Let's re-fetch with relations to be absolutely sure the returned object is complete for the client.
 
-      const message = property.status === EnumStatus.Accepted ?
-        `We have accepeted you request for adding new Property with This Property Number ${property.propertyNumber}`
-        : `We have rejected you request for adding new Property with This Property Number ${property.propertyNumber} because it doesn't verfiy all requiremnts.`;
-      await this.notificationService.notifyUser(queryRunner, updatedProperty.office.user.id, message, 'Property Adding Status.')
+      const message =
+        property.status === EnumStatus.Accepted
+          ? `We have accepeted you request for adding new Property with This Property Number ${property.propertyNumber}`
+          : `We have rejected you request for adding new Property with This Property Number ${property.propertyNumber} because it doesn't verfiy all requiremnts.`;
+      await this.notificationService.notifyUser(
+        queryRunner,
+        updatedProperty.office.user.id,
+        message,
+        'Property Adding Status.',
+      );
 
-      await queryRunner.commitTransaction()
-
+      await queryRunner.commitTransaction();
     } catch (error) {
-      await queryRunner.rollbackTransaction()
+      await queryRunner.rollbackTransaction();
       throw error;
     } finally {
-
-      await queryRunner.release()
+      await queryRunner.release();
     }
   }
 
-
   async removePropertySoft(queryRunner: QueryRunner, id: string) {
-
     // 1. Find the property first
     const property = await queryRunner.manager.findOne(Property, {
-      where: { id }
-    })
+      where: { id },
+    });
 
     if (!property) {
       throw new NotFoundException(`Property with ID "${id}" not found.`);
@@ -717,9 +707,7 @@ export class PropertyService {
 
     // 3. Save the updated property
     await queryRunner.manager.save(property);
-
   }
-
 
   async findOneByPropertyNumber(propertyNumber: string) {
     const property = await this.propertyRepository.findOne({
@@ -733,13 +721,12 @@ export class PropertyService {
         'propertyAttributes.attribute',
       ],
       order: {
-        createdAt: 'DESC'
-      }
+        createdAt: 'DESC',
+      },
     });
     if (!property) throw new NotFoundException('Property not found');
     return property;
   }
-
 
   // async findPropertiesByFiltering(
   //   filterDto: FilterPropertyDto,
@@ -762,7 +749,6 @@ export class PropertyService {
   //     // .andWhere('user.id != :userId', { userId })
   //     .andWhere('property.status = :status', { status: EnumStatus.Accepted });
 
-
   //   const {
   //     type,
   //     purpose,
@@ -775,21 +761,18 @@ export class PropertyService {
 
   //   console.log("this is the type : ",filterDto);
 
-
   //   // Type
   //   if (type) {
   //     query.andWhere('type.name = :type', { type });
   //   }
 
-
   //   // Purpose (Selling or Renting via typeOperation column)
   //   if (purpose?.selling && !purpose?.renting) {
   //     query.andWhere('property.typeOperation = :typeOp', { typeOp: 'selling' });
-  //   } else if (!purpose?.selling && purpose?.renting) {      
+  //   } else if (!purpose?.selling && purpose?.renting) {
   //     query.andWhere('property.typeOperation = :typeOp', { typeOp: 'renting' });
   //   }
   //   // If both are selected, show both (do nothing — already default)
-
 
   //   // // Purpose (selling / renting)
   //   // if (purpose?.selling && !purpose?.renting) {
@@ -803,8 +786,6 @@ export class PropertyService {
   //   //     renting: 'renting',
   //   //   });
   //   // }
-
-
 
   //   // Price range
   //   if (price?.length === 2) {
@@ -866,7 +847,6 @@ export class PropertyService {
   //     });
   //   }
 
-
   //   // ✅ Apply pagination
   //   query.skip((page - 1) * limit).take(limit);
 
@@ -875,7 +855,6 @@ export class PropertyService {
 
   //   console.log('this is the data', data);
   //   console.log('this is the total',total);
-
 
   //   return {
   //     data,
@@ -890,14 +869,14 @@ export class PropertyService {
   async findPropertiesByFiltering(
     filterDto: FilterPropertyDto,
     paginationDto: PaginationDto,
-    userId?: string
+    //userId?: string
   ) {
     const { page = 1, limit = 10 } = paginationDto;
 
-    console.log("this is the filterDto", filterDto);
+    console.log('this is the filterDto', filterDto);
 
-
-    const query = this.propertyRepository.createQueryBuilder('property')
+    const query = this.propertyRepository
+      .createQueryBuilder('property')
       .leftJoinAndSelect('property.photos', 'photos')
       .leftJoinAndSelect('property.location', 'location')
       .leftJoinAndSelect('property.type', 'type')
@@ -905,14 +884,17 @@ export class PropertyService {
       .leftJoinAndSelect('licenseDetails.license', 'license')
       .leftJoinAndSelect('property.propertyAttributes', 'propertyAttributes')
       .leftJoinAndSelect('propertyAttributes.attribute', 'attribute')
-      .leftJoin("property.office", "office")
-      .leftJoin("office.user", "user")
+      .leftJoinAndSelect('property.office', 'office')
+      .leftJoinAndSelect('office.office_photo', 'office_photo')
+
+      .leftJoin('office.user', 'user')
       .where('property.softDelete = :softDelete', { softDelete: false })
-      .andWhere('user.id != :userId', { userId }) // Uncomment if needed
+      //.andWhere('user.id != :userId', { userId }) // Uncomment if needed
       .andWhere('property.status = :status', { status: EnumStatus.Accepted });
 
     const {
       type,
+      typeOfPropertyType,
       purpose,
       price,
       space,
@@ -921,7 +903,11 @@ export class PropertyService {
       location,
     } = filterDto;
 
-    console.log("this is the type : ", filterDto);
+    console.log('this is the type : ', filterDto);
+
+    if (typeOfPropertyType) {
+      query.andWhere('type.type = :typeOfPropertyType', { typeOfPropertyType });
+    }
 
     // Type filter
     if (type && type !== '') {
@@ -982,7 +968,8 @@ export class PropertyService {
 
     // Dynamic attribute filters (The fix is here)
     if (attributeFilters && attributeFilters.length > 0) {
-      const attributeSubQuery = this.propertyRepository.createQueryBuilder('sub_property')
+      const attributeSubQuery = this.propertyRepository
+        .createQueryBuilder('sub_property')
         .leftJoin('sub_property.propertyAttributes', 'sub_pa')
         .leftJoin('sub_pa.attribute', 'sub_attr')
         .select('sub_property.id')
@@ -1027,7 +1014,6 @@ export class PropertyService {
     };
   }
 
-
   async findOne(id: string) {
     const property = await this.propertyRepository.findOne({
       where: { id, status: EnumStatus.Accepted },
@@ -1040,14 +1026,12 @@ export class PropertyService {
         'propertyAttributes.attribute',
       ],
     });
-    console.log("this is the property", property);
+    console.log('this is the property', property);
 
     if (!property) throw new NotFoundException('Property not found');
 
     return property;
   }
-
-
 
   async findByOfficeId(officeId: string, paginationDto: PaginationDto) {
     const { page = 1, limit = 10 } = paginationDto;
@@ -1056,9 +1040,9 @@ export class PropertyService {
       take: limit,
       where: {
         office: {
-          id: officeId
+          id: officeId,
         },
-        status: EnumStatus.Accepted
+        status: EnumStatus.Accepted,
       },
       relations: [
         'photos',
@@ -1079,7 +1063,11 @@ export class PropertyService {
     };
   }
 
-  async payBeforeRemove(id: string, searchPaymentCardDto: SearchPaymentCardDto, userId: string) {
+  async payBeforeRemove(
+    id: string,
+    searchPaymentCardDto: SearchPaymentCardDto,
+    userId: string,
+  ) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -1089,20 +1077,38 @@ export class PropertyService {
     try {
       const property = await queryRunner.manager.findOne(Property, {
         where: {
-          id, office: {
+          id,
+          office: {
             user: {
-              id: userId
-            }
-          }
+              id: userId,
+            },
+          },
         },
-        relations: ['photos', 'propertyAttributes', 'licenseDetails', 'location'],
+        relations: [
+          'photos',
+          'propertyAttributes',
+          'licenseDetails',
+          'location',
+        ],
       });
       if (!property) throw new NotFoundException('Property not found');
 
-      await this.paymentCardService.searchAndWithdraw(searchPaymentCardDto, amountIsPayed, queryRunner.manager)
+      await this.paymentCardService.searchAndWithdraw(
+        searchPaymentCardDto,
+        amountIsPayed,
+        queryRunner.manager,
+      );
 
-      await this.generalStatisticsService.createGeneralStats(queryRunner, amountIsPayed);
-      await this.propertyStatisticsService.createPropertyStats(queryRunner, amountIsPayed, OperationTypeStatistics.deleting, property);
+      await this.generalStatisticsService.createGeneralStats(
+        queryRunner,
+        amountIsPayed,
+      );
+      await this.propertyStatisticsService.createPropertyStats(
+        queryRunner,
+        amountIsPayed,
+        OperationTypeStatistics.deleting,
+        property,
+      );
 
       // Delete photos from Cloudinary
       for (const photo of property.photos) {
@@ -1117,8 +1123,6 @@ export class PropertyService {
 
       // Remove licenseDetails
 
-
-
       // Remove property
       await queryRunner.manager.remove(property);
 
@@ -1131,7 +1135,7 @@ export class PropertyService {
 
       await queryRunner.commitTransaction();
 
-      return property.id
+      return property.id;
     } catch (err) {
       await queryRunner.rollbackTransaction();
       throw new InternalServerErrorException(err.message);
@@ -1148,7 +1152,12 @@ export class PropertyService {
     try {
       const property = await queryRunner.manager.findOne(Property, {
         where: { id },
-        relations: ['photos', 'propertyAttributes', 'licenseDetails', 'location'],
+        relations: [
+          'photos',
+          'propertyAttributes',
+          'licenseDetails',
+          'location',
+        ],
       });
       if (!property) throw new NotFoundException('Property not found');
 
@@ -1177,7 +1186,7 @@ export class PropertyService {
 
       await queryRunner.commitTransaction();
 
-      return property
+      return property;
     } catch (err) {
       await queryRunner.rollbackTransaction();
       throw new InternalServerErrorException(err.message);
@@ -1185,8 +1194,4 @@ export class PropertyService {
       await queryRunner.release();
     }
   }
-
-
-
-
 }

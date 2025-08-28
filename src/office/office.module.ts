@@ -14,10 +14,11 @@ import { OfficeSubscriptionModule } from 'src/office-subscription/office-subscri
 import { NotificationModule } from 'src/notification/notification.module';
 import { Notification } from 'src/notification/entities/notification.entity';
 import { Photo } from 'src/common/entities/Photo.entity';
+import { Property } from 'src/property/entities/property.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Office, LicensePhoto, User, OfficeRating, Photo, OfficeSubscription, Notification]),
+    TypeOrmModule.forFeature([Office, LicensePhoto, User, OfficeRating, Photo, OfficeSubscription, Notification, Property]),
     CloudinaryModule,
     NotificationModule,
     forwardRef(() => OfficeSubscriptionModule),

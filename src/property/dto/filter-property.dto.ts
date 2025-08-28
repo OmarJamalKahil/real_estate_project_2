@@ -8,8 +8,10 @@ import {
   Min,
   Max,
   IsObject,
+  IsEnum,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { TypeOfPropertyType } from 'src/property-type/entities/property-type.entity';
 
 class PurposeDto {
   @IsOptional()
@@ -25,8 +27,8 @@ class AttributeFilterDto {
   @IsString()
   attribute: string;
 
-  @IsNumber()
-  value: number;
+  @IsString()
+  value: string;
 }
 
 class LocationDto {
@@ -48,6 +50,10 @@ class LocationDto {
 }
 
 export class FilterPropertyDto {
+  @IsOptional()
+  @IsEnum(TypeOfPropertyType)
+  typeOfPropertyType?: TypeOfPropertyType;
+  
   @IsOptional()
   @IsString()
   type?: string;
