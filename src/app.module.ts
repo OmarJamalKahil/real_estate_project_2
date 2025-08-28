@@ -69,6 +69,9 @@ import { PropertyComplaint } from './property-complaint/entities/property-compla
 import { PropertyComplaintPhoto } from './property-complaint/entities/property-complaint-photo.entity';
 import { OfficeComplaintModule } from './office-complaint/office-complaint.module';
 import { PropertyComplaintModule } from './property-complaint/property-complaint.module';
+import { Archive } from './archive/entities/archive.entity';
+import { Record } from './archive/entities/record.entity';
+import { ArchiveModule } from './archive/archive.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -92,7 +95,8 @@ import { PropertyComplaintModule } from './property-complaint/property-complaint
       SubscriptionStatistics,
       PropertyStatistics,
       generalStatistics,
-
+      Archive,
+      Record
     ]),
 
     // I18nModule.forRoot({
@@ -165,6 +169,8 @@ import { PropertyComplaintModule } from './property-complaint/property-complaint
         OfficeComplaintPhoto,
         PropertyComplaint,
         PropertyComplaintPhoto,
+        Archive,
+        Record
 
       ],
       // autoLoadEntities: true, // Automatically loads entities registered through TypeOrmModule.forFeature()
@@ -233,7 +239,8 @@ import { PropertyComplaintModule } from './property-complaint/property-complaint
     PropertyRequestModule,
     LicenseTypeModule,
     OfficeComplaintModule,
-    PropertyComplaintModule
+    PropertyComplaintModule,
+    ArchiveModule
   ],
   controllers: [AppController],
   providers: [AppService, MailService],
