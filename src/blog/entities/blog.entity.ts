@@ -16,7 +16,13 @@ export class Blog {
     @ManyToOne(() => Office, (office) => office.blogs)
     office: Office;
 
-    @OneToOne(() => BlogMedia, { nullable: true,eager:true })
+    @OneToOne(() => BlogMedia, { nullable: true, eager: true })
     @JoinColumn()
     blog_media?: BlogMedia;
+
+    @Column({
+        type: 'timestamp',
+        default: () => 'CURRENT_TIMESTAMP',
+    })
+    createdAt: Date;
 }

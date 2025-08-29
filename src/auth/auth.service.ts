@@ -11,6 +11,8 @@ export class AuthService {
   ) {} 
 
   generateTokens(payload: JwtPayload) {
+    console.log("this is the generateTokens : ", this.configService.get<string>('ACCESS_SECRET_KEY'));
+    
     const accessToken = this.jwtService.sign(payload, {
       secret: this.configService.get<string>('ACCESS_SECRET_KEY'),
       expiresIn: parseInt(this.configService.get<string>('ACCESS_EXPIRE_IN')!),

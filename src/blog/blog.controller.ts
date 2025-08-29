@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, UploadedFile, UseInterceptors, Req, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, UploadedFile, UseInterceptors, Req, Put, Query } from '@nestjs/common';
 import { BlogService } from './blog.service';
 import { CreateBlogDto } from './dto/create-blog.dto';
 import { UpdateBlogDto } from './dto/update-blog.dto';
@@ -7,6 +7,7 @@ import { Role } from 'src/user/entities/user.entity';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { PaginationDto } from 'src/common/utils/pagination.dto';
 
 @Controller('blog')
 export class BlogController {
@@ -47,9 +48,9 @@ export class BlogController {
     return this.blogService.update(id, updateBlogDto, blog_photo);
   }
 
-  @Get()
-  findAll() {
-    return this.blogService.findAll();
+  @Get() 
+  findAll(@Query() paginationDto: PaginationDto) {
+    return this.blogService.findAll(paginationDto);
   }
 
   @Get(':id')
@@ -65,9 +66,9 @@ export class BlogController {
     @Param('id') id: string,
     @Req() req,
   ) {
-    
+
     const { userId } = req.user;
-    console.log(id,userId);
+    console.log(id, userId);
     return this.blogService.remove(id, userId);
   }
 }

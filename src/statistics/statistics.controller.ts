@@ -26,7 +26,7 @@ export class StatisticsController {
     return this.generalStatisticsService.getGeneralStats()
   }
 
-  @Get('subcription')
+  @Get('subscription')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.SUPERADMIN)
   async getSubscriptionStats() {
