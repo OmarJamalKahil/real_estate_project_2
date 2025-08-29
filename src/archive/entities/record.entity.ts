@@ -1,28 +1,30 @@
-import { Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { Archive } from "./archive.entity";
-import { Client } from "./client.entity";
 import { PropertyTypeOperation } from "src/property/common/property-type-operation.enum";
 
-
+// this was modified
 @Entity()
-export class Owner{
+export class Record{
 
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
     @Column()
-    personal_Identity_Number: number;
+    owner_personal_Identity_Number: number;
     
     @Column()
-    name: string;
+    owner_name: string;
+
+    @Column()
+    client_personal_Identity_Number: number;
+    
+    @Column()
+    client_name: string;
 
     @Column()
     price: number;
 
-    @Column()
-    date: Date;
-
-    @Column()
+    @Column({type: 'enum', enum: PropertyTypeOperation})
     type: PropertyTypeOperation;
 
     @Column({nullable: true, type: 'timestamp'})
@@ -34,11 +36,8 @@ export class Owner{
     @Column({nullable: true, type: 'timestamp'})
     rental_End_Date: Date | null;
 
-    @OneToOne(() => Archive)
+    @ManyToOne(() => Archive, (archive) => archive.records)
     @JoinColumn()
     archive: Archive;
 
-    @OneToOne(() => Client)
-    @JoinColumn()
-    client: Client;
 }
