@@ -13,10 +13,18 @@ import { UserProfileService } from './services/user-profile.service';
 import { UserAdminService } from './services/user-admin.service';
 import { UserWarnings } from './entities/user-warnings.entity';
 import { Photo } from 'src/common/entities/Photo.entity';
+import { UserProperty } from './entities/user-property.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, Photo, Banned, Warning, UserWarnings,]),
+    TypeOrmModule.forFeature([
+      User,
+      Photo,
+      Banned,
+      Warning,
+      UserWarnings,
+      UserProperty,
+    ]),
     AuthModule, // ✅ this fixes the issue
     MailModule,
     CloudinaryModule,
@@ -26,13 +34,8 @@ import { Photo } from 'src/common/entities/Photo.entity';
     UserService,
     UserAuthService,
     UserProfileService,
-    UserAdminService
+    UserAdminService,
   ],
-  exports: [
-    UserService,
-    UserAuthService,
-    UserProfileService,
-    UserAdminService
-  ]
+  exports: [UserService, UserAuthService, UserProfileService, UserAdminService],
 })
-export class UserModule { }
+export class UserModule {}

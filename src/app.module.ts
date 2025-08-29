@@ -6,7 +6,7 @@ import { AuthModule } from './auth/auth.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { MailModule } from './mail/mail.module';
-import * as Joi from 'joi'
+import * as Joi from 'joi';
 import { MailService } from './mail/mail.service';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { User } from './user/entities/user.entity';
@@ -56,7 +56,7 @@ import { PropertyRequestModule } from './property-request/property-request.modul
 import { Photo } from './common/entities/Photo.entity';
 import { PropertyRequest } from './property-request/entities/property-request.entity';
 import { PropertyRequestPhoto } from './property-request/entities/property-request-photo.entity';
-import { RentalExpirationDate } from './property-request/entities/rental-expiration-date.entity';
+//import { RentalExpirationDate } from './property-request/entities/rental-expiration-date.entity';
 import { LicenseTypeModule } from './license-type/license-type.module';
 // import { CookieResolver, HeaderResolver, I18nModule, QueryResolver } from 'nestjs-i18n';
 import * as path from 'path';
@@ -72,6 +72,8 @@ import { PropertyComplaintModule } from './property-complaint/property-complaint
 import { Archive } from './archive/entities/archive.entity';
 import { Record } from './archive/entities/record.entity';
 import { ArchiveModule } from './archive/archive.module';
+import { RentalExpirationDate } from './property-request/entities/rental-expiration-date.entity';
+import { UserProperty } from './user/entities/user-property.entity';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -96,7 +98,8 @@ import { ArchiveModule } from './archive/archive.module';
       PropertyStatistics,
       generalStatistics,
       Archive,
-      Record
+      Record,
+      UserProperty,
     ]),
 
     // I18nModule.forRoot({
@@ -126,8 +129,8 @@ import { ArchiveModule } from './archive/archive.module';
       // Number(process.env.DB_PORT),
       username: 'postgres',
       // process.env.DB_USER_NAME,
-      password: "12345678910",
-      //  process.env.DB_PASSWORD || 
+      password: '12345678910',
+      //  process.env.DB_PASSWORD ||
       database: 'realEstateDb',
       // process.env.DB_NAME,
       entities: [
@@ -170,11 +173,11 @@ import { ArchiveModule } from './archive/archive.module';
         PropertyComplaint,
         PropertyComplaintPhoto,
         Archive,
-        Record
-
+        Record,
+        UserProperty,
       ],
       // autoLoadEntities: true, // Automatically loads entities registered through TypeOrmModule.forFeature()
-      synchronize: true,      // ⚠️ use only in development
+      synchronize: true, // ⚠️ use only in development
     }),
     ConfigModule.forRoot({
       isGlobal: true,
@@ -192,7 +195,6 @@ import { ArchiveModule } from './archive/archive.module';
         REFRESH_SECRET_KEY: Joi.string().required(),
         REFRESH_EXPIRE_IN: Joi.string().required(),
 
-
         // DataBase
         DB_HOST: Joi.string().required(),
         DB_PORT: Joi.string().required(),
@@ -208,13 +210,10 @@ import { ArchiveModule } from './archive/archive.module';
         CARD_EXPIRE_YEAR: Joi.number().required(),
         CARD_TYPE: Joi.string().required(),
 
-        // // Stripe 
+        // // Stripe
         // STRIPE_SECRET_KEY: Joi.string().required(),
         // STRIPE_PUBLISHABLE_KEY: Joi.string().required(),
         // STRIPE_WEBHOOK_SECRET: Joi.string().required(),
-
-
-
       }),
     }),
     UserModule,
@@ -240,11 +239,9 @@ import { ArchiveModule } from './archive/archive.module';
     LicenseTypeModule,
     OfficeComplaintModule,
     PropertyComplaintModule,
-    ArchiveModule
+    ArchiveModule,
   ],
   controllers: [AppController],
   providers: [AppService, MailService],
 })
-export class AppModule {
-
-}
+export class AppModule {}

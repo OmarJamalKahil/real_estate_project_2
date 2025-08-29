@@ -1,4 +1,3 @@
-
 import {
   Controller,
   Post,
@@ -34,29 +33,23 @@ import { GetUserByNationalNumberDto } from './dto/get-user-by-national-number.dt
 import { UserService } from './user.service';
 
 @Controller('user')
-
 export class UserController {
   constructor(
     private readonly userAuthService: UserAuthService,
     private readonly userProfileService: UserProfileService,
     private readonly userAdminService: UserAdminService,
     private readonly userService: UserService,
+  ) {}
 
-  ) { }
-
-  @Get("get-all-users")
+  @Get('get-all-users')
   async getAllUsers() {
-    return this.userAdminService.getAllUsers()
+    return this.userAdminService.getAllUsers();
   }
-
-
 
   @Post('start-register')
   async startRegister(@Body() dto: CreateUserDto) {
     return this.userAuthService.startRegister(dto);
   }
-
-
 
   @Post('verify-code')
   @UseGuards(JwtAuthGuard)
@@ -84,21 +77,16 @@ export class UserController {
 
   @Get('get-current')
   @UseGuards(JwtAuthGuard)
-  async getCurrentUser(
-    @Req() req
-  ) {
+  async getCurrentUser(@Req() req) {
     const { userId } = req.user;
-    console.log("this is something");
+    console.log('this is something');
 
     return this.userAuthService.getUser(userId);
   }
 
-
-  @Get(':id')
+  @Get('one-user/:id')
   @UseGuards(JwtAuthGuard)
-  async getUserById(
-    @Param('id') id: string
-  ) {
+  async getUserById(@Param('id') id: string) {
     return this.userService.getUserById(id);
   }
 
@@ -106,7 +94,7 @@ export class UserController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.OFFICEMANAGER)
   async getUserByNationalNumber(
-    @Param() getUserByNationalNumberDto: GetUserByNationalNumberDto
+    @Param() getUserByNationalNumberDto: GetUserByNationalNumberDto,
   ) {
     return this.userService.getUserByNationalNumber(getUserByNationalNumberDto);
   }
@@ -124,7 +112,6 @@ export class UserController {
     const { userId } = req.user;
     return this.userAuthService.editPassword(userId, dto.new_password);
   }
-
 
   // @UseGuards(JwtAuthGuard, RolesGuard)
   // @Roles(Role.SUPERADMIN)
@@ -151,8 +138,7 @@ export class UserController {
     return this.userAdminService.addNewAdmin(createAdminDto, profilePhoto);
   }
 
-
-  @Put("update-profile")
+  @Put('update-profile')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(FileInterceptor('profile_photo'))
   async updateProfile(
@@ -160,9 +146,12 @@ export class UserController {
     @Body() updateUserDto: UpdateUserDto,
     @UploadedFile() profilePhoto?: Express.Multer.File,
   ) {
-
     const { userId } = req.user;
-    return await this.userProfileService.updateUserProfile(userId, updateUserDto, profilePhoto)
+    return await this.userProfileService.updateUserProfile(
+      userId,
+      updateUserDto,
+      profilePhoto,
+    );
   }
 
   @Post('ban-user/:userId')
@@ -170,9 +159,9 @@ export class UserController {
   @Roles(Role.SUPERADMIN)
   async banUser(
     @Param('userId') userId: string,
-    @Body() banUserDto: BanUserDto
+    @Body() banUserDto: BanUserDto,
   ) {
-    return await this.userAdminService.banUser(userId, banUserDto)
+    return await this.userAdminService.banUser(userId, banUserDto);
   }
 
   @Post('warn-user/:userId')
@@ -180,10 +169,16 @@ export class UserController {
   @Roles(Role.SUPERADMIN)
   async warnUser(
     @Param('userId') userId: string,
-    @Body() warnUserDto: WarnUserDto
+    @Body() warnUserDto: WarnUserDto,
   ) {
-    return await this.userAdminService.warnUser(userId, warnUserDto)
+    return await this.userAdminService.warnUser(userId, warnUserDto);
   }
 
-
+  @Get('properties')
+  @UseGuards(JwtAuthGuard)
+  @Roles(Role.USER)
+  async getUserProperties(@Req() req) {
+    const { userId } = req.user;
+    return this.userService.getUserProperties(userId);
+  }
 }

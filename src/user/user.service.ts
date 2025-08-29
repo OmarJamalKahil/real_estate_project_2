@@ -2,27 +2,28 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
-  UnauthorizedException
-} from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+  UnauthorizedException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 
-import { ConfigService } from "@nestjs/config";
+import { ConfigService } from '@nestjs/config';
 
-import { Role, User } from "./entities/user.entity";
+import { Role, User } from './entities/user.entity';
 
-import { CreateUserDto } from "./dto/create-user.dto";
-import { VerifyUserDto } from "./dto/verify-user.dto";
-import { CompleteUserDto } from "./dto/complete-user.dto";
+import { CreateUserDto } from './dto/create-user.dto';
+import { VerifyUserDto } from './dto/verify-user.dto';
+import { CompleteUserDto } from './dto/complete-user.dto';
 
-import { AuthService } from "src/auth/auth.service";
-import { MailService } from "src/mail/mail.service";
-import { CloudinaryService } from "src/cloudinary/cloudinary.service";
-import { LoginUserDto } from "./dto/login-user.dto";
-import { UserResponseDto } from "./dto/user-response.dto";
-import { GetUserByNationalNumberDto } from "./dto/get-user-by-national-number.dto";
-import { Photo } from "src/common/entities/Photo.entity";
+import { AuthService } from 'src/auth/auth.service';
+import { MailService } from 'src/mail/mail.service';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import { LoginUserDto } from './dto/login-user.dto';
+import { UserResponseDto } from './dto/user-response.dto';
+import { GetUserByNationalNumberDto } from './dto/get-user-by-national-number.dto';
+import { Photo } from 'src/common/entities/Photo.entity';
+import { UserProperty } from './entities/user-property.entity';
 
 @Injectable()
 export class UserService {
@@ -33,11 +34,14 @@ export class UserService {
     @InjectRepository(Photo)
     private readonly uploadRepository: Repository<Photo>,
 
+    @InjectRepository(UserProperty)
+    private readonly userPropertyRepository: Repository<UserProperty>,
+
     private readonly authService: AuthService,
     private readonly mailService: MailService,
     private readonly cloudinaryService: CloudinaryService,
     private readonly configService: ConfigService,
-  ) { }
+  ) {}
 
   /**
    * Register user and send verification code
@@ -47,14 +51,13 @@ export class UserService {
 
     // Check if phone or email already registered
     const existingUser = await this.userRepository.findOne({
-      where: [
-        { phone: dto.phone },
-        { email: dto.email }
-      ]
+      where: [{ phone: dto.phone }, { email: dto.email }],
     });
 
     if (existingUser) {
-      throw new BadRequestException('Phone number or email is already registered');
+      throw new BadRequestException(
+        'Phone number or email is already registered',
+      );
     }
 
     const user = this.userRepository.create({
@@ -62,7 +65,7 @@ export class UserService {
       phone: dto.phone,
       verify_code: code,
       is_verified: false,
-      role
+      role,
     });
 
     await this.userRepository.save(user);
@@ -71,7 +74,7 @@ export class UserService {
 
     const tokens = this.authService.generateTokens({
       userId: user.id,
-      role: user.role
+      role: user.role,
     });
 
     return {
@@ -123,7 +126,9 @@ export class UserService {
     user.last_name = dto.last_name;
     user.national_number = dto.national_number;
 
-    const saltOrRounds = Number(this.configService.get<number>('SALT_OR_ROUND', 10));
+    const saltOrRounds = Number(
+      this.configService.get<number>('SALT_OR_ROUND', 10),
+    );
     user.password = await bcrypt.hash(dto.password, saltOrRounds);
 
     // if the user uploads a profile photo
@@ -145,43 +150,38 @@ export class UserService {
     return { message: 'User profile completed successfully' };
   }
 
-
   async login(loginUserDto: LoginUserDto) {
-
     const user = await this.userRepository.findOne({
       where: {
         email: loginUserDto.email,
       },
-
     });
 
     if (!user) {
-      throw new UnauthorizedException('user or password is not valid or correct')
+      throw new UnauthorizedException(
+        'user or password is not valid or correct',
+      );
     }
 
-    const result = await bcrypt.compare(loginUserDto.password, user.password)
+    const result = await bcrypt.compare(loginUserDto.password, user.password);
 
     if (!result) {
-      throw new UnauthorizedException('user or password is not valid or correct')
+      throw new UnauthorizedException(
+        'user or password is not valid or correct',
+      );
     }
 
     const tokens = this.authService.generateTokens({
       userId: user.id,
-      role: user.role
+      role: user.role,
     });
 
     return {
-      ...tokens
-    }
-
+      ...tokens,
+    };
   }
 
-
-
-
-
   async resetPassword(userId: string) {
-
     const user = await this.userRepository.findOneBy({
       id: userId,
       is_verified: true,
@@ -201,13 +201,9 @@ export class UserService {
     return {
       message: 'Verification code sent',
     };
-
   }
 
-  async editePassword(
-    userId: string, newPassword: string
-  ) {
-
+  async editePassword(userId: string, newPassword: string) {
     const user = await this.userRepository.findOneBy({
       id: userId,
       is_verified: true,
@@ -217,22 +213,22 @@ export class UserService {
       throw new NotFoundException('User not found or not verified');
     }
 
-    const saltOrRounds = Number(this.configService.get<number>('SALT_OR_ROUND', 10));
+    const saltOrRounds = Number(
+      this.configService.get<number>('SALT_OR_ROUND', 10),
+    );
     user.password = await bcrypt.hash(newPassword, saltOrRounds);
 
     await this.userRepository.save(user);
 
     return { message: 'Password has been Reseted successfully' };
-
-
   }
 
-
-  async getUserByNationalNumber(getUserByNationalNumberDto: GetUserByNationalNumberDto) {
+  async getUserByNationalNumber(
+    getUserByNationalNumberDto: GetUserByNationalNumberDto,
+  ) {
     const user = await this.userRepository.findOne({
       where: { national_number: getUserByNationalNumberDto.national_number },
-      relations: ['banned', 'userWarnings']
-
+      relations: ['banned', 'userWarnings'],
     });
 
     if (!user) {
@@ -249,12 +245,10 @@ export class UserService {
     return UserResponse;
   }
 
-
   async getUserById(id: string) {
     const user = await this.userRepository.findOne({
       where: { id },
-      relations: ['banned', 'userWarnings']
-
+      relations: ['banned', 'userWarnings'],
     });
 
     if (!user) {
@@ -262,13 +256,27 @@ export class UserService {
     }
 
     const UserResponse: UserResponseDto = {
-      ...user
-    }
+      ...user,
+    };
 
     return UserResponse;
   }
 
+  async getUserProperties(userId: string) {
+    const userProperties = await this.userPropertyRepository.find({
+      where: { user: { id: userId } },
+      relations: [
+        'property',
+        'property.office',
+        'property.type',
+        'property.photos',
+        'property.licenseDetails',
+        'property.location',
+      ],
+    });
 
+    return userProperties;
+  }
 
   /**
    * Generate a 6-digit verification code

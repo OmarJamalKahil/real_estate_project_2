@@ -197,7 +197,6 @@
 //     await queryRunner.connect();
 //     await queryRunner.startTransaction();
 
-
 //     try {
 
 //       const property = await queryRunner.manager.findOne(Property, {
@@ -237,14 +236,12 @@
 //           expireDate: updatePropertyRequestByAdminDto.expireDate
 //         })
 
-
 //       } else {
 
 //         propertyRequest.status = EnumPropertyRequestStatus.Accepted
 //         await queryRunner.manager.save(propertyRequest);
 //         await this.propertyService.removePropertySoft(queryRunner, property.id)
 //         await this.notificationService.notifyUser(queryRunner, property.office.user.id, "Your property request has been accepted.", 'Property Request Acception')
-
 
 //       }
 
@@ -301,39 +298,42 @@
 //   }
 // }
 
-
-
-
-
-
-
-
-
-
-
-
 import {
   Injectable,
   NotFoundException,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { DataSource, QueryRunner } from 'typeorm';
-import { PropertyRequest, EnumPropertyRequestStatus } from './entities/property-request.entity';
+import { DataSource, QueryRunner, Repository } from 'typeorm';
+import {
+  PropertyRequest,
+  EnumPropertyRequestStatus,
+} from './entities/property-request.entity';
 import { PropertyRequestPhoto } from './entities/property-request-photo.entity';
-import { CreatePropertyRequestDto } from './dto/create-property-request.dto';
-import { UpdatePropertyRequestDto } from './dto/update-property-request.dto';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { CreateRentalExpirationDateDto } from './dto/create-rental-expiration-date.dto';
 import { PropertyTypeOperation } from 'src/property/common/property-type-operation.enum';
 import { Property } from 'src/property/entities/property.entity';
-import { RentalExpirationDate } from './entities/rental-expiration-date.entity';
+//import { RentalExpirationDate } from './entities/rental-expiration-date.entity';
 import { PropertyService } from 'src/property/property.service';
 import { EnumStatus } from 'src/property/common/property-status.enum';
 import { NotificationService } from 'src/notification/notification.service';
 import { UpdatePropertyRequestByAdminDto } from './dto/update-property-request-by-admin.dto';
 import { PropertyStatisticsService } from 'src/statistics/services/property-statistics.service';
 import { GeneralStatisticsService } from 'src/statistics/services/general-statistics.service';
-import { OperationTypeStatistics, PropertyStatistics } from 'src/statistics/entities/property-statistics.entity';
+import {
+  OperationTypeStatistics,
+  PropertyStatistics,
+} from 'src/statistics/entities/property-statistics.entity';
+import { CreateArchiveDto } from 'src/archive/dto/create_Archive.dto';
+import { CreateRecordDto } from 'src/archive/dto/create-record.dto';
+import { ArchiveService } from 'src/archive/archive.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Record } from 'src/archive/entities/record.entity';
+import { Archive } from 'src/archive/entities/archive.entity';
+import { ArchiveStatus } from 'src/archive/enum/archive-status.entity';
+import { Reservation } from 'src/reservation/entities/reservation.entity';
+import { RentalExpirationDate } from './entities/rental-expiration-date.entity';
+import { UserProperty } from 'src/user/entities/user-property.entity';
 
 @Injectable()
 export class PropertyRequestService {
@@ -344,44 +344,120 @@ export class PropertyRequestService {
     private readonly notificationService: NotificationService,
     private readonly propertyStatisticsService: PropertyStatisticsService,
     private readonly generalStatisticsService: GeneralStatisticsService,
-  ) { }
+    private readonly archiveService: ArchiveService,
+
+    @InjectRepository(Record)
+    private readonly recordRepo: Repository<Record>,
+
+    @InjectRepository(Archive)
+    private readonly archiveRepo: Repository<Archive>,
+
+    @InjectRepository(Property)
+    private readonly propertyRepo: Repository<Property>,
+
+    @InjectRepository(Reservation)
+    private readonly reservationRepo: Repository<Reservation>,
+
+    @InjectRepository(UserProperty)
+    private readonly userPropertyRepo: Repository<UserProperty>,
+  ) {}
+
+  // async create(
+  //   createDto: CreatePropertyRequestDto,
+  //   propertyRequestPhotos: Express.Multer.File[],
+  // ) {
+  //   const queryRunner = this.dataSource.createQueryRunner();
+  //   await queryRunner.connect();
+  //   await queryRunner.startTransaction();
+
+  //   const property = await this.propertyService.findOneByPropertyNumber(createDto.propertyNumber);
+
+  //   try {
+  //     const propertyRequest = queryRunner.manager.create(PropertyRequest, {
+  //       //typeOperation: createDto.typeOperation,
+  //       property: property
+  //     });
+
+  //     const photos: PropertyRequestPhoto[] = [];
+  //     for (const file of propertyRequestPhotos) {
+  //       const uploadRes = await this.cloudinaryService.uploadImage(file);
+  //       const photo = queryRunner.manager.create(PropertyRequestPhoto, {
+  //         propertyRequest,
+  //         url: uploadRes.secure_url,
+  //         public_id: uploadRes.public_id,
+  //       });
+  //       await queryRunner.manager.save(photo);
+  //       photos.push(photo);
+  //     }
+
+  //     propertyRequest.photos = photos;
+
+  //     await queryRunner.manager.save(propertyRequest);
+
+  //     await queryRunner.commitTransaction();
+  //     return propertyRequest;
+  //   } catch (error) {
+  //     await queryRunner.rollbackTransaction();
+  //     console.error(error);
+  //     throw new InternalServerErrorException('Failed to create property request');
+  //   } finally {
+  //     await queryRunner.release();
+  //   }
+  // }
 
   async create(
-    createDto: CreatePropertyRequestDto,
+    createArchiveDto: CreateArchiveDto,
+    createRecordDto: CreateRecordDto,
     propertyRequestPhotos: Express.Multer.File[],
   ) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
+    const property = await this.propertyRepo.findOne({
+      where: {
+        propertyNumber: createArchiveDto.property_Number,
+        softDelete: false,
+      },
+    });
+
     try {
-      const propertyRequest = queryRunner.manager.create(PropertyRequest, {
-        typeOperation: createDto.typeOperation,
-        propertyNumber: createDto.propertyNumber,
-      });
+      const record = await this.archiveService.addPropertyToArchive(
+        createArchiveDto,
+        createRecordDto,
+      );
 
-      const photos: PropertyRequestPhoto[] = [];
-      for (const file of propertyRequestPhotos) {
-        const uploadRes = await this.cloudinaryService.uploadImage(file);
-        const photo = queryRunner.manager.create(PropertyRequestPhoto, {
-          propertyRequest,
-          url: uploadRes.secure_url,
-          public_id: uploadRes.public_id,
+      if (property) {
+        const propertyRequest = queryRunner.manager.create(PropertyRequest, {
+          //typeOperation: createDto.typeOperation,
+          property: property,
+          record: record,
         });
-        await queryRunner.manager.save(photo);
-        photos.push(photo);
+
+        const photos: PropertyRequestPhoto[] = [];
+        for (const file of propertyRequestPhotos) {
+          const uploadRes = await this.cloudinaryService.uploadImage(file);
+          const photo = queryRunner.manager.create(PropertyRequestPhoto, {
+            propertyRequest,
+            url: uploadRes.secure_url,
+            public_id: uploadRes.public_id,
+          });
+          await queryRunner.manager.save(photo);
+          photos.push(photo);
+        }
+
+        propertyRequest.photos = photos;
+
+        await queryRunner.manager.save(propertyRequest);
+        await queryRunner.commitTransaction();
+        return propertyRequest;
       }
-
-      propertyRequest.photos = photos;
-
-      await queryRunner.manager.save(propertyRequest);
-
-      await queryRunner.commitTransaction();
-      return propertyRequest;
     } catch (error) {
       await queryRunner.rollbackTransaction();
       console.error(error);
-      throw new InternalServerErrorException('Failed to create property request');
+      throw new InternalServerErrorException(
+        'Failed to create property request',
+      );
     } finally {
       await queryRunner.release();
     }
@@ -390,7 +466,7 @@ export class PropertyRequestService {
   async findAll() {
     return this.dataSource.getRepository(PropertyRequest).find({
       where: {
-        status: EnumPropertyRequestStatus.Pending
+        status: EnumPropertyRequestStatus.Pending,
       },
       relations: ['photos'],
     });
@@ -401,12 +477,14 @@ export class PropertyRequestService {
       .getRepository(PropertyRequest)
       .findOne({
         where: {
-          id, status: EnumPropertyRequestStatus.Pending
+          id,
+          status: EnumPropertyRequestStatus.Pending,
         },
         relations: ['photos'],
       });
 
-    if (!propertyRequest) throw new NotFoundException('Property request not found');
+    if (!propertyRequest)
+      throw new NotFoundException('Property request not found');
     return propertyRequest;
   }
 
@@ -486,7 +564,7 @@ export class PropertyRequestService {
 
       if (request.photos?.length) {
         await Promise.all(
-          request.photos.map(photo =>
+          request.photos.map((photo) =>
             this.cloudinaryService.deleteImage(photo.public_id),
           ),
         );
@@ -502,7 +580,9 @@ export class PropertyRequestService {
     } catch (error) {
       await queryRunner.rollbackTransaction();
       console.error(error);
-      throw new InternalServerErrorException('Failed to delete property request');
+      throw new InternalServerErrorException(
+        'Failed to delete property request',
+      );
     } finally {
       await queryRunner.release();
     }
@@ -515,7 +595,7 @@ export class PropertyRequestService {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
-    console.log("dto", dto);
+    console.log('dto', dto);
 
     try {
       const property = await queryRunner.manager.findOne(Property, {
@@ -523,33 +603,44 @@ export class PropertyRequestService {
           propertyNumber: dto.propertyNumber,
         },
         order: { createdAt: 'DESC' },
-        relations: ['office', 'office.user'],
+        relations: ['office', 'office.user', 'reservation', 'reservation.user'],
       });
 
       if (!property) throw new NotFoundException('Property not found');
 
+      const { reservation } = property;
 
+      const { user } = reservation;
 
-      const propertyRequest = await queryRunner.manager.findOne(PropertyRequest, {
-        where: { id },
-      });
+      const propertyRequest = await queryRunner.manager.findOne(
+        PropertyRequest,
+        {
+          where: { id },
+          relations: ['record', 'record.archive'],
+        },
+      );
 
-      console.log("property request propertyRequest:", propertyRequest);
+      console.log('property request propertyRequest:', propertyRequest);
 
+      if (!propertyRequest)
+        throw new NotFoundException('Property request not found');
 
-      if (!propertyRequest) throw new NotFoundException('Property request not found');
+      const { record } = propertyRequest;
 
+      const propertyStats = await queryRunner.manager.findOne(
+        PropertyStatistics,
+        {
+          where: {
+            property,
+          },
+          order: {
+            createdAt: 'DESC',
+          },
+        },
+      );
 
-      const propertyStats = await queryRunner.manager.findOne(PropertyStatistics, {
-        where: {
-          property
-        }, order: {
-          createdAt: 'DESC'
-        }
-      })
-
-      if (!propertyStats) throw new NotFoundException('propertyStats not found');
-
+      if (!propertyStats)
+        throw new NotFoundException('propertyStats not found');
 
       if (dto.status === EnumPropertyRequestStatus.Rejected) {
         propertyRequest.status = EnumPropertyRequestStatus.Rejected;
@@ -561,14 +652,21 @@ export class PropertyRequestService {
           'Your property request has been rejected due to illegal information.',
           'Property Request Rejection',
         );
+
+        const records = await this.recordRepo.find();
+
+        if (records == null || records.length == 1) {
+          this.archiveRepo.delete(propertyRequest.record.archive.id);
+        }
+
+        this.recordRepo.delete(propertyRequest.record.id);
       } else if (
         dto.status === EnumPropertyRequestStatus.Accepted &&
-        dto.propertyNumber &&
-        dto.expireDate
+        property.typeOperation == PropertyTypeOperation.Renting
       ) {
         await this.createRentalExpirationDate(queryRunner, {
-          propertyNumber: dto.propertyNumber,
-          expireDate: dto.expireDate,
+          propertyNumber: property.propertyNumber,
+          expireDate: record.rental_End_Date!,
         });
 
         propertyRequest.status = EnumPropertyRequestStatus.Accepted;
@@ -579,23 +677,50 @@ export class PropertyRequestService {
         await queryRunner.manager.save(propertyRequest);
         await queryRunner.manager.save(propertyStats);
 
-
         await this.notificationService.notifyUser(
           queryRunner,
           property.office.user.id,
           'Your property request has been accepted.',
           'Property Request Acceptance',
         );
+
+        const archive = await this.archiveRepo.findOne({
+          where: { id: propertyRequest.record.archive.id },
+        });
+
+        if (archive && archive.status == ArchiveStatus.PENDING) {
+          archive.status = ArchiveStatus.ACCEPETED;
+
+          await this.archiveRepo.save(archive);
+        }
+        // property.status = EnumStatus.Rented;
+
+        await this.propertyService.removePropertySoft(queryRunner, property.id);
+
+        // this.propertyRepo.save(property);
+
+        record.status = ArchiveStatus.ACCEPETED;
+
+        this.recordRepo.save(record);
+
+        if (reservation && user) {
+          this.reservationRepo.delete(reservation.id);
+
+          const userProperty = await this.userPropertyRepo.create({
+            type: property.typeOperation,
+            user: user,
+            property: property,
+          });
+
+          this.userPropertyRepo.save(userProperty);
+        }
       } else {
         propertyRequest.status = EnumPropertyRequestStatus.Accepted;
 
-
         propertyStats.operationType = OperationTypeStatistics.selling;
-
 
         await queryRunner.manager.save(propertyRequest);
         await queryRunner.manager.save(propertyStats);
-
 
         await this.propertyService.removePropertySoft(queryRunner, property.id);
 
@@ -605,14 +730,46 @@ export class PropertyRequestService {
           'Your property request has been accepted.',
           'Property Request Acceptance',
         );
+
+        const archive = await this.archiveRepo.findOne({
+          where: { id: propertyRequest.record.archive.id },
+        });
+
+        if (archive && archive.status == ArchiveStatus.PENDING) {
+          archive.status = ArchiveStatus.ACCEPETED;
+
+          await this.archiveRepo.save(archive);
+        }
+
+        property.status = EnumStatus.Sold;
+
+        this.propertyRepo.save(property);
+
+        record.status = ArchiveStatus.ACCEPETED;
+
+        this.recordRepo.save(record);
+
+        if (reservation && user) {
+          this.reservationRepo.delete(reservation.id);
+
+          const userProperty = await this.userPropertyRepo.create({
+            type: property.typeOperation,
+            user: user,
+            property: property,
+          });
+
+          this.userPropertyRepo.save(userProperty);
+        }
       }
-      console.log("propertyRequest");
+      console.log('propertyRequest');
 
       await queryRunner.commitTransaction();
     } catch (error) {
       await queryRunner.rollbackTransaction();
       console.error(error);
-      throw new InternalServerErrorException('Failed to update property request');
+      throw new InternalServerErrorException(
+        'Failed to update property request',
+      );
     } finally {
       await queryRunner.release();
     }

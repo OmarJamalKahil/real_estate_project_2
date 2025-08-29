@@ -127,6 +127,15 @@ export class PropertyService {
       await queryRunner.manager.save(location);
 
       // Create and save property
+
+      const existingProperties = await this.propertyRepository.find({
+        where:{propertyNumber: createPropertyDto.propertyNumber}
+      });
+      for(var i = 0 ; i < existingProperties.length; i++){
+        if(existingProperties[i].softDelete === false){
+          return {message: 'A Property with this Property Number is Already Published and in the app'}
+        }
+      }
       const property = this.propertyRepository.create({
         ...createPropertyDto,
         location,

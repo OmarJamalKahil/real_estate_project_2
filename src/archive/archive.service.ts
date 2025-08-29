@@ -6,6 +6,7 @@ import { Archive } from './entities/archive.entity';
 import { Repository } from 'typeorm';
 import { Record } from './entities/record.entity';
 import { Location } from 'src/property/entities/location.entity';
+import { ArchiveStatus } from './enum/archive-status.entity';
 
 @Injectable()
 export class ArchiveService {
@@ -33,7 +34,7 @@ export class ArchiveService {
   public async addPropertyToArchive(
     createArchiveDto: CreateArchiveDto,
     createRecordDto: CreateRecordDto,
-  ) {
+  ): Promise<Record> {
     var archive = await this.archiveRepository.findOne({
       where: { property_Number: createArchiveDto.property_Number },
     });
@@ -43,7 +44,7 @@ export class ArchiveService {
         where: { id: createArchiveDto.location_Id },
       });
 
-      if (location)
+      if (location) {
         archive = await this.archiveRepository.create({
           property_Number: createArchiveDto.property_Number,
           propertyType: createArchiveDto.propertyType,
@@ -51,12 +52,14 @@ export class ArchiveService {
           space: createArchiveDto.space,
           location: location,
         });
+        await this.archiveRepository.save(archive);
+      }
     }
 
     var newRecord;
 
     if (archive) {
-       newRecord = this.recordRepository.create({
+      newRecord = this.recordRepository.create({
         owner_personal_Identity_Number:
           createRecordDto.owner_personal_Identity_Number,
         owner_name: createRecordDto.owner_name,
@@ -70,23 +73,35 @@ export class ArchiveService {
         rental_Start_Date: createRecordDto.rental_Start_Date,
         archive: archive,
       });
+
+      await this.recordRepository.save(newRecord);
     }
 
-    return {message: "Archive Updated successfully"}
+    return newRecord;
   }
 
-  async getAllArchive(){
-    return await this.archiveRepository.find({
-        relations:['records']
-    });
+  async getAllArchive() {
+    return await this.archiveRepository
+      .createQueryBuilder('archive')
+      .leftJoinAndSelect('archive.location', 'location')
+      .getMany();
   }
 
-  async getOneArchiveWithRecords(archiveId: string){
-    const archive = await this.archiveRepository.findOne({
-        where: {id: archiveId},
-        relations: ['records']
-    });
-
-    return archive;
+  async getOneArchiveWithRecords(archiveId: string) {
+    return await this.archiveRepository
+      .createQueryBuilder('archive')
+      .leftJoinAndSelect('archive.location', 'location')
+      .leftJoinAndSelect(
+        'archive.records',
+        'record',
+        'record.status = :recordStatus',
+        { recordStatus: ArchiveStatus.ACCEPETED },
+      )
+      .where('archive.id = :archiveId', { archiveId })
+      .andWhere('archive.status = :archiveStatus', {
+        archiveStatus: ArchiveStatus.ACCEPETED,
+      })
+      .orderBy('record.date', 'DESC') // ترتيب تنازلي للسجلات حسب التاريخ
+      .getOne();
   }
 }

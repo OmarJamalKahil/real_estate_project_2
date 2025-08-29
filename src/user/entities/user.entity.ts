@@ -5,6 +5,7 @@ import {
   OneToOne,
   OneToMany,
   JoinColumn,
+  ManyToOne,
 } from 'typeorm';
 import { Banned } from './banned.entity';
 import { Warning } from './warning.entity';
@@ -21,6 +22,7 @@ import { Photo } from 'src/common/entities/Photo.entity';
 import { OfficeComplaint } from 'src/office-complaint/entities/office-complaint.entity';
 import { PropertyComplaint } from 'src/property-complaint/entities/property-complaint.entity';
 import { OfficeRating } from 'src/office/entities/office_rating.entity';
+import { UserProperty } from './user-property.entity';
 
 export enum Role {
   USER = 'user',
@@ -127,4 +129,7 @@ export class User {
     (propertyComplaints) => propertyComplaints.user,
   )
   propertyComplaints: PropertyComplaint;
+
+  @OneToMany(() => UserProperty, (userProperties) => userProperties.user)
+  userProperties: UserProperty[];
 }

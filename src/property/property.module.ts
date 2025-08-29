@@ -17,6 +17,7 @@ import { Attribute } from 'src/attribute/entities/attribute.entity';
 import { PaymentCardModule } from 'src/payment-card/payment-card.module';
 import { NotificationModule } from 'src/notification/notification.module';
 import { StatisticsModule } from 'src/statistics/statistics.module';
+import { UserProperty } from 'src/user/entities/user-property.entity';
 
 @Module({
   imports: [
@@ -30,16 +31,16 @@ import { StatisticsModule } from 'src/statistics/statistics.module';
       LicenseType,
       Location,
       Attribute,
+      UserProperty,
     ]),
     NotificationModule,
     OfficeModule,
     UserModule,
     PaymentCardModule,
     StatisticsModule,
-
   ],
   controllers: [PropertyController],
   providers: [PropertyService, CloudinaryService],
-  exports:[PropertyService]
+  exports: [PropertyService],
 })
 export class PropertyModule {}

@@ -1,17 +1,30 @@
-import { IsEnum, IsNotEmpty, IsString } from "class-validator";
-import { PropertyTypeOperation } from "src/property/common/property-type-operation.enum";
+import { Transform, Type } from 'class-transformer';
+import { ValidateNested } from 'class-validator';
+import { CreateRecordDto } from 'src/archive/dto/create-record.dto';
+import { CreateArchiveDto } from 'src/archive/dto/create_Archive.dto';
 
-export class CreatePropertyRequestDto {
+export class CreateFullPropertyRequestDto {
+  @Transform(({ value }) => {
+    try {
+      const parsed = typeof value === 'string' ? JSON.parse(value) : value;
+      return Object.assign(new CreateArchiveDto(), parsed);
+    } catch {
+      return new CreateArchiveDto(); // empty object with correct class type
+    }
+  })
+  @ValidateNested()
+  @Type(() => CreateArchiveDto)
+  createArchiveDto: CreateArchiveDto;
 
-    @IsString()
-    @IsNotEmpty()
-    propertyNumber: string;
-
-    @IsEnum(PropertyTypeOperation)
-    @IsNotEmpty()
-    typeOperation: PropertyTypeOperation
-
-
-
-
+  @Transform(({ value }) => {
+    try {
+      const parsed = typeof value === 'string' ? JSON.parse(value) : value;
+      return Object.assign(new CreateRecordDto(), parsed);
+    } catch {
+      return new CreateRecordDto(); // empty object with correct class type
+    }
+  })
+  @ValidateNested()
+  @Type(() => CreateRecordDto)
+  createRecordDto: CreateRecordDto;
 }

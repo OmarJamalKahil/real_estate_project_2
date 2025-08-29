@@ -20,10 +20,10 @@ export class UpdatePropertyRequestByAdminDto {
     @IsOptional()
     propertyNumber?: string;
 
-    @Type(() => Date)
-    @IsDate()
-    @IsOptional()
-    expireDate?: Date;
+    // @Type(() => Date)
+    // @IsDate()
+    // @IsOptional()
+    // expireDate?: Date;
 
 
 }
