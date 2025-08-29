@@ -122,9 +122,9 @@ import { PropertyComplaintModule } from './property-complaint/property-complaint
       // Number(process.env.DB_PORT),
       username: 'postgres',
       // process.env.DB_USER_NAME,
-      password: "12345678910",
+      password: "0940468172mtn",  
       //  process.env.DB_PASSWORD || 
-      database: 'realEstateDb',
+      database: 'real-estate',
       // process.env.DB_NAME,
       entities: [
         User,

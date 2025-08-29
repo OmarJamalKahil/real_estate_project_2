@@ -35,7 +35,6 @@ export class OfficeController {
 
   @Post('/create-office')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  // @Roles(Role.OFFICEMANAGER)
   @UseInterceptors(FileFieldsInterceptor([
     { name: 'license_photo', maxCount: 1 },
     { name: 'office_photo', maxCount: 1 },

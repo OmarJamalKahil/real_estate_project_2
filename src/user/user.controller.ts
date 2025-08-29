@@ -45,6 +45,8 @@ export class UserController {
   ) { }
 
   @Get("get-all-users")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.SUPERADMIN)
   async getAllUsers() {
     return this.userAdminService.getAllUsers()
   }
@@ -60,7 +62,8 @@ export class UserController {
 
   @Post('verify-code')
   @UseGuards(JwtAuthGuard)
-  async verifyCode(@Req() req, @Body() dto: VerifyUserDto) {
+  async verifyCode(@Req() req: any, @Body() dto: VerifyUserDto) {
+    console.log("this is the verfify code : ", dto.verify_code);
     const { userId } = req.user;
     return this.userAuthService.verifyCode(userId, dto.verify_code);
   }

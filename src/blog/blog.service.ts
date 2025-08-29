@@ -200,6 +200,8 @@ import { User } from 'src/user/entities/user.entity';
 import { CreateBlogDto } from './dto/create-blog.dto';
 import { UpdateBlogDto } from './dto/update-blog.dto';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import { PaginationDto } from 'src/common/utils/pagination.dto';
+import { PaginatedResponse } from 'src/common/utils/paginated-response.interface';
 
 
 
@@ -268,11 +270,37 @@ export class BlogService {
     }
   }
 
-  // FIND ALL
-  async findAll(): Promise<Blog[]> {
-    return this.blogRepository.find({
+  // // FIND ALL
+  // async findAll(
+  //   paginationDto:PaginationDto
+  // ): Promise<PaginatedResponse<Blog[]>> {
+  //   return this.blogRepository.find({
+  //     relations: ['office', 'blog_media'],
+  //   });
+  // }
+
+
+   async findAll(
+    paginationDto: PaginationDto
+  ): Promise<PaginatedResponse<Blog>> {
+    const { page = 0, limit = 0 } = paginationDto;
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await this.blogRepository.findAndCount({
       relations: ['office', 'blog_media'],
+      take: limit,
+      skip: skip,
     });
+
+    const pageCount = Math.ceil(total / limit);
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      pageCount,
+    };
   }
 
   async getAllBlogsForOffice(userId: string): Promise<Blog[]> {

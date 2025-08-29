@@ -134,7 +134,7 @@ export class OfficeService {
     const query = this.officeRepository
       .createQueryBuilder('office')
       .leftJoinAndSelect('office.office_photo', 'office_photo')
-      .leftJoinAndSelect('office.blogs', 'blogs')
+      // .leftJoinAndSelect('office.blogs', 'blogs')
       .leftJoin('office.ratings', 'ratings')
       .select([
         'office.id',
@@ -143,7 +143,7 @@ export class OfficeService {
         'office.office_email',
         'office.status',
         'office_photo',
-        'blogs',
+      //  // 'blogs',
       ])
       .addSelect('AVG(ratings.number_of_stars)', 'office_avg_rating')
       .addSelect('COUNT(ratings.id)', 'ratingsCount') // To get the count of ratings for each office
@@ -151,7 +151,7 @@ export class OfficeService {
       // .andWhere('office.user.id != :userId', { userId })
       .groupBy('office.id')
       .addGroupBy('office_photo.id')
-      .addGroupBy('blogs.id')
+     // // .addGroupBy('blogs.id')
       .skip(skip)
       .take(limit);
 
@@ -173,18 +173,23 @@ export class OfficeService {
       // The `blogs` relation is also a raw join, so you'd need to handle this manually.
       // A better approach is to load the `blogs` relation in a second query or handle them carefully.
       // For this example, we'll simplify.
-      blogs: office.blogs_id
-        ? [
-            {
-              id: office.blogs_id,
-              title: office.blogs_title,
-              // ...other blog properties
-            },
-          ]
-        : [],
+      // // blogs:office.blogs,
+      //  office.blogs_id
+      //   ? [
+      //       {
+      //         id: office.blogs_id,
+      //         title: office.blogs_title,
+      //         // ...other blog properties
+      //       },
+      //     ]
+      //   : [],
       averageRating: parseFloat(office.office_avg_rating) || 0,
       ratingsCount: parseInt(office.ratingsCount) || 0,
     }));
+
+    console.log("this is the data (office): ",data);
+    
+
 
     return {
       data: offices,
