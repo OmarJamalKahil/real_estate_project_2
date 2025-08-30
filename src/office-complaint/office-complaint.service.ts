@@ -88,7 +88,15 @@ export class OfficeComplaintService {
     return { message: 'The complaint has been added successfully' };
   }
 
-  async getAllOfficeComplaints(userId: string) {
+  async getAllOfficeComplaints() {
+    const office = await this.officeComplaintRepo.find({
+      relations: ['user','office', 'officeComplaintPhotos'],
+    });
+
+    return office;
+  }
+
+    async getAllOfficeComplaintsForOffice(userId: string) {
     const office = await this.officeComplaintRepo.find({
       where: { office: { user: { id: userId } } },
       relations: ['user', 'officeComplaintPhotos'],

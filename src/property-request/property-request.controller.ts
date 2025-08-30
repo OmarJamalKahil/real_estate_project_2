@@ -52,6 +52,8 @@ export class PropertyRequestController {
     files: { property_request_photos?: Express.Multer.File[] },
     @Body() createFullPropertyRequestDto: CreateFullPropertyRequestDto,
   ) {
+    console.log("these are the data : ",createFullPropertyRequestDto);
+    
 
     return this.propertyRequestService.create(
       createFullPropertyRequestDto.createArchiveDto,
@@ -77,7 +79,7 @@ export class PropertyRequestController {
 
   // Admin-only endpoint
   @Patch('admin/:id')
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN,Role.SUPERADMIN)
   updateByAdmin(
     @Param('id') id: string,
     @Body() updateByAdminDto: UpdatePropertyRequestByAdminDto,

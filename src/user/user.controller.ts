@@ -181,7 +181,7 @@ export class UserController {
 
   @Get('properties')
   @UseGuards(JwtAuthGuard)
-  @Roles(Role.USER)
+  @Roles(Role.USER,Role.OFFICEMANAGER)
   async getUserProperties(@Req() req) {
     const { userId } = req.user;
     return this.userService.getUserProperties(userId);

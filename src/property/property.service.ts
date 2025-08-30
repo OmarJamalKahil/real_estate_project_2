@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, QueryRunner, Repository } from 'typeorm';
+import { DataSource, In, QueryRunner, Repository } from 'typeorm';
 import { Property } from './entities/property.entity';
 import { CreatePropertyDto } from './dto/create-property.dto';
 import { UpdatePropertyDto } from './dto/update-property.dto';
@@ -68,7 +68,7 @@ export class PropertyService {
     private readonly generalStatisticsService: GeneralStatisticsService,
     private readonly propertyStatisticsService: PropertyStatisticsService,
     private readonly dataSource: DataSource,
-  ) {}
+  ) { }
 
   async create(
     officeManagerId: string,
@@ -129,11 +129,11 @@ export class PropertyService {
       // Create and save property
 
       const existingProperties = await this.propertyRepository.find({
-        where:{propertyNumber: createPropertyDto.propertyNumber}
+        where: { propertyNumber: createPropertyDto.propertyNumber }
       });
-      for(var i = 0 ; i < existingProperties.length; i++){
-        if(existingProperties[i].softDelete === false){
-          return {message: 'A Property with this Property Number is Already Published and in the app'}
+      for (var i = 0; i < existingProperties.length; i++) {
+        if (existingProperties[i].softDelete === false) {
+          return { message: 'A Property with this Property Number is Already Published and in the app' }
         }
       }
       const property = this.propertyRepository.create({
@@ -1051,7 +1051,7 @@ export class PropertyService {
         office: {
           id: officeId,
         },
-        status: EnumStatus.Accepted,
+        status: In([EnumStatus.Accepted, EnumStatus.Reserved]),
       },
       relations: [
         'photos',
