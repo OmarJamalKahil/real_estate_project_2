@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, QueryRunner, Repository } from 'typeorm';
+import { DataSource, In, QueryRunner, Repository } from 'typeorm';
 import { Property } from './entities/property.entity';
 import { CreatePropertyDto } from './dto/create-property.dto';
 import { UpdatePropertyDto } from './dto/update-property.dto';
@@ -129,11 +129,14 @@ export class PropertyService {
       // Create and save property
 
       const existingProperties = await this.propertyRepository.find({
-        where:{propertyNumber: createPropertyDto.propertyNumber}
+        where: { propertyNumber: createPropertyDto.propertyNumber },
       });
-      for(var i = 0 ; i < existingProperties.length; i++){
-        if(existingProperties[i].softDelete === false){
-          return {message: 'A Property with this Property Number is Already Published and in the app'}
+      for (var i = 0; i < existingProperties.length; i++) {
+        if (existingProperties[i].softDelete === false) {
+          return {
+            message:
+              'A Property with this Property Number is Already Published and in the app',
+          };
         }
       }
       const property = this.propertyRepository.create({
@@ -520,7 +523,6 @@ export class PropertyService {
         publishDate: 'DESC', // Typically, newer accepted properties are shown first
       },
     });
-
 
     return {
       data,
@@ -1058,6 +1060,111 @@ export class PropertyService {
         'location',
         'type',
         'licenseDetails',
+        'propertyAttributes',
+        'propertyAttributes.attribute',
+      ],
+    });
+    if (!data) throw new NotFoundException('Property not found');
+    return {
+      data,
+      total,
+      page,
+      limit,
+      pageCount: Math.ceil(total / limit),
+    };
+  }
+
+  async findAcceptedByOfficeId(userId: string, paginationDto: PaginationDto) {
+    const { page = 1, limit = 10 } = paginationDto;
+    const [data, total] = await this.propertyRepository.findAndCount({
+      skip: (page - 1) * limit,
+      take: limit,
+      where: {
+        office: {
+          user: { id: userId },
+        },
+        status: EnumStatus.Accepted,
+      },
+      relations: [
+        'photos',
+        'location',
+        'type',
+        'licenseDetails',
+        'licenseDetails.license',
+        'office',
+        'office.office_photo',
+        'propertyAttributes',
+        'propertyAttributes.attribute',
+      ],
+    });
+    if (!data) throw new NotFoundException('Property not found');
+    return {
+      data,
+      total,
+      page,
+      limit,
+      pageCount: Math.ceil(total / limit),
+    };
+  }
+
+  async findPendingPropertiesByOfficeId(
+    userId: string,
+    paginationDto: PaginationDto,
+  ) {
+    const { page = 1, limit = 10 } = paginationDto;
+    const [data, total] = await this.propertyRepository.findAndCount({
+      skip: (page - 1) * limit,
+      take: limit,
+      where: {
+        office: {
+          user: { id: userId },
+        },
+        status: EnumStatus.Pending,
+      },
+      relations: [
+        'photos',
+        'location',
+        'type',
+        'licenseDetails',
+        'licenseDetails.license',
+        'office',
+        'office.office_photo',
+        'propertyAttributes',
+        'propertyAttributes.attribute',
+      ],
+    });
+    if (!data) throw new NotFoundException('Property not found');
+    return {
+      data,
+      total,
+      page,
+      limit,
+      pageCount: Math.ceil(total / limit),
+    };
+  }
+
+  async findDonePropertiesByOfficeId(
+    userId: string,
+    paginationDto: PaginationDto,
+  ) {
+    const { page = 1, limit = 10 } = paginationDto;
+    const [data, total] = await this.propertyRepository.findAndCount({
+      skip: (page - 1) * limit,
+      take: limit,
+      where: {
+        office: {
+          user: { id: userId },
+        },
+        status: In([EnumStatus.Rented, EnumStatus.Sold]), // ✅ استخدام In للـ OR
+      },
+      relations: [
+        'photos',
+        'location',
+        'type',
+        'licenseDetails',
+        'licenseDetails.license',
+        'office',
+        'office.office_photo',
         'propertyAttributes',
         'propertyAttributes.attribute',
       ],

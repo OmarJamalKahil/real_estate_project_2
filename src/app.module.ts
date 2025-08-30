@@ -129,9 +129,9 @@ import { UserProperty } from './user/entities/user-property.entity';
       // Number(process.env.DB_PORT),
       username: 'postgres', 
       // process.env.DB_USER_NAME,
-      password: "0940468172mtn",  
+      password: "12345678910",  
       //  process.env.DB_PASSWORD || 
-      database: 'real-estate',
+      database: 'realEstateDb',
       // process.env.DB_NAME,
       entities: [
         User,

@@ -1,8 +1,29 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, UploadedFiles, BadRequestException, UsePipes, ParseArrayPipe, UseGuards, Put, Req, Query, UploadedFile } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseInterceptors,
+  UploadedFiles,
+  BadRequestException,
+  UsePipes,
+  ParseArrayPipe,
+  UseGuards,
+  Put,
+  Req,
+  Query,
+  UploadedFile,
+} from '@nestjs/common';
 import { PropertyService } from './property.service';
 import { CreatePropertyDto } from './dto/create-property.dto';
 import { UpdatePropertyDto } from './dto/update-property.dto';
-import { FileFieldsInterceptor, FileInterceptor } from '@nestjs/platform-express';
+import {
+  FileFieldsInterceptor,
+  FileInterceptor,
+} from '@nestjs/platform-express';
 import { MultiFileValidationPipe } from 'src/common/pipes/multi-files-validation.pipe';
 import { CreatePropertyValidationPipe } from 'src/common/pipes/create-property-validation.pipe';
 import { validateDto } from 'src/common/functions/validate-dto.function';
@@ -19,29 +40,32 @@ import { SearchPaymentCardDto } from 'src/payment-card/dto/create-payment-card.d
 
 @Controller('property')
 export class PropertyController {
-  constructor(private readonly propertyService: PropertyService) { }
-
+  constructor(private readonly propertyService: PropertyService) {}
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.OFFICEMANAGER)
-  @UseInterceptors(FileFieldsInterceptor([
-    { name: 'property_photos', maxCount: 15 },
-  ]))
+  @UseInterceptors(
+    FileFieldsInterceptor([{ name: 'property_photos', maxCount: 15 }]),
+  )
   async createProperty(
-    @UploadedFiles(MultiFileValidationPipe) files: {
-      property_photos: Express.Multer.File[],
+    @UploadedFiles(MultiFileValidationPipe)
+    files: {
+      property_photos: Express.Multer.File[];
     },
     @Body() createPropertyDtoRaw: CreatePropertyDto,
     @Req() req,
   ) {
     console.log(createPropertyDtoRaw);
     const { userId } = req.user;
-    return this.propertyService.create(userId, createPropertyDtoRaw, files.property_photos)
+    return this.propertyService.create(
+      userId,
+      createPropertyDtoRaw,
+      files.property_photos,
+    );
   }
 
-
-  @Post("/add-new-photo")
+  @Post('/add-new-photo')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.OFFICEMANAGER)
   @UseInterceptors(FileInterceptor('photo'))
@@ -50,68 +74,68 @@ export class PropertyController {
     @Body() body,
     @Req() req,
   ) {
-    return this.propertyService.addNewPhotoToPropertyPhotos(body.propertyId, photo)
+    return this.propertyService.addNewPhotoToPropertyPhotos(
+      body.propertyId,
+      photo,
+    );
   }
 
-
-  @Delete("/remove-property-photo")
+  @Delete('/remove-property-photo')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.OFFICEMANAGER)
-  async removePhotoOfPropertyFromPropertyPhotos(
-    @Body() body,
-    @Req() req,
-  ) {
-    return this.propertyService.removePhotoOfPropertyFromPropertyPhotos(body?.propertyPhotoId);
+  async removePhotoOfPropertyFromPropertyPhotos(@Body() body, @Req() req) {
+    return this.propertyService.removePhotoOfPropertyFromPropertyPhotos(
+      body?.propertyPhotoId,
+    );
   }
 
-
-  @Post("/add-new-attribute")
+  @Post('/add-new-attribute')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.OFFICEMANAGER)
   async addNewAttributeToPropertyAttributes(
     @Body() createAttributeDto: CreateAttributeDto,
   ) {
-    return this.propertyService.addNewAttributeToPropertyAttributes(createAttributeDto)
+    return this.propertyService.addNewAttributeToPropertyAttributes(
+      createAttributeDto,
+    );
   }
 
-
-  @Delete("/remove-property-attribute")
+  @Delete('/remove-property-attribute')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.OFFICEMANAGER)
   async removeAttributeOfPropertyFromPropertyAttributes(
     @Body() body,
     @Req() req,
   ) {
-
-    return this.propertyService.removeAttributeOfPropertyFromPropertyAttributes(body?.propertyAttributeId)
+    return this.propertyService.removeAttributeOfPropertyFromPropertyAttributes(
+      body?.propertyAttributeId,
+    );
   }
 
   @Put(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.OFFICEMANAGER)
   async updateProperty(
-    @Param("id") id: string,
+    @Param('id') id: string,
     @Body() updatePropertyDtoRaw: UpdatePropertyDto,
     @Req() req,
   ) {
     const { userId } = req.user;
-    return this.propertyService.update(id, userId, updatePropertyDtoRaw)
+    return this.propertyService.update(id, userId, updatePropertyDtoRaw);
   }
-
 
   @Get()
-  getAll(
-    @Query() paginationDto: PaginationDto
-  ) {
-    return this.propertyService.findAllAcceptedProperties(paginationDto)
+  getAll(@Query() paginationDto: PaginationDto) {
+    return this.propertyService.findAllAcceptedProperties(paginationDto);
   }
-
 
   @Get('get-all-properties-which-are-still-not-accepted')
   getAllPropertiesAreStillNotAcceptedYet(
-    @Query() paginationDto: PaginationDto
+    @Query() paginationDto: PaginationDto,
   ) {
-    return this.propertyService.getAllPropertiesWhoAreStillNotAccepted(paginationDto)
+    return this.propertyService.getAllPropertiesWhoAreStillNotAccepted(
+      paginationDto,
+    );
   }
 
   @Post('/filter')
@@ -120,52 +144,87 @@ export class PropertyController {
     @Body() filterPropertyDto: FilterPropertyDto,
     @Query() paginationDto: PaginationDto,
     //@Req() req,
-
   ) {
     //const { userId } = req.user
-    return this.propertyService.findPropertiesByFiltering(filterPropertyDto, paginationDto, 
+    return this.propertyService.findPropertiesByFiltering(
+      filterPropertyDto,
+      paginationDto,
       //userId
-    )
+    );
   }
 
   @Get('/reserved')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.USER, Role.OFFICEMANAGER)
-  getReservedProperties(
-    @Query() paginationDto: PaginationDto,
-    @Req() req,
-  ) {
-    const { userId } = req.user
-    return this.propertyService.findAllReservedPropertiesForUser(userId, paginationDto)
+  getReservedProperties(@Query() paginationDto: PaginationDto, @Req() req) {
+    const { userId } = req.user;
+    return this.propertyService.findAllReservedPropertiesForUser(
+      userId,
+      paginationDto,
+    );
   }
-
 
   @Get('office/:officeId')
   getPropertiesByOfficeId(
     @Param('officeId') officeId: string,
-    @Query() paginationDto: PaginationDto
-
+    @Query() paginationDto: PaginationDto,
   ) {
-    return this.propertyService.findByOfficeId(officeId, paginationDto)
+    return this.propertyService.findByOfficeId(officeId, paginationDto);
   }
 
+  @Get('accepted')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  findAcceptedByOfficeId(@Query() paginationDto: PaginationDto, @Req() req) {
+    const { userId } = req.user;
+
+    return this.propertyService.findAcceptedByOfficeId(userId, paginationDto);
+  }
+
+  @Get('pending')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  findPendingPropertiesByOfficeId(
+    @Query() paginationDto: PaginationDto,
+    @Req() req,
+  ) {
+    const { userId } = req.user;
+
+    return this.propertyService.findPendingPropertiesByOfficeId(
+      userId,
+      paginationDto,
+    );
+  }
+
+  @Get('done')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  findDonePropertiesByOfficeId(
+    @Query() paginationDto: PaginationDto,
+    @Req() req,
+  ) {
+    const { userId } = req.user;
+
+    return this.propertyService.findDonePropertiesByOfficeId(
+      userId,
+      paginationDto,
+    );
+  }
 
   @Get(':id')
-  getById(
-    @Param('id') id: string
-  ) {
-
-    return this.propertyService.findOne(id)
+  getById(@Param('id') id: string) {
+    return this.propertyService.findOne(id);
   }
 
   @Put('/status/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.SUPERADMIN)
-  updateStatus(@Param('id') id: string, @Body() updatePropertyStatusDto: UpdatePropertyStatusDto) {
-    return this.propertyService.updatePropertyStatus(id, updatePropertyStatusDto);
+  updateStatus(
+    @Param('id') id: string,
+    @Body() updatePropertyStatusDto: UpdatePropertyStatusDto,
+  ) {
+    return this.propertyService.updatePropertyStatus(
+      id,
+      updatePropertyStatusDto,
+    );
   }
-
-
 
   @Post('/pay-before/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -176,21 +235,17 @@ export class PropertyController {
     @Req() req,
   ) {
     const { userId } = req.user;
-    return this.propertyService.payBeforeRemove(id, searchPaymentCardDto,userId)
+    return this.propertyService.payBeforeRemove(
+      id,
+      searchPaymentCardDto,
+      userId,
+    );
   }
-
-
-
-
-
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.SUPERADMIN)
-  DeletePropertyById(
-    @Param('id') id: string
-  ) {
-    return this.propertyService.remove(id)
+  DeletePropertyById(@Param('id') id: string) {
+    return this.propertyService.remove(id);
   }
-
 }

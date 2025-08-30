@@ -92,7 +92,14 @@ export class PropertyComplaintService {
   async getAllPropertyComplaintsForOffice(userId: string) {
     const office = await this.propertyComplaintRepo.find({
       where: { property: { office: { user: { id: userId } } } },
-      relations: ['user', 'propertyComplaintPhotos', 'property'],
+      relations: ['user', 'propertyComplaintPhotos',         
+        'property',
+        'propertyComplaintPhotos',
+        'property.office',
+        'property.type',
+        'property.photos',
+        'property.licenseDetails',
+        'property.location',],
     });
 
     return office;
@@ -101,7 +108,15 @@ export class PropertyComplaintService {
   async getAllPropertyComplaintsForUser(userId: string) {
     return await this.propertyComplaintRepo.find({
       where: { user: { id: userId } },
-      relations: ['property', 'propertyComplaintPhotos', 'property.office'],
+      relations: [
+        'property',
+        'propertyComplaintPhotos',
+        'property.office',
+        'property.type',
+        'property.photos',
+        'property.licenseDetails',
+        'property.location',
+      ],
     });
   }
 
