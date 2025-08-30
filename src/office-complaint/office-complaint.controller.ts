@@ -23,11 +23,11 @@ import { MultiFileValidationPipe } from 'src/common/pipes/multi-files-validation
 export class OfficeComplaintController {
   constructor(
     private readonly officeComplaintService: OfficeComplaintService,
-  ) {}
+  ) { }
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.USER)
+  @Roles(Role.USER, Role.OFFICEMANAGER)
   @UseInterceptors(
     FileFieldsInterceptor([{ name: 'complaint_media', maxCount: 15 }]),
   )
@@ -47,30 +47,36 @@ export class OfficeComplaintController {
     );
   }
 
-  @Get()
+  @Get('')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.SUPERADMIN)
+  async getAllOfficeComplaints(@Req() req) {
+    return this.officeComplaintService.getAllOfficeComplaints();
+  }
+
+  // this is just for the office who are using the application now where this request return just its complaints
+  @Get('/office')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.OFFICEMANAGER)
-  async getAllOfficeComplaints(@Req() req) {
+  async getAllOfficeComplaintsForOffice(@Req() req) {
     const { userId } = req.user;
-
-    return this.officeComplaintService.getAllOfficeComplaints(userId);
+    return this.officeComplaintService.getAllOfficeComplaintsForOffice(userId);
   }
 
   @Get('/user')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.USER)
+  @Roles(Role.USER,Role.OFFICEMANAGER)
   async getAllComplaintsForUser(@Req() req) {
     const { userId } = req.user;
-
     return this.officeComplaintService.getAllOfficeComplaintsForUser(userId);
   }
 
   @Delete(":complaintId")
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.USER, Role.ADMIN)
+  @Roles(Role.USER, Role.ADMIN, Role.OFFICEMANAGER, Role.SUPERADMIN)
   async deleteOfficeComplaint(@Param("complaintId") complaintId: string, @Req() req) {
-            const { userId } = req.user;
-
+    const { userId } = req.user;
     return this.officeComplaintService.deleteOfficeComplaint(userId, complaintId);
   }
+  
 }

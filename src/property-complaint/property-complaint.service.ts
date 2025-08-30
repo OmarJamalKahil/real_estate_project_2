@@ -30,7 +30,7 @@ export class PropertyComplaintService {
     private readonly userRepo: Repository<User>,
 
     private readonly cloudinaryService: CloudinaryService,
-  ) {}
+  ) { }
 
   async createComplaint(
     userId: string,
@@ -87,6 +87,14 @@ export class PropertyComplaintService {
     await this.propertyComplaintRepo.save(propertyComplaint);
 
     return { message: 'The complaint has been added successfully' };
+  }
+
+  async getAllPropertyComplaints() {
+    const office = await this.propertyComplaintRepo.find({
+      relations: ['user', 'propertyComplaintPhotos', 'property','property.office','property.office.user'],
+    });
+
+    return office;
   }
 
   async getAllPropertyComplaintsForOffice(userId: string) {

@@ -104,6 +104,7 @@ export class Property {
 
   @OneToOne(() => Reservation, (reservation) => reservation.property) // Or handle reservation soft-deletion if it applies
   reservation: Reservation;
+  
 
   // onDelete: 'SET NULL' means when a Property is deleted (hard or soft),
   // the propertyId in PropertyAttribute will become NULL.

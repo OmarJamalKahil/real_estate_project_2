@@ -468,7 +468,7 @@ export class PropertyRequestService {
       where: {
         status: EnumPropertyRequestStatus.Pending,
       },
-      relations: ['photos'],
+      relations: ['photos','property'],
     });
   }
 
@@ -609,6 +609,9 @@ export class PropertyRequestService {
       if (!property) throw new NotFoundException('Property not found');
 
       const { reservation } = property;
+      console.log("this is the property : ",property);
+      // console.log("this is the property : ",property);
+      
 
       const { user } = reservation;
 

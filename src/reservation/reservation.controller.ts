@@ -14,7 +14,7 @@ export class ReservationController {
 
   @Post(":id")
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.USER)
+  @Roles(Role.USER,Role.OFFICEMANAGER)
   create(
     @Req() req,
     @Param() createReservationParamDto:CreateReservationParamDto,
